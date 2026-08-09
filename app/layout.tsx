@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,10 +13,32 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Stillpoint — Haiku Generator",
-  description: "Create a quiet 5–7–5 poem by chance or from a word on your mind.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const incomingHeaders = await headers();
+  const host = incomingHeaders.get("x-forwarded-host") ?? incomingHeaders.get("host") ?? "localhost";
+  const protocol = incomingHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const metadataBase = new URL(`${protocol}://${host}`);
+  const title = "Stillpoint — Haiku Generator";
+  const description = "Create a quiet 5–7–5 poem by chance or from a word on your mind.";
+
+  return {
+    metadataBase,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [{ url: "/og.png", width: 1730, height: 909, alt: "Stillpoint — Three lines. One quiet world." }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og.png"],
+    },
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

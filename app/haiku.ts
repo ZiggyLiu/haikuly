@@ -1,4 +1,5 @@
 export type Mode = "random" | "keyword";
+export type GenerationSource = "local" | "openai" | "local-fallback";
 
 export type Haiku = {
   lines: [string, string, string];
@@ -154,11 +155,21 @@ export function makeRandomHaiku(seed: number): Haiku {
 }
 
 export function makeKeywordHaiku(keyword: string, seed: number): Haiku | null {
-  const middle = keywordLine(keyword, seed);
-  if (!middle) return null;
+  const clean = keyword.trim();
+  if (!clean) return null;
   const theme = THEME_LINES[detectTheme(keyword)];
+  const candidates = [clean, ...clean.split(/\s+/)];
+  const middle = candidates
+    .map((candidate, index) => keywordLine(candidate, seed + index))
+    .find((line): line is string => Boolean(line)) ?? pick(theme.seven, seed, 2);
   return {
     lines: [pick(theme.five, seed, 1), middle, pick(theme.five, seed, 3)],
     seed,
   };
+}
+
+export function generationSourceLabel(source: GenerationSource): string {
+  if (source === "openai") return "Written with OpenAI";
+  if (source === "local-fallback") return "Local fallback";
+  return "Local generator";
 }

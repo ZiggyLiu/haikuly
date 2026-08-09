@@ -44,9 +44,17 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(haiku, /makeKeywordHaiku/);
   assert.match(haiku, /estimateSyllables/);
   assert.match(page, /aria-pressed/);
+  assert.match(page, /\/api\/haiku/);
+  assert.match(haiku, /Written with OpenAI/);
+  assert.match(page, /generationSourceLabel/);
+  assert.match(page, /OpenAI when available/);
   assert.match(page, /navigator\.clipboard\.writeText/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
+  assert.match(layout, /\/og\.png/);
+  assert.match(layout, /summary_large_image/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
   await access(new URL(".openai/hosting.json", projectRoot));
+  await access(new URL("public/og.png", projectRoot));
+  await access(new URL(".env.example", projectRoot));
 });

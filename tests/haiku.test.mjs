@@ -7,6 +7,7 @@ import {
   THEME_LINES,
   detectTheme,
   estimateSyllables,
+  generationSourceLabel,
   keywordLine,
   makeKeywordHaiku,
   makeRandomHaiku,
@@ -65,4 +66,17 @@ test("keyword mode rejects invalid input and selects known themes", () => {
   assert.equal(detectTheme("ocean breeze"), "water");
   assert.equal(detectTheme("moon shadow"), "night");
   assert.equal(detectTheme("unknown thought"), "earth");
+});
+
+test("long phrases keep a usable keyword fragment in the fallback", () => {
+  const haiku = makeKeywordHaiku("artificial intelligence", 7);
+  assert.ok(haiku);
+  assert.deepEqual(haiku.lines.map(estimateSyllables), [5, 7, 5]);
+  assert.match(haiku.lines[1], /artificial|intelligence/i);
+});
+
+test("generation source labels are explicit", () => {
+  assert.equal(generationSourceLabel("local"), "Local generator");
+  assert.equal(generationSourceLabel("openai"), "Written with OpenAI");
+  assert.equal(generationSourceLabel("local-fallback"), "Local fallback");
 });

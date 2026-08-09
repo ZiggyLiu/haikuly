@@ -3,8 +3,9 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
   estimateSyllables,
-  makeKeywordHaiku,
+  generationSourceLabel,
   makeRandomHaiku,
+  type GenerationSource,
   type Haiku,
   type Mode,
 } from "./haiku";
@@ -14,14 +15,19 @@ export default function Home() {
   const [keyword, setKeyword] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [haiku, setHaiku] = useState<Haiku>(() => makeRandomHaiku(Date.now()));
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [displayed, setDisplayed] = useState<{ haiku: Haiku; source: GenerationSource }>(() => ({
+    haiku: makeRandomHaiku(Date.now()),
+    source: "local",
+  }));
+  const { haiku, source: generationSource } = displayed;
 
   const syllables = useMemo(
     () => haiku.lines.map((line) => estimateSyllables(line)),
     [haiku],
   );
 
-  function generate(event?: FormEvent) {
+  async function generate(event?: FormEvent) {
     event?.preventDefault();
     const seed = Date.now() + Math.floor(Math.random() * 10000);
     setCopied(false);
@@ -31,14 +37,32 @@ export default function Home() {
         setError("Enter a word or short phrase first.");
         return;
       }
-      const next = makeKeywordHaiku(keyword, seed);
-      if (!next) {
-        setError("Try a shorter keyword or phrase, up to seven syllables.");
+      setIsGenerating(true);
+      setError("");
+      try {
+        const response = await fetch("/api/haiku", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword: keyword.trim() }),
+        });
+        const result = (await response.json()) as {
+          haiku?: Haiku;
+          error?: string;
+          source?: GenerationSource;
+        };
+        if (!response.ok || !result.haiku) {
+          setError(result.error ?? "The studio is resting. Please try again.");
+          return;
+        }
+        setDisplayed({ haiku: result.haiku, source: result.source ?? "openai" });
+      } catch {
+        setError("The studio is resting. Please try again.");
         return;
+      } finally {
+        setIsGenerating(false);
       }
-      setHaiku(next);
     } else {
-      setHaiku(makeRandomHaiku(seed));
+      setDisplayed({ haiku: makeRandomHaiku(seed), source: "local" });
     }
     setError("");
   }
@@ -114,6 +138,7 @@ export default function Home() {
                 />
                 <span>{keyword.length}/48</span>
               </div>
+              <p className="ai-note"><span aria-hidden="true">✦</span> OpenAI when available</p>
             </div>
           )}
 
@@ -132,6 +157,7 @@ export default function Home() {
             </div>
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
+              <span className="poem-source">{generationSourceLabel(generationSource)}</span>
               <button type="button" onClick={copyHaiku} aria-label="Copy haiku">
                 {copied ? "Copied" : "Copy poem"}
               </button>
@@ -140,8 +166,8 @@ export default function Home() {
 
           <div className="action-row">
             <p className="error-message" role="alert">{error}</p>
-            <button type="submit" className="generate-button">
-              {mode === "random" ? "Find another" : "Write my haiku"}
+            <button type="submit" className="generate-button" disabled={isGenerating}>
+              {isGenerating ? "Writing…" : mode === "random" ? "Find another" : "Write my haiku"}
               <span aria-hidden="true">↗</span>
             </button>
           </div>

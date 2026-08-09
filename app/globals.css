@@ -210,6 +210,16 @@ h1 em {
   font-size: 10px;
 }
 
+.ai-note {
+  margin: 8px 2px 0;
+  color: var(--ink-soft);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.ai-note span { color: var(--rust); }
+
 .poem-paper {
   min-height: 390px;
   padding: 48px 65px 32px;
@@ -312,6 +322,12 @@ h1 em {
   letter-spacing: 0;
 }
 
+.poem-source {
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .action-row {
   min-height: 68px;
   display: grid;
@@ -348,6 +364,7 @@ h1 em {
 .generate-button:hover { background: #29443a; transform: translateY(-2px); }
 .generate-button:active { transform: translateY(0); }
 .generate-button span { color: #b9c9be; font-size: 17px; }
+.generate-button:disabled { cursor: wait; opacity: 0.72; transform: none; }
 
 .ambient {
   position: absolute;
