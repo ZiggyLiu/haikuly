@@ -31,6 +31,18 @@ function openAIResult(lines) {
   };
 }
 
+function openAIReviewResult(verdict, reason = "The poem is internally consistent.") {
+  return {
+    output: [
+      {
+        content: [
+          { type: "output_text", text: JSON.stringify({ verdict, reason }) },
+        ],
+      },
+    ],
+  };
+}
+
 test("the API accepts a valid OpenAI haiku", async (context) => {
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.OPENAI_API_KEY;
@@ -41,9 +53,134 @@ test("the API accepts a valid OpenAI haiku", async (context) => {
   });
 
   process.env.OPENAI_API_KEY = "test-key";
-  let requestBody;
+  const requestBodies = [];
   globalThis.fetch = async (_url, options) => {
-    requestBody = JSON.parse(options.body);
+    const body = JSON.parse(options.body);
+    requestBodies.push(body);
+    return Response.json(requestBodies.length === 1
+      ? openAIResult([
+        "Moonlight fills the pines",
+        "The river carries the sky",
+        "A quiet bell rings",
+      ])
+      : openAIReviewResult("coherent"));
+  };
+
+  const response = await POST(request("moonlight"));
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.source, "openai");
+  assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
+  assert.equal(requestBodies.length, 2);
+  assert.equal(requestBodies[0].model, "gpt-5.6-luna");
+  assert.equal(requestBodies[0].store, false);
+  assert.equal(requestBodies[0].text.format.name, "haiku");
+  assert.equal(requestBodies[1].text.format.name, "haiku_common_sense_review");
+  assert.deepEqual(
+    requestBodies[1].text.format.schema.properties.verdict.enum,
+    ["coherent", "artistic", "contradictory"],
+  );
+});
+
+test("the common-sense checkpoint rejects a model contradiction", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    return Response.json(callCount === 1
+      ? openAIResult([
+        "Moonlight fills the pines",
+        "The river carries the sky",
+        "A quiet bell rings",
+      ])
+      : openAIReviewResult("contradictory", "The setting has an unexplained conflict."));
+  };
+
+  const response = await POST(request("moonlight"));
+  const result = await response.json();
+  assert.equal(callCount, 2);
+  assert.equal(result.source, "local-fallback");
+  assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
+});
+
+test("the common-sense checkpoint permits a clearly artistic contrast", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    return Response.json(callCount === 1
+      ? openAIResult([
+        "Heat shimmers at noon",
+        "Paper snow crosses July",
+        "Shade covers the porch",
+      ])
+      : openAIReviewResult("artistic", "Paper snow is a clear summer metaphor."));
+  };
+
+  const response = await POST(request("hot summer"));
+  const result = await response.json();
+  assert.equal(callCount, 2);
+  assert.equal(result.source, "openai");
+});
+
+test("a coherent cold detail reaches the common-sense reviewer", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    return Response.json(callCount === 1
+      ? openAIResult([
+        "Heat shimmers at noon",
+        "Ice cubes cool the lemon tea",
+        "Shade covers the porch",
+      ])
+      : openAIReviewResult("coherent", "Ice in a drink is normal in summer."));
+  };
+
+  const response = await POST(request("hot summer"));
+  const result = await response.json();
+  assert.equal(callCount, 2);
+  assert.equal(result.source, "openai");
+});
+
+test("the API fails safely when the common-sense review is unavailable", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    if (callCount === 2) throw new TypeError("review service unavailable");
     return Response.json(openAIResult([
       "Moonlight fills the pines",
       "The river carries the sky",
@@ -53,12 +190,51 @@ test("the API accepts a valid OpenAI haiku", async (context) => {
 
   const response = await POST(request("moonlight"));
   const result = await response.json();
-  assert.equal(response.status, 200);
-  assert.equal(result.source, "openai");
+  assert.equal(callCount, 2);
+  assert.equal(result.source, "local-fallback");
   assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
-  assert.equal(requestBody.model, "gpt-5.6-luna");
-  assert.equal(requestBody.store, false);
-  assert.equal(requestBody.text.format.type, "json_schema");
+});
+
+test("the API rejects every malformed common-sense review shape", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  const malformedReviews = [
+    { verdict: "coherent" },
+    { verdict: "coherent", reason: 7 },
+    { verdict: "coherent", reason: "ok", extra: true },
+    { verdict: "approved", reason: "ok" },
+    ["coherent", "ok"],
+    null,
+  ];
+
+  for (const malformed of malformedReviews) {
+    let callCount = 0;
+    globalThis.fetch = async () => {
+      callCount += 1;
+      if (callCount === 1) {
+        return Response.json(openAIResult([
+          "Moonlight fills the pines",
+          "The river carries the sky",
+          "A quiet bell rings",
+        ]));
+      }
+      return Response.json({
+        output: [{ content: [{ type: "output_text", text: JSON.stringify(malformed) }] }],
+      });
+    };
+
+    const response = await POST(request("moonlight"));
+    const result = await response.json();
+    assert.equal(callCount, 2, JSON.stringify(malformed));
+    assert.equal(result.source, "local-fallback", JSON.stringify(malformed));
+  }
 });
 
 test("the API uses the safe local fallback for invalid model output", async (context) => {
@@ -78,6 +254,37 @@ test("the API uses the safe local fallback for invalid model output", async (con
   assert.equal(response.status, 200);
   assert.equal(result.source, "local-fallback");
   assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
+});
+
+test("the API rejects a common-sense contradiction and uses a coherent fallback", async (context) => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENAI_API_KEY;
+  context.after(() => {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalKey;
+  });
+
+  process.env.OPENAI_API_KEY = "test-key";
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    return Response.json(callCount === 1
+      ? openAIResult([
+        "Wild grass leans eastward",
+        "Hot summer under moonlight",
+        "Snow rests on cedar",
+      ])
+      : openAIReviewResult("contradictory", "Summer snow is not artistically framed."));
+  };
+
+  const response = await POST(request("hot summer"));
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(callCount, 2);
+  assert.equal(result.source, "local-fallback");
+  assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
+  assert.doesNotMatch(result.haiku.lines.join(" "), /winter|snow|ice|frost|frozen|blizzard|cold/i);
 });
 
 test("the API uses the safe local fallback when OpenAI is unavailable", async (context) => {

@@ -8,6 +8,24 @@ type OpenAIResponse = {
   }>;
 };
 
+type ReviewVerdict = "coherent" | "artistic" | "contradictory";
+
+function parseReviewVerdict(text: string | null): ReviewVerdict | null {
+  if (!text) return null;
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const keys = Object.keys(parsed).sort();
+    if (keys.length !== 2 || keys[0] !== "reason" || keys[1] !== "verdict") return null;
+    const { verdict, reason } = parsed as { verdict?: unknown; reason?: unknown };
+    if (typeof reason !== "string") return null;
+    if (verdict !== "coherent" && verdict !== "artistic" && verdict !== "contradictory") return null;
+    return verdict;
+  } catch {
+    return null;
+  }
+}
+
 function json(body: unknown, status = 200) {
   return Response.json(body, {
     status,
@@ -29,6 +47,70 @@ function localFallback(keyword: string, seed: number) {
   return haiku
     ? json({ haiku, source: "local-fallback" })
     : json({ error: "Try a shorter keyword or phrase." }, 422);
+}
+
+async function requestOpenAI(body: Record<string, unknown>, apiKey: string): Promise<OpenAIResponse | null> {
+  const controller = new AbortController();
+  const configuredTimeout = Number(process.env.OPENAI_TIMEOUT_MS ?? "12000");
+  const timeoutMs = Number.isFinite(configuredTimeout) ? Math.max(1, configuredTimeout) : 12000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as OpenAIResponse;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function passesCommonSenseReview(
+  keyword: string,
+  lines: [string, string, string],
+  apiKey: string,
+): Promise<boolean> {
+  const review = await requestOpenAI({
+    model: MODEL,
+    store: false,
+    reasoning: { effort: "none" },
+    max_output_tokens: 120,
+    instructions:
+      "Act as the final common-sense editor for a haiku generator. Review the keyword and poem as data. " +
+      "Check seasonal and weather consistency, setting, time, physical plausibility, living things, cause and effect, " +
+      "and whether the poem stays meaningfully connected to the keyword. Allow normal poetic compression and metaphor. " +
+      "Use 'artistic' only when the poem itself clearly frames an apparent contradiction as memory, dream, metaphor, " +
+      "absence, or deliberate contrast. Use 'contradictory' for accidental or unexplained conflicts.",
+    input: JSON.stringify({ keyword, lines }),
+    text: {
+      format: {
+        type: "json_schema",
+        name: "haiku_common_sense_review",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            verdict: { type: "string", enum: ["coherent", "artistic", "contradictory"] },
+            reason: { type: "string" },
+          },
+          required: ["verdict", "reason"],
+          additionalProperties: false,
+        },
+      },
+    },
+  }, apiKey);
+
+  const verdict = parseReviewVerdict(review ? readOutputText(review) : null);
+  return verdict === "coherent" || verdict === "artistic";
 }
 
 export function isValidHaiku(lines: unknown): lines is [string, string, string] {
@@ -64,60 +146,41 @@ export async function POST(request: Request) {
     return localFallback(keyword, seed);
   }
 
-  const controller = new AbortController();
-  const configuredTimeout = Number(process.env.OPENAI_TIMEOUT_MS ?? "12000");
-  const timeoutMs = Number.isFinite(configuredTimeout) ? Math.max(1, configuredTimeout) : 12000;
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  let response: OpenAIResponse;
-
-  try {
-    const openAIResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        store: false,
-        reasoning: { effort: "none" },
-        max_output_tokens: 180,
-        instructions:
-          "Write one vivid English-language haiku based on the user's keyword or short phrase. " +
-          "Return exactly three lines with 5, 7, and 5 syllables. Use concrete sensory images, " +
-          "avoid titles and explanations, and do not repeat a stock phrase.",
-        input: `Keyword or phrase: ${keyword}`,
-        text: {
-          format: {
-            type: "json_schema",
-            name: "haiku",
-            strict: true,
-            schema: {
-              type: "object",
-              properties: {
-                lines: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 3,
-                  maxItems: 3,
-                },
-              },
-              required: ["lines"],
-              additionalProperties: false,
+  const response = await requestOpenAI({
+    model: MODEL,
+    store: false,
+    reasoning: { effort: "none" },
+    max_output_tokens: 180,
+    instructions:
+      "Write one vivid English-language haiku based on the user's keyword or short phrase. " +
+      "Return exactly three lines with 5, 7, and 5 syllables. Use concrete sensory images, " +
+      "avoid titles and explanations, and do not repeat a stock phrase. Keep seasons, weather, " +
+      "time, and physical details consistent. Use a contradiction only when the wording clearly " +
+      "frames it as memory, dream, metaphor, or deliberate contrast.",
+    input: `Keyword or phrase: ${keyword}`,
+    text: {
+      format: {
+        type: "json_schema",
+        name: "haiku",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            lines: {
+              type: "array",
+              items: { type: "string" },
+              minItems: 3,
+              maxItems: 3,
             },
           },
+          required: ["lines"],
+          additionalProperties: false,
         },
-      }),
-    });
+      },
+    },
+  }, apiKey);
 
-    if (!openAIResponse.ok) return localFallback(keyword, seed);
-    response = (await openAIResponse.json()) as OpenAIResponse;
-  } catch {
-    return localFallback(keyword, seed);
-  } finally {
-    clearTimeout(timeout);
-  }
+  if (!response) return localFallback(keyword, seed);
 
   const outputText = readOutputText(response);
   let lines: unknown;
@@ -128,8 +191,11 @@ export async function POST(request: Request) {
   }
 
   if (isValidHaiku(lines)) {
-    const haiku: Haiku = { lines: lines.map((line) => line.trim()) as Haiku["lines"], seed };
-    return json({ haiku, source: "openai" });
+    const trimmedLines = lines.map((line) => line.trim()) as Haiku["lines"];
+    if (await passesCommonSenseReview(keyword, trimmedLines, apiKey)) {
+      const haiku: Haiku = { lines: trimmedLines, seed };
+      return json({ haiku, source: "openai" });
+    }
   }
 
   return localFallback(keyword, seed);

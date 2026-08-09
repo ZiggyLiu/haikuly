@@ -33,6 +33,42 @@ export const SEVEN_SYLLABLE_LINES = [
 ];
 
 export const THEME_LINES: Record<string, { five: string[]; seven: string[] }> = {
+  neutral: {
+    five: ["Soft ink dries slowly", "White paper holds light", "A quiet room waits"],
+    seven: ["One phrase rests upon the page", "A thought settles into ink"],
+  },
+  summer: {
+    five: ["Cicadas fill noon", "Heat shimmers at noon", "Tall grass drinks the sun"],
+    seven: ["Cicadas stitch the bright air", "Warm wind moves across the field", "The pond holds a cloudless sky"],
+  },
+  winter: {
+    five: ["Snow rests on cedar", "Frost whitens the field", "Cold moon over snow"],
+    seven: ["Bare branches gather the snow", "Cold stars sharpen in the night", "The pond sleeps under clear ice"],
+  },
+  spring: {
+    five: ["Plum blossoms open", "New rain wakes the roots", "Green buds hold the light"],
+    seven: ["Soft rain opens the garden", "Young leaves gather morning light", "A creek wakes under green shade"],
+  },
+  autumn: {
+    five: ["Red leaves cross the path", "Apples scent the dusk", "Geese call through thin clouds"],
+    seven: ["Dry leaves gather by the gate", "Cool wind carries distant geese", "The orchard darkens at dusk"],
+  },
+  indoor: {
+    five: ["Desk lamp warms the room", "Soft rain taps the glass", "Steam rises from tea"],
+    seven: ["The clock hums beside the lamp", "The soft rain traces window glass"],
+  },
+  desert: {
+    five: ["Heat shimmers on sand", "Dry wind shapes the dunes", "Stars crowd the desert"],
+    seven: ["Warm sand cools beneath the stars", "Night cools the open desert"],
+  },
+  cave: {
+    five: ["Cool stone holds the dark", "Still water echoes", "Darkness fills the cave"],
+    seven: ["Slow drops echo through the cave", "A small stream moves under stone"],
+  },
+  space: {
+    five: ["Cold stars fill the dark", "Earth turns far below", "Moon dust holds no wind"],
+    seven: ["Stars burn in the silent dark", "Earth turns beneath the black sky"],
+  },
   water: {
     five: ["Small waves find the shore", "Rain darkens the stones", "Mist rises slowly"],
     seven: ["The river carries the sky", "One leaf turns in the current"],
@@ -64,19 +100,52 @@ export const KEYWORD_ENDINGS: Record<number, string[]> = {
   1: ["waits", "glows", "wakes"],
   2: ["drifts on", "at dusk", "in rain"],
   3: ["in soft rain", "under stars", "meets the dawn"],
-  4: ["under moonlight", "beside the stream", "through winter rain"],
+  4: ["under moonlight", "beside the stream", "through quiet air"],
   5: ["beneath the moonlight", "through quiet gardens", "past the green mountain"],
-  6: ["under the autumn moon", "in stillness before dawn", "by the old garden gate"],
+  6: ["under a silent moon", "in stillness before dawn", "by the old garden gate"],
 };
 
 const THEME_WORDS: Record<string, string[]> = {
-  water: ["ocean", "sea", "river", "rain", "lake", "wave", "water", "stream", "tide"],
-  night: ["night", "moon", "star", "dark", "dream", "dusk", "evening", "shadow"],
-  season: ["spring", "summer", "autumn", "fall", "winter", "snow", "blossom"],
+  summer: ["summer", "hot", "heat", "humid", "cicada", "cicadas", "sunlit", "sunlight"],
+  winter: ["winter", "snow", "snowy", "ice", "icy", "frost", "frozen", "cold", "blizzard"],
+  spring: ["spring", "blossom", "blossoms", "bloom", "blooms", "thaw", "thawing"],
+  autumn: ["autumn", "fall", "harvest"],
+  indoor: ["indoor", "indoors", "inside", "office", "room", "desk", "kitchen"],
+  desert: ["desert", "dune", "dunes", "sand", "cactus"],
+  cave: ["cave", "cavern", "underground"],
+  space: ["space", "vacuum", "cosmos", "orbit", "planet", "galaxy"],
+  water: ["ocean", "sea", "river", "rain", "lake", "wave", "water", "underwater", "stream", "tide"],
+  night: ["night", "moon", "moonlight", "star", "stars", "dark", "dream", "dusk", "evening", "shadow"],
+  season: ["season", "seasons"],
   city: ["city", "street", "train", "window", "tower", "traffic", "home"],
   heart: ["love", "hope", "memory", "grief", "joy", "peace", "heart", "friend"],
   earth: ["tree", "forest", "mountain", "stone", "flower", "garden", "bird", "wind"],
 };
+
+const CONTEXT_CONFLICTS: Record<string, string[]> = {
+  summer: ["winter", "snow", "snowy", "ice", "icy", "frost", "frozen", "blizzard", "cold"],
+  winter: ["summer", "hot", "heat", "humid", "cicada", "cicadas"],
+  spring: ["autumn", "harvest", "frozen", "blizzard"],
+  autumn: ["spring", "blossom", "blossoms", "thaw", "cicada", "cicadas"],
+};
+
+const ARTISTIC_FRAMING = [
+  "memory",
+  "memories",
+  "remember",
+  "remembers",
+  "dream",
+  "dreams",
+  "ghost",
+  "echo",
+  "absence",
+  "longing",
+  "imagines",
+  "wishes",
+  "though",
+  "yet",
+  "but",
+];
 
 function pick<T>(items: T[], seed: number, offset = 0): T {
   return items[Math.abs((seed * 9301 + offset * 49297) % items.length)];
@@ -124,9 +193,24 @@ export function estimateSyllables(text: string): number {
 export function detectTheme(keyword: string): keyof typeof THEME_LINES {
   const normalized = keyword.toLowerCase();
   const match = Object.entries(THEME_WORDS).find(([, words]) =>
-    words.some((word) => normalized.includes(word)),
+    words.some((word) => new RegExp(`\\b${word}\\b`, "i").test(normalized)),
   );
-  return (match?.[0] as keyof typeof THEME_LINES) ?? "earth";
+  return (match?.[0] as keyof typeof THEME_LINES) ?? "neutral";
+}
+
+export function isSemanticallyCoherent(keyword: string, lines: string[]): boolean {
+  const context = detectTheme(keyword);
+  const conflicts = CONTEXT_CONFLICTS[context] ?? [];
+  if (conflicts.length === 0) return true;
+
+  const normalizedKeyword = keyword.toLowerCase();
+  const normalizedPoem = lines.join(" ").toLowerCase();
+  const conflictPattern = conflicts.find((word) => new RegExp(`\\b${word}\\b`, "i").test(normalizedPoem));
+  if (!conflictPattern) return true;
+
+  const userRequestedContrast = new RegExp(`\\b${conflictPattern}\\b`, "i").test(normalizedKeyword);
+  const clearlyFramed = ARTISTIC_FRAMING.some((word) => new RegExp(`\\b${word}\\b`, "i").test(`${normalizedKeyword} ${normalizedPoem}`));
+  return userRequestedContrast || clearlyFramed;
 }
 
 export function keywordLine(keyword: string, seed: number): string | null {
@@ -139,6 +223,22 @@ export function keywordLine(keyword: string, seed: number): string | null {
     const ending = pick(endings, seed, 5 + offset);
     const line = `${clean}${ending ? ` ${ending}` : ""}`;
     if (estimateSyllables(line) === 7) return line;
+  }
+  return null;
+}
+
+function keywordAsTextLine(keyword: string): string | null {
+  const candidates = [keyword, ...keyword.split(/\s+/)];
+  for (const candidate of candidates) {
+    const clean = candidate.trim();
+    const count = estimateSyllables(clean);
+    if (count === 1) return `I write ${clean} on white paper`;
+    if (count === 2) return `I write ${clean} on paper`;
+    if (count === 3) return `I write ${clean} in ink`;
+    if (count === 4) return `I write ${clean} down`;
+    if (count === 5) return `I write ${clean}`;
+    if (count === 6) return `${clean} waits`;
+    if (count === 7) return clean;
   }
   return null;
 }
@@ -157,11 +257,12 @@ export function makeRandomHaiku(seed: number): Haiku {
 export function makeKeywordHaiku(keyword: string, seed: number): Haiku | null {
   const clean = keyword.trim();
   if (!clean) return null;
-  const theme = THEME_LINES[detectTheme(keyword)];
-  const candidates = [clean, ...clean.split(/\s+/)];
-  const middle = candidates
-    .map((candidate, index) => keywordLine(candidate, seed + index))
-    .find((line): line is string => Boolean(line)) ?? pick(theme.seven, seed, 2);
+  const context = detectTheme(keyword);
+  const theme = THEME_LINES[context];
+  const exactKeywordLine = estimateSyllables(clean) === 7 ? clean : null;
+  const middle = exactKeywordLine
+    ?? (context === "neutral" ? keywordAsTextLine(clean) : null)
+    ?? pick(theme.seven, seed, 2);
   return {
     lines: [pick(theme.five, seed, 1), middle, pick(theme.five, seed, 3)],
     seed,
