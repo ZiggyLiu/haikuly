@@ -146,6 +146,22 @@ test("Chinese mode writes and reviews a 5–7–5 character haiku", async (conte
   });
 });
 
+test("Chinese mode removes harmless punctuation and spaces before validation", async (context) => {
+  restoreAfter(context);
+  const formattedLines = ["春雨 落花间。", "远山藏入暮云中，", "一灯照归舟！"];
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    return Response.json(callCount === 1 ? poemResult(formattedLines) : reviewResult("coherent"));
+  };
+
+  const response = await POST(request({ mode: "random", language: "zh" }));
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(result.haiku.lines, validChineseLines);
+  assert.equal(result.language, "zh");
+});
+
 test("keyword content stays data even when it looks like an instruction", async (context) => {
   restoreAfter(context);
   const bodies = [];

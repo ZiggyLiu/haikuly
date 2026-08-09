@@ -43,6 +43,15 @@ function parseHaikuLines(text: string | null): unknown {
   }
 }
 
+function normalizeHaikuLines(lines: unknown, language: Language): unknown {
+  if (!Array.isArray(lines) || lines.length !== 3 ||
+    !lines.every((line) => typeof line === "string")) return null;
+
+  return lines.map((line) => language === "zh"
+    ? line.replace(/[\p{P}\p{S}\s]/gu, "")
+    : line.trim());
+}
+
 function parseReviewVerdict(text: string | null): ReviewVerdict | null {
   if (!text) return null;
   try {
@@ -228,7 +237,7 @@ export async function POST(request: Request) {
       return json({ error: "DeepSeek could not be reached. Please try again later." }, 503);
     }
 
-    const lines = parseHaikuLines(readOutputText(response));
+    const lines = normalizeHaikuLines(parseHaikuLines(readOutputText(response)), language);
     if (!isValidHaiku(lines, language)) continue;
 
     const trimmedLines = lines.map((line) => line.trim()) as Haiku["lines"];
