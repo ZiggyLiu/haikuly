@@ -163,6 +163,48 @@ h1 em {
   box-shadow: 0 3px 14px rgba(38, 53, 47, 0.18);
 }
 
+.language-control {
+  width: min(600px, 100%);
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.language-label,
+.language-rule {
+  color: var(--ink-soft);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.language-switch {
+  padding: 3px;
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: rgba(247, 244, 236, 0.56);
+}
+
+.language-switch button {
+  min-width: 76px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 100px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.language-switch button.active {
+  background: rgba(54, 83, 71, 0.13);
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .generator-form { position: relative; }
 
 .keyword-field {
@@ -430,6 +472,8 @@ footer p {
   .studio { margin-bottom: 64px; }
   .mode-switch { width: 100%; }
   .mode-switch button { min-width: 0; flex: 1; }
+  .language-control { flex-wrap: wrap; gap: 8px 10px; }
+  .language-label { width: 100%; text-align: center; }
   .poem-paper { min-height: 370px; padding: 76px 24px 26px; }
   .sun-seal { width: 62px; height: 62px; top: 24px; right: 26px; }
   .sun-seal::after { top: 28px; left: 28px; }

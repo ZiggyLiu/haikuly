@@ -1,4 +1,5 @@
 export type Mode = "random" | "keyword";
+export type Language = "en" | "zh";
 export type GenerationSource = "deepseek";
 
 export type Haiku = {
@@ -43,6 +44,13 @@ export function estimateSyllables(text: string): number {
       const groups = adjusted.match(/[aeiouy]{1,2}/g);
       return total + Math.max(1, groups?.length ?? 1);
     }, 0);
+}
+
+export function countPoeticUnits(text: string, language: Language): number {
+  if (language === "zh") {
+    return Array.from(text).filter((character) => /\p{Script=Han}/u.test(character)).length;
+  }
+  return estimateSyllables(text);
 }
 
 export function generationSourceLabel(source: GenerationSource): string {

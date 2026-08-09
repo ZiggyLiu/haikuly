@@ -1,4 +1,9 @@
-import { estimateSyllables, type Haiku, type Mode } from "../../haiku.ts";
+import {
+  countPoeticUnits,
+  type Haiku,
+  type Language,
+  type Mode,
+} from "../../haiku.ts";
 
 const MODEL = "deepseek-v4-flash";
 const MAX_GENERATION_ATTEMPTS = 2;
@@ -82,7 +87,11 @@ async function requestDeepSeek(
   }
 }
 
-function haikuRequest(mode: Mode, keyword: string | null, attempt: number) {
+function haikuRequest(mode: Mode, language: Language, keyword: string | null, attempt: number) {
+  const formInstruction = language === "zh"
+    ? "Write in natural Chinese. The three lines must contain exactly 5, 7, and 5 Chinese Han characters. Do not use punctuation, spaces, Latin letters, or digits."
+    : "Write in natural English. The three lines must contain exactly 5, 7, and 5 syllables.";
+
   return {
     model: MODEL,
     thinking: { type: "disabled" },
@@ -93,8 +102,8 @@ function haikuRequest(mode: Mode, keyword: string | null, attempt: number) {
       {
         role: "system",
         content:
-          "Write one vivid English-language haiku. Return only a JSON object with exactly one key, " +
-          "lines, whose value is an array of exactly three strings. The lines must have exactly 5, 7, and 5 syllables. " +
+          "Write one vivid haiku. Return only a JSON object with exactly one key, lines, whose value is an array of exactly three strings. " +
+          formInstruction + " " +
           "Use concrete sensory images and natural language. Avoid titles, explanations, clichés, and repeated images. " +
           "Keep season, weather, setting, time, physical details, living things, and cause and effect internally consistent. " +
           "Allow a contradiction only when the poem clearly frames it as memory, dream, metaphor, absence, or deliberate contrast. " +
@@ -107,6 +116,7 @@ function haikuRequest(mode: Mode, keyword: string | null, attempt: number) {
             ? "Write a haiku meaningfully based on the supplied keyword or phrase."
             : "Choose a fresh, specific scene or moment without asking for a subject.",
           mode,
+          language,
           keyword,
           attempt,
         }),
@@ -117,6 +127,7 @@ function haikuRequest(mode: Mode, keyword: string | null, attempt: number) {
 
 async function commonSenseReview(
   mode: Mode,
+  language: Language,
   keyword: string | null,
   lines: [string, string, string],
   apiKey: string,
@@ -141,7 +152,7 @@ async function commonSenseReview(
       },
       {
         role: "user",
-        content: JSON.stringify({ mode, keyword, lines }),
+        content: JSON.stringify({ mode, language, keyword, lines }),
       },
     ],
   }, apiKey);
@@ -152,12 +163,21 @@ async function commonSenseReview(
   return verdict === "coherent" || verdict === "artistic" ? "pass" : "reject";
 }
 
-export function isValidHaiku(lines: unknown): lines is [string, string, string] {
+export function isValidHaiku(
+  lines: unknown,
+  language: Language = "en",
+): lines is [string, string, string] {
+  const validChineseLines = language !== "zh" || (
+    Array.isArray(lines) &&
+    lines.every((line) => typeof line === "string" &&
+      Array.from(line.trim()).every((character) => /\p{Script=Han}/u.test(character)))
+  );
   return (
     Array.isArray(lines) &&
     lines.length === 3 &&
     lines.every((line) => typeof line === "string" && line.trim().length > 0) &&
-    lines.map((line) => estimateSyllables(line)).join(",") === "5,7,5"
+    validChineseLines &&
+    lines.map((line) => countPoeticUnits(line, language)).join(",") === "5,7,5"
   );
 }
 
@@ -179,6 +199,12 @@ export async function POST(request: Request) {
   }
   const mode: Mode = modeValue;
 
+  const languageValue = (body as { language?: unknown }).language ?? "en";
+  if (languageValue !== "en" && languageValue !== "zh") {
+    return json({ error: "Choose English or Chinese." }, 400);
+  }
+  const language: Language = languageValue;
+
   const keywordValue = (body as { keyword?: unknown }).keyword;
   const keyword = typeof keywordValue === "string" ? keywordValue.trim().replace(/\s+/g, " ") : "";
   if (mode === "keyword" && (!keyword || keyword.length > 48 || !/[\p{L}\p{N}]/u.test(keyword))) {
@@ -195,7 +221,7 @@ export async function POST(request: Request) {
 
   for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
     const response = await requestDeepSeek(
-      haikuRequest(mode, mode === "keyword" ? keyword : null, attempt),
+      haikuRequest(mode, language, mode === "keyword" ? keyword : null, attempt),
       apiKey,
     );
     if (!response) {
@@ -203,10 +229,16 @@ export async function POST(request: Request) {
     }
 
     const lines = parseHaikuLines(readOutputText(response));
-    if (!isValidHaiku(lines)) continue;
+    if (!isValidHaiku(lines, language)) continue;
 
     const trimmedLines = lines.map((line) => line.trim()) as Haiku["lines"];
-    const review = await commonSenseReview(mode, mode === "keyword" ? keyword : null, trimmedLines, apiKey);
+    const review = await commonSenseReview(
+      mode,
+      language,
+      mode === "keyword" ? keyword : null,
+      trimmedLines,
+      apiKey,
+    );
     if (review === "unavailable") {
       return json({ error: "DeepSeek could not review the poem. Please try again later." }, 503);
     }
@@ -216,7 +248,7 @@ export async function POST(request: Request) {
       lines: trimmedLines,
       seed: Date.now() + Math.floor(Math.random() * 10000),
     };
-    return json({ haiku, source: "deepseek" });
+    return json({ haiku, source: "deepseek", language });
   }
 
   return json({ error: "DeepSeek could not produce a coherent 5–7–5 poem. Please try again." }, 422);

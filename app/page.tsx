@@ -2,25 +2,31 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import {
-  estimateSyllables,
+  countPoeticUnits,
   generationSourceLabel,
   type GenerationSource,
   type Haiku,
+  type Language,
   type Mode,
 } from "./haiku";
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("random");
+  const [language, setLanguage] = useState<Language>("en");
   const [keyword, setKeyword] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [displayed, setDisplayed] = useState<{ haiku: Haiku; source: GenerationSource } | null>(null);
+  const [displayed, setDisplayed] = useState<{
+    haiku: Haiku;
+    source: GenerationSource;
+    language: Language;
+  } | null>(null);
   const haiku = displayed?.haiku ?? null;
 
-  const syllables = useMemo(
-    () => haiku?.lines.map((line) => estimateSyllables(line)) ?? [],
-    [haiku],
+  const lineCounts = useMemo(
+    () => displayed?.haiku.lines.map((line) => countPoeticUnits(line, displayed.language)) ?? [],
+    [displayed],
   );
 
   async function generate(event?: FormEvent) {
@@ -40,6 +46,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode,
+          language,
           ...(mode === "keyword" ? { keyword: keyword.trim() } : {}),
         }),
       });
@@ -47,12 +54,13 @@ export default function Home() {
         haiku?: Haiku;
         error?: string;
         source?: GenerationSource;
+        language?: Language;
       };
       if (!response.ok || !result.haiku) {
         setError(result.error ?? "DeepSeek could not write a poem. Please try again.");
         return;
       }
-      setDisplayed({ haiku: result.haiku, source: "deepseek" });
+      setDisplayed({ haiku: result.haiku, source: "deepseek", language: result.language ?? language });
     } catch {
       setError("DeepSeek could not be reached. Please try again.");
       return;
@@ -71,6 +79,12 @@ export default function Home() {
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
+    setError("");
+    setCopied(false);
+  }
+
+  function changeLanguage(nextLanguage: Language) {
+    setLanguage(nextLanguage);
     setError("");
     setCopied(false);
   }
@@ -116,6 +130,32 @@ export default function Home() {
           </button>
         </div>
 
+        <div className="language-control">
+          <span className="language-label">Poem language</span>
+          <div className="language-switch" role="group" aria-label="Poem language">
+            <button
+              type="button"
+              className={language === "en" ? "active" : ""}
+              aria-pressed={language === "en"}
+              onClick={() => changeLanguage("en")}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              className={language === "zh" ? "active" : ""}
+              aria-pressed={language === "zh"}
+              onClick={() => changeLanguage("zh")}
+              lang="zh-CN"
+            >
+              中文
+            </button>
+          </div>
+          <span className="language-rule">
+            {language === "zh" ? "5 · 7 · 5 characters" : "5 · 7 · 5 syllables"}
+          </span>
+        </div>
+
         <form onSubmit={generate} className="generator-form">
           {mode === "keyword" && (
             <div className="keyword-field">
@@ -129,7 +169,7 @@ export default function Home() {
                     setError("");
                   }}
                   maxLength={48}
-                  placeholder="moonlight, first snow, home…"
+                  placeholder={language === "zh" ? "月光，初雪，故乡…" : "moonlight, first snow, home…"}
                   autoComplete="off"
                 />
                 <span>{keyword.length}/48</span>
@@ -144,11 +184,11 @@ export default function Home() {
             </span>
             <div className="sun-seal" aria-hidden="true" />
             {haiku ? (
-              <div className="poem-lines">
+              <div className="poem-lines" lang={displayed?.language === "zh" ? "zh-CN" : "en"}>
                 {haiku.lines.map((line, index) => (
                   <div className="poem-line" key={`${haiku.seed}-${index}`}>
                     <p>{line}</p>
-                    <span>{syllables[index]}</span>
+                    <span title={displayed?.language === "zh" ? "characters" : "syllables"}>{lineCounts[index]}</span>
                   </div>
                 ))}
               </div>
