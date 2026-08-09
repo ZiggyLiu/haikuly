@@ -1,42 +1,121 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  FIVE_SYLLABLE_LINES,
-  KEYWORD_ENDINGS,
-  SEVEN_SYLLABLE_LINES,
-  THEME_LINES,
+  LOCAL_COMPOSITION_BANKS,
   detectTheme,
   estimateSyllables,
   generationSourceLabel,
   isSemanticallyCoherent,
-  keywordLine,
   makeKeywordHaiku,
   makeRandomHaiku,
 } from "../app/haiku.ts";
 
-test("all curated random lines match their syllable target", () => {
-  for (const line of FIVE_SYLLABLE_LINES) assert.equal(estimateSyllables(line), 5, line);
-  for (const line of SEVEN_SYLLABLE_LINES) assert.equal(estimateSyllables(line), 7, line);
-  for (const theme of Object.values(THEME_LINES)) {
-    for (const line of theme.five) assert.equal(estimateSyllables(line), 5, line);
-    for (const line of theme.seven) assert.equal(estimateSyllables(line), 7, line);
-  }
-
-  for (let seed = 0; seed < 100; seed += 1) {
+test("random composition always keeps the 5–7–5 form", () => {
+  for (let seed = 0; seed < 1000; seed += 1) {
     const haiku = makeRandomHaiku(seed);
     assert.deepEqual(haiku.lines.map(estimateSyllables), [5, 7, 5]);
   }
 });
 
-test("every keyword ending matches its declared syllable count", () => {
-  for (const [target, endings] of Object.entries(KEYWORD_ENDINGS)) {
-    for (const ending of endings) {
-      assert.equal(estimateSyllables(ending), Number(target), ending || "empty ending");
+test("local composition fragments produce exact five- and seven-syllable lines", () => {
+  for (const [context, bank] of Object.entries(LOCAL_COMPOSITION_BANKS)) {
+    for (const entry of bank.images) {
+      assert.equal(estimateSyllables(entry.subject), 2, `${context} subject: ${entry.subject}`);
+      const shortSettings = bank.shortSettings.filter((candidate) =>
+        candidate.tags.some((tag) => entry.tags.includes(tag)),
+      );
+      const longSettings = bank.longSettings.filter((candidate) =>
+        candidate.tags.some((tag) => entry.tags.includes(tag)),
+      );
+      assert.ok(shortSettings.length > 0, `${context} short settings for ${entry.subject}`);
+      assert.ok(longSettings.length > 0, `${context} long settings for ${entry.subject}`);
+      for (const action of entry.actions) {
+        assert.equal(estimateSyllables(action), 1, `${context} action: ${action}`);
+        for (const candidate of shortSettings) {
+          const line = `${entry.subject} ${action} ${candidate.text}`;
+          assert.equal(estimateSyllables(line), 5, `${context}: ${line}`);
+        }
+        for (const candidate of longSettings) {
+          const line = `${entry.subject} ${action} ${candidate.text}`;
+          assert.equal(estimateSyllables(line), 7, `${context}: ${line}`);
+        }
+      }
     }
   }
 });
 
-test("keyword mode keeps inputs and always assembles a seven-syllable middle line", () => {
+test("the compositional generator creates broad local variety", () => {
+  const randomPoems = new Set();
+  const summerPoems = new Set();
+  const unknownPoems = new Set();
+
+  for (let seed = 0; seed < 500; seed += 1) {
+    const random = makeRandomHaiku(seed);
+    const summer = makeKeywordHaiku("hot summer", seed);
+    const unknown = makeKeywordHaiku("unknown thought", seed);
+    assert.ok(summer);
+    assert.ok(unknown);
+    assert.notEqual(random.lines[0], random.lines[2]);
+    assert.notEqual(summer.lines[0], summer.lines[2]);
+    randomPoems.add(random.lines.join("\n"));
+    summerPoems.add(summer.lines.join("\n"));
+    unknownPoems.add(unknown.lines.join("\n"));
+  }
+
+  assert.ok(randomPoems.size > 450, `random variety: ${randomPoems.size}`);
+  assert.ok(summerPoems.size > 200, `summer variety: ${summerPoems.size}`);
+  assert.ok(unknownPoems.size > 150, `unknown variety: ${unknownPoems.size}`);
+});
+
+test("keyword poems avoid repeated images, actions, and settings", () => {
+  const cases = [
+    ["hot summer", "summer"],
+    ["first snow", "winter"],
+    ["ocean", "water"],
+    ["city street", "city"],
+    ["love", "heart"],
+    ["season", "season"],
+  ];
+
+  for (const [keyword, context] of cases) {
+    const bank = LOCAL_COMPOSITION_BANKS[context];
+    for (let seed = 0; seed < 500; seed += 1) {
+      const haiku = makeKeywordHaiku(keyword, seed);
+      assert.ok(haiku);
+      const parts = haiku.lines.map((line) => {
+        const entry = bank.images.find((candidate) => line.startsWith(`${candidate.subject} `));
+        assert.ok(entry, `${keyword}: ${line}`);
+        const remainder = line.slice(entry.subject.length + 1);
+        const action = entry.actions.find((candidate) => remainder.startsWith(`${candidate} `));
+        assert.ok(action, `${keyword}: ${line}`);
+        return { subject: entry.subject, action, setting: remainder.slice(action.length + 1) };
+      });
+      assert.equal(new Set(parts.map((part) => part.subject)).size, 3, `${keyword}: repeated subject`);
+      assert.equal(new Set(parts.map((part) => part.action)).size, 3, `${keyword}: repeated action`);
+      assert.equal(new Set(parts.map((part) => part.setting)).size, 3, `${keyword}: repeated setting`);
+    }
+  }
+});
+
+test("every detected theme keeps a positive keyword connection", () => {
+  const cases = [
+    ["love", "heart"],
+    ["grief", "heart"],
+    ["city street", "city"],
+    ["traffic", "city"],
+    ["season", "season"],
+  ];
+
+  for (const [keyword, context] of cases) {
+    assert.equal(detectTheme(keyword), context);
+    const haiku = makeKeywordHaiku(keyword, 137);
+    assert.ok(haiku);
+    const subjects = LOCAL_COMPOSITION_BANKS[context].images.map((entry) => entry.subject);
+    assert.ok(haiku.lines.every((line) => subjects.some((subject) => line.startsWith(`${subject} `))));
+  }
+});
+
+test("keyword mode always assembles an exact 5–7–5 poem", () => {
   const examples = [
     "rain",
     "ocean",
@@ -49,11 +128,6 @@ test("keyword mode keeps inputs and always assembles a seven-syllable middle lin
 
   for (const keyword of examples) {
     for (let seed = 0; seed < 30; seed += 1) {
-      const line = keywordLine(keyword, seed);
-      assert.ok(line, `${keyword} must produce a line`);
-      assert.equal(estimateSyllables(line), 7, line);
-      assert.ok(line.toLowerCase().startsWith(keyword.toLowerCase()));
-
       const haiku = makeKeywordHaiku(keyword, seed);
       assert.ok(haiku);
       assert.deepEqual(haiku.lines.map(estimateSyllables), [5, 7, 5]);
@@ -61,9 +135,8 @@ test("keyword mode keeps inputs and always assembles a seven-syllable middle lin
   }
 });
 
-test("keyword mode rejects invalid input and selects known themes", () => {
-  assert.equal(keywordLine("", 1), null);
-  assert.equal(keywordLine("beautiful quiet river rain", 1), null);
+test("keyword mode rejects empty input and selects known themes", () => {
+  assert.equal(makeKeywordHaiku("", 1), null);
   assert.equal(detectTheme("ocean breeze"), "water");
   assert.equal(detectTheme("moon shadow"), "night");
   assert.equal(detectTheme("unknown thought"), "neutral");

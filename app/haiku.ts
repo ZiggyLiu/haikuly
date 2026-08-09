@@ -6,103 +6,101 @@ export type Haiku = {
   seed: number;
 };
 
-export const FIVE_SYLLABLE_LINES = [
-  "Morning mist rises",
-  "Dusk settles softly",
-  "A pale moth takes flight",
-  "Moonlight fills the pines",
-  "Small waves find the shore",
-  "First light warms the stones",
-  "Snow rests on cedar",
-  "Wild grass leans eastward",
-  "A quiet bell rings",
-  "Clouds open to blue",
-];
+type TaggedSetting = { text: string; tags: string[] };
+type CompositionImage = { subject: string; actions: string[]; tags: string[] };
+type CompositionBank = {
+  images: CompositionImage[];
+  shortSettings: TaggedSetting[];
+  longSettings: TaggedSetting[];
+};
 
-export const SEVEN_SYLLABLE_LINES = [
-  "The river carries the sky",
-  "Rain whispers against the glass",
-  "A sparrow crosses the sun",
-  "Night gathers under the eaves",
-  "Old branches remember spring",
-  "The moon drifts through shallow clouds",
-  "Wind moves through the open field",
-  "One leaf turns in the current",
-  "Far thunder softens to rain",
-  "The garden listens for dawn",
-];
+const setting = (text: string, ...tags: string[]): TaggedSetting => ({ text, tags });
+const image = (subject: string, actions: string[], ...tags: string[]): CompositionImage => ({ subject, actions, tags });
 
-export const THEME_LINES: Record<string, { five: string[]; seven: string[] }> = {
+// A line combines a two-syllable subject, a one-syllable compatible action,
+// and a tagged two- or four-syllable setting. Tags block unsuitable pairings.
+export const LOCAL_COMPOSITION_BANKS: Record<string, CompositionBank> = {
   neutral: {
-    five: ["Soft ink dries slowly", "White paper holds light", "A quiet room waits"],
-    seven: ["One phrase rests upon the page", "A thought settles into ink"],
+    images: [image("Soft ink", ["dries", "shines"], "ink"), image("White page", ["waits", "glows"], "page"), image("Calm breath", ["slows", "moves"], "breath"), image("Lamp glow", ["rests", "falls"], "lamp")],
+    shortSettings: [setting("in hush", "page", "breath"), setting("at rest", "breath"), setting("by lamps", "ink", "page"), setting("on desks", "ink", "page"), setting("at dusk", "lamp"), setting("near glass", "lamp")],
+    longSettings: [setting("beside the lamp", "ink", "page"), setting("on blank paper", "ink"), setting("through the still room", "page", "breath"), setting("under soft light", "ink", "page", "breath"), setting("across the desk", "lamp"), setting("beyond the glass", "lamp")],
   },
   summer: {
-    five: ["Cicadas fill noon", "Heat shimmers at noon", "Tall grass drinks the sun"],
-    seven: ["Cicadas stitch the bright air", "Warm wind moves across the field", "The pond holds a cloudless sky"],
+    images: [image("Warm wind", ["drifts", "moves"], "air", "field"), image("Tall grass", ["leans", "waves"], "field"), image("Pond light", ["glows", "rests"], "water", "light")],
+    shortSettings: [setting("at noon", "air", "field", "water", "light"), setting("through fields", "air", "field"), setting("on ponds", "water", "light"), setting("in shade", "field", "water")],
+    longSettings: [setting("across warm fields", "air", "field"), setting("under bright sun", "air", "field", "water", "light"), setting("above the pond", "water", "light"), setting("through the green grass", "air", "field")],
   },
   winter: {
-    five: ["Snow rests on cedar", "Frost whitens the field", "Cold moon over snow"],
-    seven: ["Bare branches gather the snow", "Cold stars sharpen in the night", "The pond sleeps under clear ice"],
+    images: [image("Cold wind", ["drifts", "moves"], "air", "snow"), image("Night frost", ["forms", "spreads"], "frost", "ground"), image("Snow light", ["glows", "rests"], "light", "snow")],
+    shortSettings: [setting("through snow", "air", "snow"), setting("on stone", "frost", "ground"), setting("at dusk", "air", "snow", "frost", "ground", "light"), setting("below", "snow", "frost", "ground")],
+    longSettings: [setting("across white fields", "air", "snow"), setting("under cold stars", "air", "snow", "frost", "ground", "light"), setting("beside dark pines", "snow", "light"), setting("over still ground", "air", "snow", "frost", "ground", "light")],
   },
   spring: {
-    five: ["Plum blossoms open", "New rain wakes the roots", "Green buds hold the light"],
-    seven: ["Soft rain opens the garden", "Young leaves gather morning light", "A creek wakes under green shade"],
+    images: [image("New rain", ["falls", "moves"], "rain"), image("Plum bloom", ["wakes", "glows"], "bloom"), image("Creek song", ["flows", "drifts"], "creek")],
+    shortSettings: [setting("at dawn", "rain", "bloom", "creek"), setting("through leaves", "rain", "creek"), setting("near roots", "rain", "bloom"), setting("by creeks", "bloom")],
+    longSettings: [setting("across green fields", "rain", "creek"), setting("under young leaves", "rain", "bloom", "creek"), setting("beside the creek", "bloom"), setting("through the wet earth", "rain")],
   },
   autumn: {
-    five: ["Red leaves cross the path", "Apples scent the dusk", "Geese call through thin clouds"],
-    seven: ["Dry leaves gather by the gate", "Cool wind carries distant geese", "The orchard darkens at dusk"],
-  },
-  indoor: {
-    five: ["Desk lamp warms the room", "Soft rain taps the glass", "Steam rises from tea"],
-    seven: ["The clock hums beside the lamp", "The soft rain traces window glass"],
-  },
-  desert: {
-    five: ["Heat shimmers on sand", "Dry wind shapes the dunes", "Stars crowd the desert"],
-    seven: ["Warm sand cools beneath the stars", "Night cools the open desert"],
-  },
-  cave: {
-    five: ["Cool stone holds the dark", "Still water echoes", "Darkness fills the cave"],
-    seven: ["Slow drops echo through the cave", "A small stream moves under stone"],
-  },
-  space: {
-    five: ["Cold stars fill the dark", "Earth turns far below", "Moon dust holds no wind"],
-    seven: ["Stars burn in the silent dark", "Earth turns beneath the black sky"],
+    images: [image("Red leaves", ["drift", "turn"], "leaf", "air"), image("Cool winds", ["move", "cross"], "air", "field"), image("Geese wings", ["beat", "glide"], "sky", "air")],
+    shortSettings: [setting("at dusk", "leaf", "air", "field", "sky"), setting("through clouds", "air", "sky"), setting("on paths", "leaf", "field"), setting("near fields", "leaf", "air", "field", "sky")],
+    longSettings: [setting("across dry fields", "leaf", "air", "field", "sky"), setting("under thin clouds", "leaf", "air", "sky"), setting("beside the gate", "leaf", "field"), setting("through the orchard", "leaf", "air", "field")],
   },
   water: {
-    five: ["Small waves find the shore", "Rain darkens the stones", "Mist rises slowly"],
-    seven: ["The river carries the sky", "One leaf turns in the current"],
+    images: [image("One wave", ["rolls", "breaks"], "sea", "shore"), image("Soft rain", ["falls", "taps"], "rain", "stone"), image("Pond mist", ["drifts", "lifts"], "pond", "air")],
+    shortSettings: [setting("at dawn", "sea", "shore", "rain", "stone", "pond", "air"), setting("on stone", "rain", "stone", "shore"), setting("near reeds", "pond", "shore"), setting("through light", "rain", "pond", "air")],
+    longSettings: [setting("along the shore", "sea", "shore"), setting("under moonlight", "sea", "shore", "rain", "stone", "pond", "air"), setting("beside the reeds", "pond", "shore"), setting("against dark glass", "rain", "stone")],
   },
   night: {
-    five: ["Moonlight fills the pines", "A pale moth takes flight", "Stars wake one by one"],
-    seven: ["Night gathers under the eaves", "The moon drifts through shallow clouds"],
+    images: [image("Moonlight", ["glows", "rests"], "light", "pine"), image("One moth", ["drifts", "turns"], "air", "light"), image("Night wind", ["moves", "sighs"], "air", "roof")],
+    shortSettings: [setting("at dusk", "light", "pine", "air", "roof"), setting("through pines", "light", "pine", "air"), setting("near roofs", "air", "roof"), setting("in clouds", "light", "air")],
+    longSettings: [setting("across dark roofs", "light", "air", "roof"), setting("under the eaves", "air", "roof"), setting("through shallow clouds", "light", "air"), setting("above the pines", "light", "pine", "air")],
   },
-  season: {
-    five: ["Snow rests on cedar", "First light warms the stones", "Wild grass leans eastward"],
-    seven: ["Old branches remember spring", "The garden listens for dawn"],
+  indoor: {
+    images: [image("Desk light", ["glows", "rests"], "light", "room"), image("One clock", ["ticks", "waits"], "clock", "room"), image("Tea steam", ["drifts", "lifts"], "tea", "air")],
+    shortSettings: [setting("at dusk", "light", "room", "clock", "tea", "air"), setting("near glass", "light", "room", "tea", "air"), setting("in rooms", "light", "room", "clock", "air"), setting("by lamps", "light", "room", "clock")],
+    longSettings: [setting("beside the lamp", "light", "room", "clock"), setting("through the still room", "light", "room", "tea", "air"), setting("above warm tea", "tea", "air"), setting("beyond the door", "light", "room", "clock", "air")],
   },
-  city: {
-    five: ["Dusk settles softly", "A quiet bell rings", "Rain darkens the street"],
-    seven: ["Rain whispers against the glass", "Far footsteps dissolve in mist"],
+  desert: {
+    images: [image("Warm sand", ["shifts", "rests"], "ground", "dune"), image("Dry wind", ["moves", "sighs"], "air", "dune"), image("Sun haze", ["glows", "drifts"], "light", "air")],
+    shortSettings: [setting("at dusk", "ground", "dune", "air", "light"), setting("in heat", "ground", "dune", "air", "light"), setting("through dunes", "air", "dune"), setting("on stone", "ground", "light")],
+    longSettings: [setting("across dry dunes", "ground", "dune", "air"), setting("under bright stars", "ground", "dune", "air", "light"), setting("above warm stone", "air", "light"), setting("beyond the road", "ground", "dune", "air", "light")],
   },
-  heart: {
-    five: ["A quiet bell rings", "Clouds open to blue", "Morning mist rises"],
-    seven: ["Old branches remember spring", "Far thunder softens to rain"],
+  cave: {
+    images: [image("Cool stone", ["waits", "rests"], "ground", "dark"), image("One drop", ["falls", "rings"], "water", "stone"), image("Cave wind", ["moves", "sighs"], "air", "hall")],
+    shortSettings: [setting("below", "ground", "dark", "water", "stone", "air", "hall"), setting("in dark", "ground", "dark", "water", "stone", "air", "hall"), setting("through stone", "water", "stone", "air"), setting("near streams", "ground", "water", "stone", "hall")],
+    longSettings: [setting("beneath the earth", "ground", "dark", "water", "stone", "air", "hall"), setting("through narrow halls", "water", "air", "hall"), setting("under cold stone", "ground", "dark", "water", "stone"), setting("beyond the light", "ground", "dark", "water", "air", "hall")],
+  },
+  space: {
+    images: [image("Cold stars", ["burn", "glow"], "light", "sky"), image("Far worlds", ["turn", "drift"], "world", "void"), image("Twin moons", ["move", "cross"], "world", "sky")],
+    shortSettings: [setting("in dark", "light", "sky", "world", "void"), setting("below", "light", "sky", "world", "void"), setting("through space", "world", "void"), setting("at dawn", "light", "sky", "world")],
+    longSettings: [setting("beyond black skies", "light", "sky", "world", "void"), setting("across the void", "world", "void"), setting("above the earth", "light", "sky", "world"), setting("through endless night", "light", "sky", "world", "void")],
   },
   earth: {
-    five: ["Wild grass leans eastward", "Snow rests on cedar", "First light warms the stones"],
-    seven: ["Wind moves through the open field", "The garden listens for dawn"],
+    images: [image("Tall grass", ["leans", "waves"], "field", "air"), image("Pine shade", ["rests", "spreads"], "pine", "ground"), image("One bird", ["flies", "waits"], "sky", "path")],
+    shortSettings: [setting("at dawn", "field", "air", "pine", "ground", "sky", "path"), setting("on stones", "pine", "ground", "path"), setting("through leaves", "air", "pine", "sky"), setting("by paths", "field", "ground", "sky", "path")],
+    longSettings: [setting("across green fields", "field", "air", "sky"), setting("under tall pines", "field", "pine", "ground", "path"), setting("beside the path", "field", "ground", "sky", "path"), setting("beyond the hill", "field", "air", "sky", "path")],
+  },
+  city: {
+    images: [image("Street lights", ["glow", "blink"], "light", "street"), image("Train wheels", ["turn", "hum"], "train", "street"), image("Footsteps", ["fade", "cross"], "street", "rain")],
+    shortSettings: [setting("at dusk", "light", "street", "train", "rain"), setting("through streets", "street", "train", "rain"), setting("near glass", "light", "street", "rain"), setting("below", "light", "street", "train", "rain")],
+    longSettings: [setting("beneath tall signs", "light", "street", "train", "rain"), setting("along wet streets", "light", "street", "train", "rain"), setting("beyond the glass", "light", "street", "train", "rain"), setting("under dim lights", "street", "train", "rain")],
+  },
+  heart: {
+    images: [image("Old grief", ["waits", "fades"], "grief", "time"), image("New hope", ["wakes", "grows"], "hope", "light"), image("One wish", ["drifts", "glows"], "dream", "light")],
+    shortSettings: [setting("at dawn", "grief", "time", "hope", "light", "dream"), setting("in dreams", "grief", "time", "hope", "dream"), setting("through years", "grief", "time", "hope", "dream"), setting("at rest", "grief", "time", "hope", "light", "dream")],
+    longSettings: [setting("beneath soft rain", "grief", "time", "hope", "dream"), setting("beyond the night", "grief", "time", "hope", "light", "dream"), setting("under warm light", "grief", "hope", "light", "dream"), setting("across still years", "grief", "time", "hope", "dream")],
+  },
+  season: {
+    images: [image("Year light", ["glows", "turns"], "time", "light"), image("Time wind", ["moves", "turns"], "time", "air"), image("Day length", ["shifts", "grows"], "time", "light")],
+    shortSettings: [setting("at dawn", "time", "light", "air"), setting("in fields", "time", "light", "air"), setting("through months", "time", "light", "air"), setting("on trees", "time", "light", "air")],
+    longSettings: [setting("across the year", "time", "light", "air"), setting("under changed skies", "time", "light", "air"), setting("beyond the sun", "time", "light", "air"), setting("through the long year", "time", "light", "air")],
   },
 };
 
-export const KEYWORD_ENDINGS: Record<number, string[]> = {
-  0: [""],
-  1: ["waits", "glows", "wakes"],
-  2: ["drifts on", "at dusk", "in rain"],
-  3: ["in soft rain", "under stars", "meets the dawn"],
-  4: ["under moonlight", "beside the stream", "through quiet air"],
-  5: ["beneath the moonlight", "through quiet gardens", "past the green mountain"],
-  6: ["under a silent moon", "in stillness before dawn", "by the old garden gate"],
+const COMPOSITION_THEME: Record<string, keyof typeof LOCAL_COMPOSITION_BANKS> = {
+  neutral: "neutral", summer: "summer", winter: "winter", spring: "spring", autumn: "autumn",
+  indoor: "indoor", desert: "desert", cave: "cave", space: "space", water: "water", night: "night",
+  season: "season", city: "city", heart: "heart", earth: "earth",
 };
 
 const THEME_WORDS: Record<string, string[]> = {
@@ -148,7 +146,59 @@ const ARTISTIC_FRAMING = [
 ];
 
 function pick<T>(items: T[], seed: number, offset = 0): T {
-  return items[Math.abs((seed * 9301 + offset * 49297) % items.length)];
+  let mixed = (Math.trunc(seed) ^ Math.imul(offset + 1, 0x9e3779b1)) >>> 0;
+  mixed ^= mixed >>> 16;
+  mixed = Math.imul(mixed, 0x7feb352d);
+  mixed ^= mixed >>> 15;
+  mixed = Math.imul(mixed, 0x846ca68b);
+  mixed ^= mixed >>> 16;
+  return items[(mixed >>> 0) % items.length];
+}
+
+function sharesContentWord(left: string, right: string): boolean {
+  const words = (text: string) => text
+    .toLowerCase()
+    .match(/[a-z]+/g)
+    ?.filter((word) => word.length > 3)
+    .map((word) => word.endsWith("s") ? word.slice(0, -1) : word) ?? [];
+  const leftWords = new Set(words(left));
+  return words(right).some((word) => leftWords.has(word));
+}
+
+function composeLine(
+  bank: CompositionBank,
+  syllables: 5 | 7,
+  seed: number,
+  offset: number,
+  excludedSubjects: string[] = [],
+  excludedActions: string[] = [],
+  excludedSettings: string[] = [],
+): { line: string; subject: string; action: string; setting: string } {
+  const availableImages = bank.images.filter((entry) => !excludedSubjects.includes(entry.subject));
+  const selectedImage = pick(availableImages.length > 0 ? availableImages : bank.images, seed, offset);
+  const availableActions = selectedImage.actions.filter((action) => !excludedActions.includes(action));
+  const action = pick(availableActions.length > 0 ? availableActions : selectedImage.actions, seed, offset + 11);
+  const settings = syllables === 5 ? bank.shortSettings : bank.longSettings;
+  const compatibleSettings = settings.filter((candidate) =>
+    candidate.tags.some((tag) => selectedImage.tags.includes(tag))
+      && !excludedSettings.includes(candidate.text)
+      && !sharesContentWord(selectedImage.subject, candidate.text),
+  );
+  const fallbackSettings = settings.filter((candidate) =>
+    candidate.tags.some((tag) => selectedImage.tags.includes(tag))
+      && !sharesContentWord(selectedImage.subject, candidate.text),
+  );
+  const selectedSetting = pick(
+    compatibleSettings.length > 0 ? compatibleSettings : fallbackSettings.length > 0 ? fallbackSettings : settings,
+    seed,
+    offset + 23,
+  );
+  return {
+    line: `${selectedImage.subject} ${action} ${selectedSetting.text}`,
+    subject: selectedImage.subject,
+    action,
+    setting: selectedSetting.text,
+  };
 }
 
 export function estimateSyllables(text: string): number {
@@ -190,12 +240,12 @@ export function estimateSyllables(text: string): number {
     }, 0);
 }
 
-export function detectTheme(keyword: string): keyof typeof THEME_LINES {
+export function detectTheme(keyword: string): keyof typeof COMPOSITION_THEME {
   const normalized = keyword.toLowerCase();
   const match = Object.entries(THEME_WORDS).find(([, words]) =>
     words.some((word) => new RegExp(`\\b${word}\\b`, "i").test(normalized)),
   );
-  return (match?.[0] as keyof typeof THEME_LINES) ?? "neutral";
+  return (match?.[0] as keyof typeof COMPOSITION_THEME) ?? "neutral";
 }
 
 export function isSemanticallyCoherent(keyword: string, lines: string[]): boolean {
@@ -211,20 +261,6 @@ export function isSemanticallyCoherent(keyword: string, lines: string[]): boolea
   const userRequestedContrast = new RegExp(`\\b${conflictPattern}\\b`, "i").test(normalizedKeyword);
   const clearlyFramed = ARTISTIC_FRAMING.some((word) => new RegExp(`\\b${word}\\b`, "i").test(`${normalizedKeyword} ${normalizedPoem}`));
   return userRequestedContrast || clearlyFramed;
-}
-
-export function keywordLine(keyword: string, seed: number): string | null {
-  const count = estimateSyllables(keyword);
-  if (count < 1 || count > 7) return null;
-  const endings = KEYWORD_ENDINGS[7 - count];
-  const clean = keyword.trim().replace(/\s+/g, " ");
-
-  for (let offset = 0; offset < endings.length; offset += 1) {
-    const ending = pick(endings, seed, 5 + offset);
-    const line = `${clean}${ending ? ` ${ending}` : ""}`;
-    if (estimateSyllables(line) === 7) return line;
-  }
-  return null;
 }
 
 function keywordAsTextLine(keyword: string): string | null {
@@ -244,12 +280,21 @@ function keywordAsTextLine(keyword: string): string | null {
 }
 
 export function makeRandomHaiku(seed: number): Haiku {
+  const contexts = Object.keys(LOCAL_COMPOSITION_BANKS);
+  const bank = LOCAL_COMPOSITION_BANKS[pick(contexts, seed, 0)];
+  const first = composeLine(bank, 5, seed, 1);
+  const middle = composeLine(bank, 7, seed, 2, [first.subject], [first.action], [first.setting]);
+  const last = composeLine(
+    bank,
+    5,
+    seed,
+    3,
+    [first.subject, middle.subject],
+    [first.action, middle.action],
+    [first.setting, middle.setting],
+  );
   return {
-    lines: [
-      pick(FIVE_SYLLABLE_LINES, seed, 1),
-      pick(SEVEN_SYLLABLE_LINES, seed, 2),
-      pick(FIVE_SYLLABLE_LINES, seed, 3),
-    ],
+    lines: [first.line, middle.line, last.line],
     seed,
   };
 }
@@ -258,13 +303,31 @@ export function makeKeywordHaiku(keyword: string, seed: number): Haiku | null {
   const clean = keyword.trim();
   if (!clean) return null;
   const context = detectTheme(keyword);
-  const theme = THEME_LINES[context];
+  const bank = LOCAL_COMPOSITION_BANKS[COMPOSITION_THEME[context] ?? "neutral"];
   const exactKeywordLine = estimateSyllables(clean) === 7 ? clean : null;
-  const middle = exactKeywordLine
-    ?? (context === "neutral" ? keywordAsTextLine(clean) : null)
-    ?? pick(theme.seven, seed, 2);
+  const keywordTextLine = context === "neutral" ? keywordAsTextLine(clean) : null;
+  const composedMiddle = exactKeywordLine || keywordTextLine ? null : composeLine(bank, 7, seed, 2);
+  const middle = exactKeywordLine ?? keywordTextLine ?? composedMiddle?.line ?? composeLine(bank, 7, seed, 2).line;
+  const first = composeLine(
+    bank,
+    5,
+    seed,
+    1,
+    composedMiddle ? [composedMiddle.subject] : [],
+    composedMiddle ? [composedMiddle.action] : [],
+    composedMiddle ? [composedMiddle.setting] : [],
+  );
+  const last = composeLine(
+    bank,
+    5,
+    seed,
+    3,
+    composedMiddle ? [first.subject, composedMiddle.subject] : [first.subject],
+    composedMiddle ? [first.action, composedMiddle.action] : [first.action],
+    composedMiddle ? [first.setting, composedMiddle.setting] : [first.setting],
+  );
   return {
-    lines: [pick(theme.five, seed, 1), middle, pick(theme.five, seed, 3)],
+    lines: [first.line, middle, last.line],
     seed,
   };
 }
