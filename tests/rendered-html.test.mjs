@@ -27,7 +27,7 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.match(html, /One quiet world\./);
   assert.match(html, /By chance/);
   assert.match(html, /From a word/);
-  assert.match(html, /Find another/);
+  assert.match(html, /Write a haiku/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
@@ -40,14 +40,15 @@ test("includes both generator modes and removes starter assets", async () => {
   ]);
 
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
-  assert.match(haiku, /makeRandomHaiku/);
-  assert.match(haiku, /makeKeywordHaiku/);
   assert.match(haiku, /estimateSyllables/);
+  assert.doesNotMatch(haiku, /LOCAL_COMPOSITION_BANKS|makeRandomHaiku|makeKeywordHaiku/);
   assert.match(page, /aria-pressed/);
   assert.match(page, /\/api\/haiku/);
-  assert.match(haiku, /Written with OpenAI/);
+  assert.match(haiku, /Written with DeepSeek/);
   assert.match(page, /generationSourceLabel/);
-  assert.match(page, /OpenAI when available/);
+  assert.match(page, /Written and reviewed by DeepSeek/);
+  assert.match(page, /mode === "keyword"/);
+  assert.match(page, /mode,/);
   assert.match(page, /navigator\.clipboard\.writeText/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);

@@ -272,6 +272,17 @@ h1 em {
   margin: 30px auto;
 }
 
+.poem-empty {
+  min-height: 160px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(20px, 2.5vw, 27px);
+  font-style: italic;
+  text-align: center;
+}
+
 .poem-line {
   display: grid;
   grid-template-columns: 1fr 28px;
@@ -320,6 +331,11 @@ h1 em {
   font-family: var(--font-geist-sans), sans-serif;
   font-size: 12px;
   letter-spacing: 0;
+}
+
+.paper-footer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .poem-source {

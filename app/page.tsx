@@ -4,7 +4,6 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   estimateSyllables,
   generationSourceLabel,
-  makeRandomHaiku,
   type GenerationSource,
   type Haiku,
   type Mode,
@@ -16,58 +15,55 @@ export default function Home() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [displayed, setDisplayed] = useState<{ haiku: Haiku; source: GenerationSource }>(() => ({
-    haiku: makeRandomHaiku(Date.now()),
-    source: "local",
-  }));
-  const { haiku, source: generationSource } = displayed;
+  const [displayed, setDisplayed] = useState<{ haiku: Haiku; source: GenerationSource } | null>(null);
+  const haiku = displayed?.haiku ?? null;
 
   const syllables = useMemo(
-    () => haiku.lines.map((line) => estimateSyllables(line)),
+    () => haiku?.lines.map((line) => estimateSyllables(line)) ?? [],
     [haiku],
   );
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
-    const seed = Date.now() + Math.floor(Math.random() * 10000);
     setCopied(false);
 
-    if (mode === "keyword") {
-      if (!keyword.trim()) {
-        setError("Enter a word or short phrase first.");
+    if (mode === "keyword" && !keyword.trim()) {
+      setError("Enter a word or short phrase first.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError("");
+    try {
+      const response = await fetch("/api/haiku", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode,
+          ...(mode === "keyword" ? { keyword: keyword.trim() } : {}),
+        }),
+      });
+      const result = (await response.json()) as {
+        haiku?: Haiku;
+        error?: string;
+        source?: GenerationSource;
+      };
+      if (!response.ok || !result.haiku) {
+        setError(result.error ?? "DeepSeek could not write a poem. Please try again.");
         return;
       }
-      setIsGenerating(true);
-      setError("");
-      try {
-        const response = await fetch("/api/haiku", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ keyword: keyword.trim() }),
-        });
-        const result = (await response.json()) as {
-          haiku?: Haiku;
-          error?: string;
-          source?: GenerationSource;
-        };
-        if (!response.ok || !result.haiku) {
-          setError(result.error ?? "The studio is resting. Please try again.");
-          return;
-        }
-        setDisplayed({ haiku: result.haiku, source: result.source ?? "openai" });
-      } catch {
-        setError("The studio is resting. Please try again.");
-        return;
-      } finally {
-        setIsGenerating(false);
-      }
-    } else {
-      setDisplayed({ haiku: makeRandomHaiku(seed), source: "local" });
+      setDisplayed({ haiku: result.haiku, source: "deepseek" });
+    } catch {
+      setError("DeepSeek could not be reached. Please try again.");
+      return;
+    } finally {
+      setIsGenerating(false);
     }
     setError("");
   }
 
   async function copyHaiku() {
+    if (!haiku) return;
     await navigator.clipboard.writeText(haiku.lines.join("\n"));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
@@ -138,27 +134,33 @@ export default function Home() {
                 />
                 <span>{keyword.length}/48</span>
               </div>
-              <p className="ai-note"><span aria-hidden="true">✦</span> OpenAI when available</p>
+              <p className="ai-note"><span aria-hidden="true">✦</span> Written and reviewed by DeepSeek</p>
             </div>
           )}
 
           <div className="poem-paper" aria-live="polite" aria-atomic="true">
             <span className="paper-number" aria-hidden="true">
-              {String((haiku.seed % 99) + 1).padStart(2, "0")}
+              {haiku ? String((haiku.seed % 99) + 1).padStart(2, "0") : "—"}
             </span>
             <div className="sun-seal" aria-hidden="true" />
-            <div className="poem-lines">
-              {haiku.lines.map((line, index) => (
-                <div className="poem-line" key={`${haiku.seed}-${index}`}>
-                  <p>{line}</p>
-                  <span>{syllables[index]}</span>
-                </div>
-              ))}
-            </div>
+            {haiku ? (
+              <div className="poem-lines">
+                {haiku.lines.map((line, index) => (
+                  <div className="poem-line" key={`${haiku.seed}-${index}`}>
+                    <p>{line}</p>
+                    <span>{syllables[index]}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="poem-lines poem-empty">
+                <p>Your next small moment will appear here.</p>
+              </div>
+            )}
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
-              <span className="poem-source">{generationSourceLabel(generationSource)}</span>
-              <button type="button" onClick={copyHaiku} aria-label="Copy haiku">
+              <span className="poem-source">{haiku ? generationSourceLabel("deepseek") : "DeepSeek studio"}</span>
+              <button type="button" onClick={copyHaiku} aria-label="Copy haiku" disabled={!haiku}>
                 {copied ? "Copied" : "Copy poem"}
               </button>
             </div>
@@ -167,7 +169,7 @@ export default function Home() {
           <div className="action-row">
             <p className="error-message" role="alert">{error}</p>
             <button type="submit" className="generate-button" disabled={isGenerating}>
-              {isGenerating ? "Writing…" : mode === "random" ? "Find another" : "Write my haiku"}
+              {isGenerating ? "Writing and reviewing…" : mode === "random" ? "Write a haiku" : "Write my haiku"}
               <span aria-hidden="true">↗</span>
             </button>
           </div>
