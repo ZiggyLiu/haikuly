@@ -4,7 +4,7 @@ import {
   countPoeticUnits,
   estimateSyllables,
   generationSourceLabel,
-  poemLineClassName,
+  poemLinesClassName,
 } from "../app/haiku.ts";
 
 test("the syllable estimator verifies representative 5–7–5 lines", () => {
@@ -34,13 +34,18 @@ test("the only generation source is DeepSeek", () => {
   assert.equal(generationSourceLabel("deepseek"), "Written with DeepSeek");
 });
 
-test("long English lines use responsive fitting classes", () => {
-  assert.equal(poemLineClassName("x".repeat(27), 1, "en"), "poem-line");
-  assert.equal(poemLineClassName("x".repeat(28), 1, "en"), "poem-line line-tight");
-  assert.equal(poemLineClassName("x".repeat(31), 0, "en"), "poem-line line-tight");
-  assert.equal(poemLineClassName("x".repeat(39), 1, "en"), "poem-line line-extra-tight");
+test("the longest English line selects one shared poem size", () => {
+  assert.equal(poemLinesClassName(["x".repeat(20), "x".repeat(27), "x".repeat(18)], "en"), "poem-lines");
+  assert.equal(
+    poemLinesClassName(["x".repeat(20), "x".repeat(28), "x".repeat(18)], "en"),
+    "poem-lines lines-tight",
+  );
+  assert.equal(
+    poemLinesClassName(["x".repeat(39), "x".repeat(28), "x".repeat(18)], "en"),
+    "poem-lines lines-extra-tight",
+  );
 });
 
 test("Chinese lines keep their standard presentation", () => {
-  assert.equal(poemLineClassName("远山藏入暮云中", 1, "zh"), "poem-line");
+  assert.equal(poemLinesClassName(["春雨落花间", "远山藏入暮云中", "归鸟过长空"], "zh"), "poem-lines");
 });

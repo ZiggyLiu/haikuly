@@ -343,12 +343,12 @@ h1 em {
   animation: reveal 500ms ease both;
 }
 
-.poem-line.line-tight p {
+.poem-lines.lines-tight .poem-line p {
   font-size: clamp(20px, 2.6vw, 28px);
   letter-spacing: -0.035em;
 }
 
-.poem-line.line-extra-tight p {
+.poem-lines.lines-extra-tight .poem-line p {
   font-size: clamp(17px, 2.2vw, 24px);
   letter-spacing: -0.045em;
 }
@@ -491,8 +491,8 @@ footer p {
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { gap: 6px; grid-template-columns: minmax(0, 1fr) 16px; }
   .poem-line p { font-size: clamp(20px, 6vw, 25px); }
-  .poem-line.line-tight p { font-size: clamp(16px, 4.7vw, 20px); }
-  .poem-line.line-extra-tight p { font-size: clamp(14px, 4vw, 17px); }
+  .poem-lines.lines-tight .poem-line p { font-size: clamp(16px, 4.7vw, 20px); }
+  .poem-lines.lines-extra-tight .poem-line p { font-size: clamp(14px, 4vw, 17px); }
   .action-row { grid-template-columns: 1fr; }
   .generate-button { grid-column: 1; grid-row: 1; width: 100%; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }

@@ -53,15 +53,13 @@ export function countPoeticUnits(text: string, language: Language): number {
   return estimateSyllables(text);
 }
 
-export function poemLineClassName(line: string, index: number, language: Language): string {
-  if (language === "zh") return "poem-line";
+export function poemLinesClassName(lines: readonly string[], language: Language): string {
+  if (language === "zh") return "poem-lines";
 
-  const characterCount = Array.from(line).length;
-  if (characterCount > 38) return "poem-line line-extra-tight";
-  if (characterCount > 30 || (index === 1 && characterCount > 27)) {
-    return "poem-line line-tight";
-  }
-  return "poem-line";
+  const longestLine = Math.max(...lines.map((line) => Array.from(line).length));
+  if (longestLine > 38) return "poem-lines lines-extra-tight";
+  if (longestLine > 27) return "poem-lines lines-tight";
+  return "poem-lines";
 }
 
 export function generationSourceLabel(source: GenerationSource): string {

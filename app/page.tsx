@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import {
   countPoeticUnits,
   generationSourceLabel,
-  poemLineClassName,
+  poemLinesClassName,
   type GenerationSource,
   type Haiku,
   type Language,
@@ -185,12 +185,12 @@ export default function Home() {
             </span>
             <div className="sun-seal" aria-hidden="true" />
             {haiku ? (
-              <div className="poem-lines" lang={displayed?.language === "zh" ? "zh-CN" : "en"}>
+              <div
+                className={poemLinesClassName(haiku.lines, displayed?.language ?? "en")}
+                lang={displayed?.language === "zh" ? "zh-CN" : "en"}
+              >
                 {haiku.lines.map((line, index) => (
-                  <div
-                    className={poemLineClassName(line, index, displayed?.language ?? "en")}
-                    key={`${haiku.seed}-${index}`}
-                  >
+                  <div className="poem-line" key={`${haiku.seed}-${index}`}>
                     <p>{line}</p>
                     <span title={displayed?.language === "zh" ? "characters" : "syllables"}>{lineCounts[index]}</span>
                   </div>
