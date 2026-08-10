@@ -35,11 +35,12 @@ test("server-renders the finished Stillpoint experience", async () => {
 });
 
 test("includes both generator modes and removes starter assets", async () => {
-  const [page, haiku, layout, packageJson] = await Promise.all([
+  const [page, haiku, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/haiku.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
@@ -57,6 +58,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /language,/);
   assert.match(page, /Poem language/);
   assert.match(page, /navigator\.clipboard\.writeText/);
+  assert.match(page, /poemLineClassName/);
+  assert.match(styles, /white-space:\s*nowrap/);
+  assert.match(styles, /\.poem-line\.line-extra-tight p/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);

@@ -53,6 +53,17 @@ export function countPoeticUnits(text: string, language: Language): number {
   return estimateSyllables(text);
 }
 
+export function poemLineClassName(line: string, index: number, language: Language): string {
+  if (language === "zh") return "poem-line";
+
+  const characterCount = Array.from(line).length;
+  if (characterCount > 38) return "poem-line line-extra-tight";
+  if (characterCount > 30 || (index === 1 && characterCount > 27)) {
+    return "poem-line line-tight";
+  }
+  return "poem-line";
+}
+
 export function generationSourceLabel(source: GenerationSource): string {
   const labels: Record<GenerationSource, string> = { deepseek: "Written with DeepSeek" };
   return labels[source];
