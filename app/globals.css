@@ -437,9 +437,11 @@ h1 em {
 
 .ambient {
   position: absolute;
+  z-index: 0;
   pointer-events: none;
   border: 1px solid rgba(54, 83, 71, 0.12);
   border-radius: 50%;
+  background: rgba(247, 244, 236, 0.08);
 }
 
 .ambient-left { width: 300px; height: 300px; left: -215px; top: 300px; }
@@ -476,6 +478,7 @@ footer p {
 
 @media (max-width: 700px) {
   .page-shell { padding: 0 20px; }
+  .page-shell::before { position: absolute; opacity: 0.28; }
   .site-header { height: 74px; }
   .header-note { display: none; }
   .hero { margin: 64px auto 42px; }
@@ -486,8 +489,23 @@ footer p {
   .language-control { flex-wrap: wrap; gap: 8px 10px; }
   .language-label { width: 100%; text-align: center; }
   .poem-paper { min-height: 370px; padding: 76px 14px 26px; }
-  .sun-seal { width: 62px; height: 62px; top: 24px; right: 26px; }
-  .sun-seal::after { top: 28px; left: 28px; }
+  .sun-seal {
+    width: 62px;
+    height: 62px;
+    top: 24px;
+    right: 26px;
+    z-index: 0;
+    background: rgba(201, 111, 76, 0.18);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  .sun-seal::after {
+    top: 28px;
+    left: 28px;
+    box-shadow: 0 0 0 11px rgba(201,111,76,.16), 0 0 0 22px rgba(201,111,76,.11);
+  }
+  .poem-lines, .paper-footer { position: relative; z-index: 1; }
+  .paper-number { z-index: 1; }
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { gap: 6px; grid-template-columns: minmax(0, 1fr) 16px; }
   .poem-line p { font-size: clamp(20px, 6vw, 25px); }
@@ -496,6 +514,9 @@ footer p {
   .action-row { grid-template-columns: 1fr; }
   .generate-button { grid-column: 1; grid-row: 1; width: 100%; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }
+  .ambient { border-color: rgba(54, 83, 71, 0.2); }
+  .ambient-left { width: 210px; height: 210px; left: -118px; top: 210px; }
+  .ambient-right { width: 260px; height: 260px; right: -155px; top: 520px; }
   footer { align-items: flex-start; gap: 10px; flex-direction: column; }
 }
 

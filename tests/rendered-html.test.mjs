@@ -61,6 +61,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /poemLinesClassName/);
   assert.match(styles, /white-space:\s*nowrap/);
   assert.match(styles, /\.poem-lines\.lines-extra-tight \.poem-line p/);
+  assert.match(styles, /\.page-shell::before \{ position: absolute; opacity: 0\.28; \}/);
+  assert.match(styles, /\.ambient-left \{ width: 210px; height: 210px; left: -118px; top: 210px; \}/);
+  assert.match(styles, /-webkit-transform:\s*translateZ\(0\)/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
