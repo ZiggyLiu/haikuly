@@ -370,7 +370,16 @@ export default function Home() {
 
       <footer>
         <p>Pause. Notice. Begin again.</p>
-        <span>Built for brief moments of attention.</span>
+        <div className="footer-meta">
+          <span>Built for brief moments of attention.</span>
+          <a
+            className="footer-contact"
+            href="mailto:zhiguoinusa@gmail.com"
+            aria-label="Email Stillpoint at zhiguoinusa@gmail.com"
+          >
+            zhiguoinusa@gmail.com
+          </a>
+        </div>
       </footer>
     </main>
   );

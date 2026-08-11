@@ -31,6 +31,8 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.match(html, /中文/);
   assert.match(html, /5 · 7 · 5 syllables/);
   assert.match(html, /Write a haiku/);
+  assert.match(html, /href="mailto:zhiguoinusa@gmail\.com"/);
+  assert.match(html, />zhiguoinusa@gmail\.com</);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
@@ -77,6 +79,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /haikuDateLabel/);
   assert.match(page, /Daily<br \/>Haiku/);
   assert.match(page, /sun-seal-label/);
+  assert.match(page, /aria-label="Email Stillpoint at zhiguoinusa@gmail\.com"/);
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);
@@ -96,6 +99,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
   assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-geist-sans\)/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
+  assert.match(styles, /\.footer-contact/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
