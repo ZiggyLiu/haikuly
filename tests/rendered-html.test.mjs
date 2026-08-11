@@ -23,10 +23,23 @@ test("server-renders the finished Stillpoint experience", async () => {
 
   const html = await response.text();
   const rscBootstrapPosition = html.indexOf("self.__VINEXT_RSC_CHUNKS__");
+  const criticalStylesPosition = html.indexOf("data-stillpoint-critical");
+  const inlineRuntimePosition = html.indexOf("data-stillpoint-runtime");
+  const inlineReadyPosition = html.indexOf("__STILLPOINT_INLINE_READY__");
   const clientEntryPosition = html.indexOf('id="_R_"');
   assert.ok(rscBootstrapPosition >= 0);
+  assert.ok(criticalStylesPosition >= 0);
+  assert.ok(inlineRuntimePosition >= 0);
+  assert.ok(inlineReadyPosition >= 0);
   assert.ok(clientEntryPosition >= 0);
   assert.ok(rscBootstrapPosition < clientEntryPosition);
+  assert.ok(criticalStylesPosition < clientEntryPosition);
+  assert.ok(inlineRuntimePosition < clientEntryPosition);
+  assert.ok(inlineReadyPosition < clientEntryPosition);
+  assert.equal((html.match(/data-stillpoint-critical/g) ?? []).length, 1);
+  assert.equal((html.match(/data-stillpoint-runtime/g) ?? []).length, 1);
+  assert.match(html, /data-stillpoint-critical="true"[^>]*>[^<]*\.page-shell/);
+  assert.match(html, /data-stillpoint-runtime="true"/);
   assert.match(html, /<title>Stillpoint — Haiku Generator<\/title>/i);
   assert.match(html, /Three lines\./);
   assert.match(html, /One quiet world\./);
@@ -43,13 +56,15 @@ test("server-renders the finished Stillpoint experience", async () => {
 });
 
 test("includes both generator modes and removes starter assets", async () => {
-  const [page, haiku, layout, packageJson, styles, inkWash] = await Promise.all([
+  const [page, haiku, layout, packageJson, styles, inkWash, mobileRuntime, bootstrap] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/haiku.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../app/ink-wash.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mobile-runtime.js", import.meta.url), "utf8"),
+    readFile(new URL("../app/rsc-bootstrap.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
@@ -82,6 +97,15 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /俳句を保存/);
   assert.match(page, /俳句を詠む/);
   assert.match(page, /onClick=\{\(\) => changeLanguage\("ja"\)\}/);
+  assert.match(page, /data-language="ja"/);
+  assert.match(page, /data-mode="keyword"/);
+  assert.match(page, /id="stillpoint-app"/);
+  assert.match(page, /id="generate-haiku"/);
+  assert.match(page, /__STILLPOINT_REACT_READY__/);
+  assert.match(page, /useLayoutEffect/);
+  assert.match(page, /__STILLPOINT_FALLBACK_ACTIVE__/);
+  assert.match(page, /readFallbackSnapshot/);
+  assert.match(page, /__STILLPOINT_FALLBACK_STATE__/);
   assert.ok(page.indexOf('className="language-control"') < page.indexOf('className="mode-switch"'));
   assert.match(page, /event\.persisted/);
   assert.match(page, /window\.location\.reload\(\)/);
@@ -122,6 +146,21 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.footer-contact/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /RscBootstrap/);
+  assert.match(bootstrap, /globals\.css\?raw/);
+  assert.match(bootstrap, /mobile-runtime\.js\?raw/);
+  assert.match(bootstrap, /data-stillpoint-critical/);
+  assert.match(bootstrap, /data-stillpoint-runtime/);
+  assert.match(mobileRuntime, /document\.addEventListener\("click"/);
+  assert.match(mobileRuntime, /document\.addEventListener\("submit"/);
+  assert.match(mobileRuntime, /function activateFallback\(\)/);
+  assert.match(mobileRuntime, /activateFallback\(\);/);
+  assert.match(mobileRuntime, /__STILLPOINT_FALLBACK_ACTIVE__ !== true/);
+  assert.match(mobileRuntime, /function publishState\(\)/);
+  assert.match(mobileRuntime, /__STILLPOINT_FALLBACK_STATE__/);
+  assert.match(mobileRuntime, /fetch\("\/api\/haiku"/);
+  assert.match(mobileRuntime, /navigator\.canShare\(shareData\)/);
+  assert.match(mobileRuntime, /navigator\.share\(shareData\)/);
+  assert.match(mobileRuntime, /drawInk\(canvas, haiku\)/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
@@ -141,5 +180,8 @@ test("keeps mobile Safari controls tappable and browser-compatible", async () =>
   assert.match(styles, /\.language-switch button \{ min-height: 44px;/);
   assert.match(styles, /\.generate-button \{ grid-column: 1; grid-row: 1; width: 100%; min-height: 48px;/);
   assert.match(styles, /\.generator-form \{[\s\S]*?isolation: isolate;[\s\S]*?pointer-events: auto;/);
+  assert.match(styles, /\.ink-wash-canvas \{[\s\S]*?top:\s*0;[\s\S]*?right:\s*0;[\s\S]*?bottom:\s*0;[\s\S]*?left:\s*0;[\s\S]*?inset:\s*0;/);
+  assert.match(styles, /\.brand > \* \+ \* \{ margin-left: 12px; \}/);
+  assert.match(styles, /\.footer-meta > \* \+ \* \{ margin-left: 22px; \}/);
   assert.match(viteConfig, /target: "safari13"/);
 });

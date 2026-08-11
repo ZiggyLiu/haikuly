@@ -46,6 +46,10 @@ button {
 .page-shell::before {
   content: "";
   position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   inset: 0;
   pointer-events: none;
   opacity: 0.18;
@@ -69,13 +73,14 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
   color: var(--ink);
   text-decoration: none;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 22px;
   letter-spacing: -0.02em;
 }
+
+.brand > * + * { margin-left: 12px; }
 
 .brand-mark {
   width: 34px;
@@ -115,6 +120,7 @@ button {
 h1 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 72px;
   font-size: clamp(52px, 7.2vw, 92px);
   font-weight: 400;
   letter-spacing: -0.06em;
@@ -181,12 +187,13 @@ h1 em {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   position: relative;
   z-index: 3;
   isolation: isolate;
   pointer-events: auto;
 }
+
+.language-control > .language-switch { margin: 0 12px; }
 
 .language-label,
 .language-rule {
@@ -308,6 +315,10 @@ h1 em {
   width: 100%;
   height: 100%;
   position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   inset: 0;
   z-index: 0;
   display: block;
@@ -318,6 +329,10 @@ h1 em {
 .poem-paper.has-illustration::after {
   content: "";
   position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   inset: 0;
   z-index: 1;
   pointer-events: none;
@@ -395,6 +410,7 @@ h1 em {
   place-items: center;
   color: var(--ink-soft);
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
   font-size: clamp(20px, 2.5vw, 27px);
   font-style: italic;
   text-align: center;
@@ -407,6 +423,7 @@ h1 em {
 .poem-line p {
   margin: 8px 0;
   font-family: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  font-size: 30px;
   font-size: clamp(24px, 3.2vw, 34px);
   font-weight: 400;
   letter-spacing: -0.025em;
@@ -421,11 +438,13 @@ h1 em {
 }
 
 .poem-lines.lines-tight .poem-line p {
+  font-size: 24px;
   font-size: clamp(20px, 2.6vw, 28px);
   letter-spacing: -0.035em;
 }
 
 .poem-lines.lines-extra-tight .poem-line p {
+  font-size: 20px;
   font-size: clamp(17px, 2.2vw, 24px);
   letter-spacing: -0.045em;
 }
@@ -495,7 +514,6 @@ h1 em {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
   border: 0;
   border-radius: 4px;
   background: var(--moss);
@@ -544,8 +562,9 @@ footer p {
 .footer-meta {
   display: flex;
   align-items: center;
-  gap: 22px;
 }
+
+.footer-meta > * + * { margin-left: 22px; }
 
 .footer-contact {
   padding: 4px 0;
@@ -580,12 +599,14 @@ footer p {
   .site-header { height: 74px; }
   .header-note { display: none; }
   .hero { margin: 64px auto 42px; }
-  h1 { font-size: clamp(49px, 15vw, 72px); }
+  h1 { font-size: 56px; font-size: clamp(49px, 15vw, 72px); }
   .studio { margin-bottom: 64px; }
   .mode-switch { width: 100%; }
   .mode-switch button { min-width: 0; min-height: 44px; flex: 1; }
-  .language-control { flex-wrap: wrap; gap: 8px 10px; }
+  .language-control { flex-wrap: wrap; }
   .language-label { width: 100%; text-align: center; }
+  .language-control > .language-switch { margin: 8px 10px 0 0; }
+  .language-rule { margin-top: 8px; }
   .language-switch button { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
   .poem-paper { min-height: 370px; padding: 76px 14px 26px; }
   .sun-seal {
@@ -608,17 +629,19 @@ footer p {
   .paper-number { z-index: 2; }
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { display: block; }
-  .poem-line p { font-size: clamp(20px, 6vw, 25px); }
-  .poem-lines.lines-tight .poem-line p { font-size: clamp(16px, 4.7vw, 20px); }
-  .poem-lines.lines-extra-tight .poem-line p { font-size: clamp(14px, 4vw, 17px); }
+  .poem-line p { font-size: 22px; font-size: clamp(20px, 6vw, 25px); }
+  .poem-lines.lines-tight .poem-line p { font-size: 18px; font-size: clamp(16px, 4.7vw, 20px); }
+  .poem-lines.lines-extra-tight .poem-line p { font-size: 15px; font-size: clamp(14px, 4vw, 17px); }
   .action-row { grid-template-columns: 1fr; }
   .generate-button { grid-column: 1; grid-row: 1; width: 100%; min-height: 48px; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }
   .ambient { border-color: rgba(54, 83, 71, 0.2); }
   .ambient-left { width: 210px; height: 210px; left: -118px; top: 210px; }
   .ambient-right { width: 260px; height: 260px; right: -155px; top: 520px; }
-  footer { align-items: flex-start; gap: 12px; flex-direction: column; }
-  .footer-meta { align-items: flex-start; flex-direction: column; gap: 8px; }
+  footer { align-items: flex-start; flex-direction: column; }
+  footer > * + * { margin-top: 12px; }
+  .footer-meta { align-items: flex-start; flex-direction: column; }
+  .footer-meta > * + * { margin-top: 8px; margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

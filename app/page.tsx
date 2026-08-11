@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import InkWashIllustration from "./ink-wash";
 import {
   generationSourceLabel,
@@ -139,21 +139,66 @@ function languageTag(language: Language) {
   return "en";
 }
 
+type DisplayedHaiku = {
+  haiku: Haiku;
+  source: GenerationSource;
+  language: Language;
+};
+
+type FallbackSnapshot = {
+  mode: Mode;
+  language: Language;
+  keyword: string;
+  error: string;
+  generating: boolean;
+  haiku: Haiku | null;
+  haikuLanguage: Language;
+};
+
+function readFallbackSnapshot(): FallbackSnapshot | null {
+  if (typeof window === "undefined") return null;
+  const runtimeWindow = window as Window & {
+    __STILLPOINT_FALLBACK_ACTIVE__?: boolean;
+    __STILLPOINT_FALLBACK_STATE__?: FallbackSnapshot;
+  };
+  return runtimeWindow.__STILLPOINT_FALLBACK_ACTIVE__
+    ? runtimeWindow.__STILLPOINT_FALLBACK_STATE__ ?? null
+    : null;
+}
+
 export default function Home() {
-  const [mode, setMode] = useState<Mode>("random");
-  const [language, setLanguage] = useState<Language>("en");
-  const [keyword, setKeyword] = useState("");
-  const [error, setError] = useState("");
+  const [fallbackSnapshot] = useState(readFallbackSnapshot);
+  const [mode, setMode] = useState<Mode>(fallbackSnapshot?.mode ?? "random");
+  const [language, setLanguage] = useState<Language>(fallbackSnapshot?.language ?? "en");
+  const [keyword, setKeyword] = useState(fallbackSnapshot?.keyword ?? "");
+  const [error, setError] = useState(fallbackSnapshot?.error ?? "");
   const [saved, setSaved] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(fallbackSnapshot?.generating ?? false);
   const poemPaperRef = useRef<HTMLDivElement>(null);
-  const [displayed, setDisplayed] = useState<{
-    haiku: Haiku;
-    source: GenerationSource;
-    language: Language;
-  } | null>(null);
+  const [displayed, setDisplayed] = useState<DisplayedHaiku | null>(() => (
+    fallbackSnapshot?.haiku
+      ? {
+          haiku: fallbackSnapshot.haiku,
+          source: "deepseek",
+          language: fallbackSnapshot.haikuLanguage,
+        }
+      : null
+  ));
   const haiku = displayed?.haiku ?? null;
   const copy = UI_COPY[language];
+
+  useLayoutEffect(() => {
+    const runtimeWindow = window as Window & {
+      __STILLPOINT_FALLBACK_ACTIVE__?: boolean;
+      __STILLPOINT_REACT_READY__?: boolean;
+    };
+    if (runtimeWindow.__STILLPOINT_FALLBACK_ACTIVE__) return;
+    runtimeWindow.__STILLPOINT_REACT_READY__ = true;
+
+    return () => {
+      runtimeWindow.__STILLPOINT_REACT_READY__ = false;
+    };
+  }, []);
 
   useEffect(() => {
     const refreshRestoredPage = (event: PageTransitionEvent) => {
@@ -336,8 +381,6 @@ export default function Home() {
       ) {
         try {
           await navigator.share(shareData);
-          setSaved(true);
-          window.setTimeout(() => setSaved(false), 1800);
           return;
         } catch (shareError) {
           if (shareError instanceof DOMException && shareError.name === "AbortError") return;
@@ -370,7 +413,7 @@ export default function Home() {
   }
 
   return (
-    <main className="page-shell">
+    <main className="page-shell" id="stillpoint-app">
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -399,6 +442,7 @@ export default function Home() {
               className={language === "en" ? "active" : ""}
               aria-pressed={language === "en"}
               onClick={() => changeLanguage("en")}
+              data-language="en"
             >
               English
             </button>
@@ -408,6 +452,7 @@ export default function Home() {
               aria-pressed={language === "zh"}
               onClick={() => changeLanguage("zh")}
               lang="zh-CN"
+              data-language="zh"
             >
               中文
             </button>
@@ -417,6 +462,7 @@ export default function Home() {
               aria-pressed={language === "ja"}
               onClick={() => changeLanguage("ja")}
               lang="ja"
+              data-language="ja"
             >
               日本語
             </button>
@@ -430,6 +476,7 @@ export default function Home() {
             className={mode === "random" ? "active" : ""}
             aria-pressed={mode === "random"}
             onClick={() => changeMode("random")}
+            data-mode="random"
           >
             <span aria-hidden="true">✦</span> {copy.randomMode}
           </button>
@@ -438,15 +485,15 @@ export default function Home() {
             className={mode === "keyword" ? "active" : ""}
             aria-pressed={mode === "keyword"}
             onClick={() => changeMode("keyword")}
+            data-mode="keyword"
           >
             <span aria-hidden="true">⌁</span> {copy.keywordMode}
           </button>
         </div>
 
         <form onSubmit={generate} className="generator-form">
-          {mode === "keyword" && (
-            <div className="keyword-field">
-              <label htmlFor="keyword">{copy.keywordPrompt}</label>
+          <div className="keyword-field" id="keyword-field" hidden={mode !== "keyword"}>
+              <label htmlFor="keyword" id="keyword-label">{copy.keywordPrompt}</label>
               <div className="input-wrap">
                 <input
                   id="keyword"
@@ -461,23 +508,23 @@ export default function Home() {
                 />
                 <span>{keyword.length}/48</span>
               </div>
-              <p className="ai-note"><span aria-hidden="true">✦</span> {copy.aiNote}</p>
-            </div>
-          )}
+              <p className="ai-note" id="ai-note"><span aria-hidden="true">✦</span> {copy.aiNote}</p>
+          </div>
 
           <div
             ref={poemPaperRef}
+            id="poem-paper"
             className={`poem-paper${haiku ? " has-illustration" : ""}`}
             aria-live="polite"
             aria-atomic="true"
           >
             {haiku && <InkWashIllustration recipe={haiku.illustration} seed={haiku.seed} />}
             {haiku ? (
-              <time className="paper-number paper-date" dateTime={haiku.createdAt}>
+              <time className="paper-number paper-date" id="paper-date" dateTime={haiku.createdAt}>
                 {haikuDateLabel(haiku.createdAt, displayed?.language ?? "en")}
               </time>
             ) : (
-              <span className="paper-number paper-date" aria-hidden="true">DATE —</span>
+              <span className="paper-number paper-date" id="paper-date" aria-hidden="true">DATE —</span>
             )}
             <div className="sun-seal" aria-hidden="true">
               <span className="sun-seal-label">Daily<br />Haiku</span>
@@ -485,6 +532,7 @@ export default function Home() {
             {haiku ? (
               <div
                 className={poemLinesClassName(haiku.lines, displayed?.language ?? "en")}
+                id="poem-lines"
                 lang={languageTag(displayed?.language ?? "en")}
               >
                 {haiku.lines.map((line, index) => (
@@ -494,26 +542,26 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="poem-lines poem-empty">
-                <p>{copy.emptyPoem}</p>
+              <div className="poem-lines poem-empty" id="poem-lines">
+                <p id="empty-poem">{copy.emptyPoem}</p>
               </div>
             )}
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
-              <span className="poem-source">
+              <span className="poem-source" id="poem-source">
                 {haiku
                   ? generationSourceLabel("deepseek", displayed?.language ?? "en")
                   : copy.deepSeekStudio}
               </span>
-              <button type="button" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>
+              <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>
                 {saved ? copy.saved : copy.save}
               </button>
             </div>
           </div>
 
           <div className="action-row">
-            <p className="error-message" role="alert">{error}</p>
-            <button type="submit" className="generate-button" disabled={isGenerating}>
+            <p className="error-message" id="error-message" role="alert">{error}</p>
+            <button type="submit" className="generate-button" id="generate-haiku" disabled={isGenerating}>
               {isGenerating
                 ? copy.generating
                 : mode === "random" ? copy.generateRandom : copy.generateKeyword}
