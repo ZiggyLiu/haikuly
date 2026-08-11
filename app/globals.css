@@ -309,9 +309,9 @@ h1 em {
   pointer-events: none;
   background: radial-gradient(
     ellipse at center,
-    rgba(248, 245, 237, 0.78) 0%,
-    rgba(248, 245, 237, 0.58) 42%,
-    rgba(248, 245, 237, 0.14) 76%,
+    rgba(248, 245, 237, 0.52) 0%,
+    rgba(248, 245, 237, 0.32) 42%,
+    rgba(248, 245, 237, 0.06) 78%,
     transparent 100%
   );
 }
@@ -371,10 +371,7 @@ h1 em {
 }
 
 .poem-line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px;
-  align-items: baseline;
-  gap: 12px;
+  display: block;
 }
 
 .poem-line p {
@@ -405,12 +402,6 @@ h1 em {
 
 .poem-line:nth-child(2) p { animation-delay: 70ms; }
 .poem-line:nth-child(3) p { animation-delay: 140ms; }
-
-.poem-line > span {
-  color: #536159;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-}
 
 .paper-footer {
   margin-top: auto;
@@ -562,7 +553,7 @@ footer p {
   .poem-lines, .paper-footer { position: relative; z-index: 2; }
   .paper-number { z-index: 2; }
   .poem-lines { width: 100%; margin: 20px auto; }
-  .poem-line { gap: 6px; grid-template-columns: minmax(0, 1fr) 16px; }
+  .poem-line { display: block; }
   .poem-line p { font-size: clamp(20px, 6vw, 25px); }
   .poem-lines.lines-tight .poem-line p { font-size: clamp(16px, 4.7vw, 20px); }
   .poem-lines.lines-extra-tight .poem-line p { font-size: clamp(14px, 4vw, 17px); }

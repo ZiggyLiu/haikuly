@@ -1,9 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import InkWashIllustration from "./ink-wash";
 import {
-  countPoeticUnits,
   generationSourceLabel,
   poemLinesClassName,
   type GenerationSource,
@@ -25,11 +24,6 @@ export default function Home() {
     language: Language;
   } | null>(null);
   const haiku = displayed?.haiku ?? null;
-
-  const lineCounts = useMemo(
-    () => displayed?.haiku.lines.map((line) => countPoeticUnits(line, displayed.language)) ?? [],
-    [displayed],
-  );
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
@@ -194,7 +188,6 @@ export default function Home() {
                 {haiku.lines.map((line, index) => (
                   <div className="poem-line" key={`${haiku.seed}-${index}`}>
                     <p>{line}</p>
-                    <span title={displayed?.language === "zh" ? "characters" : "syllables"}>{lineCounts[index]}</span>
                   </div>
                 ))}
               </div>

@@ -69,8 +69,15 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /Poem language/);
   assert.match(page, /navigator\.clipboard\.writeText/);
   assert.match(page, /poemLinesClassName/);
+  assert.doesNotMatch(page, /lineCounts/);
+  assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);
+  assert.match(page, /<span>5 · 7 · 5<\/span>/);
   assert.match(styles, /white-space:\s*nowrap/);
+  assert.doesNotMatch(styles, /\.poem-line > span/);
   assert.match(styles, /\.poem-lines\.lines-extra-tight \.poem-line p/);
+  assert.match(inkWash, /width \* 0\.36/);
+  assert.match(inkWash, /width \* 0\.64/);
+  assert.match(inkWash, /width \* 0\.72/);
   assert.match(styles, /\.page-shell::before \{ position: absolute; opacity: 0\.28; \}/);
   assert.match(styles, /\.ambient-left \{ width: 210px; height: 210px; left: -118px; top: 210px; \}/);
   assert.match(styles, /-webkit-transform:\s*translateZ\(0\)/);

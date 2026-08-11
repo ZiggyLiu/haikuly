@@ -89,19 +89,21 @@ function drawMotif(
   random: () => number,
 ) {
   const side = recipe.placement === "left" ? 1 : -1;
-  const originX = recipe.placement === "left" ? width * 0.18 : width * 0.82;
-  const span = Math.min(width * 0.38, 280);
+  const originX = recipe.placement === "left" ? width * 0.36 : width * 0.64;
+  const span = Math.min(width * 0.72, 560);
   const ground = height * 0.74;
 
-  for (let index = 0; index < 8; index += 1) {
+  paintWash(context, width * 0.5, height * 0.52, width * 0.46, height * 0.4, palette.wash, 0.035);
+
+  for (let index = 0; index < 12; index += 1) {
     paintWash(
       context,
-      originX + side * (random() - 0.52) * span,
-      height * (0.2 + random() * 0.64),
-      45 + random() * 95,
-      28 + random() * 72,
+      width * (0.12 + random() * 0.76),
+      height * (0.12 + random() * 0.76),
+      60 + random() * 120,
+      38 + random() * 92,
       index % 3 === 0 ? palette.accent : palette.wash,
-      0.045 + random() * 0.045,
+      0.04 + random() * 0.04,
     );
   }
 
@@ -191,8 +193,8 @@ function drawAccent(
 ) {
   if (recipe.accent === "none") return;
   const side = recipe.placement === "left" ? 1 : -1;
-  const x = recipe.placement === "left" ? width * 0.2 : width * 0.8;
-  const y = height * 0.25;
+  const x = recipe.placement === "left" ? width * 0.36 : width * 0.64;
+  const y = height * 0.28;
 
   if (recipe.accent === "moon" || recipe.accent === "sun") {
     paintWash(context, x, y, 34, 34, palette.accent, recipe.accent === "sun" ? 0.15 : 0.11);
