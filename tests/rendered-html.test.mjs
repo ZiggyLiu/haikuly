@@ -22,6 +22,11 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
+  const rscBootstrapPosition = html.indexOf("self.__VINEXT_RSC_CHUNKS__");
+  const clientEntryPosition = html.indexOf('id="_R_"');
+  assert.ok(rscBootstrapPosition >= 0);
+  assert.ok(clientEntryPosition >= 0);
+  assert.ok(rscBootstrapPosition < clientEntryPosition);
   assert.match(html, /<title>Stillpoint — Haiku Generator<\/title>/i);
   assert.match(html, /Three lines\./);
   assert.match(html, /One quiet world\./);
@@ -84,7 +89,11 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /Save Haiku/);
   assert.match(page, /Save haiku as a picture/);
   assert.match(page, /toDataURL\("image\/png"\)/);
-  assert.match(page, /link\.download = haikuImageFilename/);
+  assert.match(page, /new File\(\[bytes\], filename/);
+  assert.match(page, /navigator\.canShare\(shareData\)/);
+  assert.match(page, /await navigator\.share\(shareData\)/);
+  assert.match(page, /shareError\.name === "AbortError"/);
+  assert.match(page, /link\.download = filename/);
   assert.match(page, /\.ink-wash-canvas/);
   assert.match(page, /paper-date/);
   assert.match(page, /haikuDateLabel/);

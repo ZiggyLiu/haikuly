@@ -25,6 +25,20 @@ function elementPosition(element: Element, paperBounds: DOMRect) {
   return { x: bounds.left - paperBounds.left, y: bounds.top - paperBounds.top };
 }
 
+function pngFileFromCanvas(canvas: HTMLCanvasElement, filename: string) {
+  const dataUrl = canvas.toDataURL("image/png");
+  const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
+  const binary = window.atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return {
+    dataUrl,
+    file: new File([bytes], filename, { type: "image/png", lastModified: Date.now() }),
+  };
+}
+
 const UI_COPY: Record<Language, {
   languageLabel: string;
   languageRule: string;
@@ -191,7 +205,7 @@ export default function Home() {
     setError("");
   }
 
-  function saveHaiku() {
+  async function saveHaiku() {
     const paper = poemPaperRef.current;
     if (!haiku || !paper) return;
 
@@ -312,9 +326,27 @@ export default function Home() {
       context.lineWidth = 1;
       context.strokeRect(0.5, 0.5, width - 1, height - 1);
 
+      const filename = haikuImageFilename(haiku.createdAt);
+      const image = pngFileFromCanvas(exportCanvas, filename);
+      const shareData = { files: [image.file] };
+      if (
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare(shareData)
+      ) {
+        try {
+          await navigator.share(shareData);
+          setSaved(true);
+          window.setTimeout(() => setSaved(false), 1800);
+          return;
+        } catch (shareError) {
+          if (shareError instanceof DOMException && shareError.name === "AbortError") return;
+        }
+      }
+
       const link = document.createElement("a");
-      link.href = exportCanvas.toDataURL("image/png");
-      link.download = haikuImageFilename(haiku.createdAt);
+      link.href = image.dataUrl;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
