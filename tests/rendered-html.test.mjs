@@ -29,6 +29,7 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.match(html, /From a word/);
   assert.match(html, /English/);
   assert.match(html, /中文/);
+  assert.match(html, /日本語/);
   assert.match(html, /5 · 7 · 5 syllables/);
   assert.match(html, /Write a haiku/);
   assert.match(html, /href="mailto:zhiguoinusa@gmail\.com"/);
@@ -47,7 +48,7 @@ test("includes both generator modes and removes starter assets", async () => {
   ]);
 
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
-  assert.match(haiku, /type Language = "en" \| "zh"/);
+  assert.match(haiku, /type Language = "en" \| "zh" \| "ja"/);
   assert.match(haiku, /countPoeticUnits/);
   assert.match(haiku, /estimateSyllables/);
   assert.doesNotMatch(haiku, /LOCAL_COMPOSITION_BANKS|makeRandomHaiku|makeKeywordHaiku/);
@@ -69,6 +70,14 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /mode,/);
   assert.match(page, /language,/);
   assert.match(page, /Poem language/);
+  assert.match(page, /随机生成/);
+  assert.match(page, /关键词生成/);
+  assert.match(page, /おまかせ/);
+  assert.match(page, /言葉から/);
+  assert.match(page, /俳句を保存/);
+  assert.match(page, /俳句を詠む/);
+  assert.match(page, /onClick=\{\(\) => changeLanguage\("ja"\)\}/);
+  assert.ok(page.indexOf('className="language-control"') < page.indexOf('className="mode-switch"'));
   assert.doesNotMatch(page, /navigator\.clipboard\.writeText/);
   assert.match(page, /Save Haiku/);
   assert.match(page, /Save haiku as a picture/);

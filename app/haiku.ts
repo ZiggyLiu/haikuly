@@ -1,5 +1,5 @@
 export type Mode = "random" | "keyword";
-export type Language = "en" | "zh";
+export type Language = "en" | "zh" | "ja";
 export type GenerationSource = "deepseek";
 
 export const ILLUSTRATION_MOTIFS = [
@@ -19,6 +19,7 @@ export type IllustrationRecipe = {
 
 export type Haiku = {
   lines: [string, string, string];
+  readings?: [string, string, string];
   seed: number;
   createdAt: string;
   illustration: IllustrationRecipe;
@@ -42,7 +43,9 @@ function localDateParts(createdAt: string) {
 export function haikuDateLabel(createdAt: string, language: Language): string {
   const parts = localDateParts(createdAt);
   if (!parts) return "DATE —";
-  if (language === "zh") return `${parts.year}年${parts.month + 1}月${parts.day}日`;
+  if (language === "zh" || language === "ja") {
+    return `${parts.year}年${parts.month + 1}月${parts.day}日`;
+  }
   return `${ENGLISH_MONTHS[parts.month]} ${parts.day}, ${parts.year}`;
 }
 
@@ -108,11 +111,23 @@ export function countPoeticUnits(text: string, language: Language): number {
   if (language === "zh") {
     return Array.from(text).filter((character) => /\p{Script=Han}/u.test(character)).length;
   }
+  if (language === "ja") return countJapaneseMora(text);
   return estimateSyllables(text);
 }
 
+export function countJapaneseMora(reading: string): number {
+  const combiningKana = new Set([
+    "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゃ", "ゅ", "ょ", "ゎ", "ゕ", "ゖ",
+    "ァ", "ィ", "ゥ", "ェ", "ォ", "ャ", "ュ", "ョ", "ヮ", "ヵ", "ヶ",
+  ]);
+  return Array.from(reading.normalize("NFC")).filter((character) =>
+    (/^[\p{Script=Hiragana}\p{Script=Katakana}ー]$/u.test(character) &&
+      !combiningKana.has(character)),
+  ).length;
+}
+
 export function poemLinesClassName(lines: readonly string[], language: Language): string {
-  if (language === "zh") return "poem-lines";
+  if (language !== "en") return "poem-lines";
 
   const longestLine = Math.max(...lines.map((line) => Array.from(line).length));
   if (longestLine > 38) return "poem-lines lines-extra-tight";
@@ -120,7 +135,11 @@ export function poemLinesClassName(lines: readonly string[], language: Language)
   return "poem-lines";
 }
 
-export function generationSourceLabel(source: GenerationSource): string {
-  const labels: Record<GenerationSource, string> = { deepseek: "Written & painted with DeepSeek" };
-  return labels[source];
+export function generationSourceLabel(source: GenerationSource, language: Language = "en"): string {
+  const labels: Record<Language, Record<GenerationSource, string>> = {
+    en: { deepseek: "Written & painted with DeepSeek" },
+    zh: { deepseek: "由 DeepSeek 创作与绘制" },
+    ja: { deepseek: "DeepSeekによる作句・描画" },
+  };
+  return labels[language][source];
 }

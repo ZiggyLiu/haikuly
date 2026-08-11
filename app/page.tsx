@@ -25,6 +25,106 @@ function elementPosition(element: Element, paperBounds: DOMRect) {
   return { x: bounds.left - paperBounds.left, y: bounds.top - paperBounds.top };
 }
 
+const UI_COPY: Record<Language, {
+  languageLabel: string;
+  languageRule: string;
+  languageGroup: string;
+  modeGroup: string;
+  randomMode: string;
+  keywordMode: string;
+  keywordPrompt: string;
+  keywordPlaceholder: string;
+  keywordError: string;
+  aiNote: string;
+  emptyPoem: string;
+  deepSeekStudio: string;
+  save: string;
+  saved: string;
+  saveAria: string;
+  saveError: string;
+  generateRandom: string;
+  generateKeyword: string;
+  generating: string;
+  generationError: string;
+  unreachableError: string;
+}> = {
+  en: {
+    languageLabel: "Poem language",
+    languageRule: "5 · 7 · 5 syllables",
+    languageGroup: "Poem language",
+    modeGroup: "Generation mode",
+    randomMode: "By chance",
+    keywordMode: "From a word",
+    keywordPrompt: "What is on your mind?",
+    keywordPlaceholder: "moonlight, first snow, home…",
+    keywordError: "Enter a word or short phrase first.",
+    aiNote: "Written, reviewed, and painted with DeepSeek",
+    emptyPoem: "Your next small moment will appear here.",
+    deepSeekStudio: "DeepSeek studio",
+    save: "Save Haiku",
+    saved: "Saved",
+    saveAria: "Save haiku as a picture",
+    saveError: "The haiku image could not be saved. Please try again.",
+    generateRandom: "Write a haiku",
+    generateKeyword: "Write my haiku",
+    generating: "Writing, reviewing, and painting…",
+    generationError: "DeepSeek could not write a poem. Please try again.",
+    unreachableError: "DeepSeek could not be reached. Please try again.",
+  },
+  zh: {
+    languageLabel: "诗歌语言",
+    languageRule: "5 · 7 · 5 字",
+    languageGroup: "诗歌语言",
+    modeGroup: "生成方式",
+    randomMode: "随机生成",
+    keywordMode: "关键词生成",
+    keywordPrompt: "此刻你在想什么？",
+    keywordPlaceholder: "月光，初雪，故乡…",
+    keywordError: "请先输入一个词或短语。",
+    aiNote: "由 DeepSeek 创作、审校与绘制",
+    emptyPoem: "下一刻诗意将在此浮现。",
+    deepSeekStudio: "DeepSeek 俳句工房",
+    save: "保存俳句",
+    saved: "已保存",
+    saveAria: "将俳句保存为图片",
+    saveError: "无法保存俳句图片，请重试。",
+    generateRandom: "写一首俳句",
+    generateKeyword: "写我的俳句",
+    generating: "正在创作、审校与绘制…",
+    generationError: "DeepSeek 暂时无法创作俳句，请重试。",
+    unreachableError: "暂时无法连接 DeepSeek，请重试。",
+  },
+  ja: {
+    languageLabel: "俳句の言語",
+    languageRule: "5 · 7 · 5 音",
+    languageGroup: "俳句の言語",
+    modeGroup: "作句方法",
+    randomMode: "おまかせ",
+    keywordMode: "言葉から",
+    keywordPrompt: "今、心にあるものは？",
+    keywordPlaceholder: "月明かり、初雪、故郷…",
+    keywordError: "言葉または短いフレーズを入力してください。",
+    aiNote: "DeepSeekが作句・推敲・描画",
+    emptyPoem: "次の小さな瞬間がここに現れます。",
+    deepSeekStudio: "DeepSeek 俳句工房",
+    save: "俳句を保存",
+    saved: "保存しました",
+    saveAria: "俳句を画像として保存",
+    saveError: "俳句の画像を保存できませんでした。もう一度お試しください。",
+    generateRandom: "俳句を詠む",
+    generateKeyword: "私の俳句を詠む",
+    generating: "作句・推敲・描画中…",
+    generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
+    unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+  },
+};
+
+function languageTag(language: Language) {
+  if (language === "zh") return "zh-CN";
+  if (language === "ja") return "ja";
+  return "en";
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("random");
   const [language, setLanguage] = useState<Language>("en");
@@ -39,13 +139,14 @@ export default function Home() {
     language: Language;
   } | null>(null);
   const haiku = displayed?.haiku ?? null;
+  const copy = UI_COPY[language];
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
     setSaved(false);
 
     if (mode === "keyword" && !keyword.trim()) {
-      setError("Enter a word or short phrase first.");
+      setError(copy.keywordError);
       return;
     }
 
@@ -68,12 +169,12 @@ export default function Home() {
         language?: Language;
       };
       if (!response.ok || !result.haiku) {
-        setError(result.error ?? "DeepSeek could not write a poem. Please try again.");
+        setError(language === "en" ? (result.error ?? copy.generationError) : copy.generationError);
         return;
       }
       setDisplayed({ haiku: result.haiku, source: "deepseek", language: result.language ?? language });
     } catch {
-      setError("DeepSeek could not be reached. Please try again.");
+      setError(copy.unreachableError);
       return;
     } finally {
       setIsGenerating(false);
@@ -211,7 +312,7 @@ export default function Home() {
       setSaved(true);
       window.setTimeout(() => setSaved(false), 1800);
     } catch {
-      setError("The haiku image could not be saved. Please try again.");
+      setError(copy.saveError);
     }
   }
 
@@ -249,28 +350,9 @@ export default function Home() {
       </section>
 
       <section className="studio" aria-label="Haiku generator">
-        <div className="mode-switch" role="group" aria-label="Generation mode">
-          <button
-            type="button"
-            className={mode === "random" ? "active" : ""}
-            aria-pressed={mode === "random"}
-            onClick={() => changeMode("random")}
-          >
-            <span aria-hidden="true">✦</span> By chance
-          </button>
-          <button
-            type="button"
-            className={mode === "keyword" ? "active" : ""}
-            aria-pressed={mode === "keyword"}
-            onClick={() => changeMode("keyword")}
-          >
-            <span aria-hidden="true">⌁</span> From a word
-          </button>
-        </div>
-
         <div className="language-control">
-          <span className="language-label">Poem language</span>
-          <div className="language-switch" role="group" aria-label="Poem language">
+          <span className="language-label">{copy.languageLabel}</span>
+          <div className="language-switch" role="group" aria-label={copy.languageGroup}>
             <button
               type="button"
               className={language === "en" ? "active" : ""}
@@ -288,16 +370,42 @@ export default function Home() {
             >
               中文
             </button>
+            <button
+              type="button"
+              className={language === "ja" ? "active" : ""}
+              aria-pressed={language === "ja"}
+              onClick={() => changeLanguage("ja")}
+              lang="ja"
+            >
+              日本語
+            </button>
           </div>
-          <span className="language-rule">
-            {language === "zh" ? "5 · 7 · 5 characters" : "5 · 7 · 5 syllables"}
-          </span>
+          <span className="language-rule">{copy.languageRule}</span>
+        </div>
+
+        <div className="mode-switch" role="group" aria-label={copy.modeGroup}>
+          <button
+            type="button"
+            className={mode === "random" ? "active" : ""}
+            aria-pressed={mode === "random"}
+            onClick={() => changeMode("random")}
+          >
+            <span aria-hidden="true">✦</span> {copy.randomMode}
+          </button>
+          <button
+            type="button"
+            className={mode === "keyword" ? "active" : ""}
+            aria-pressed={mode === "keyword"}
+            onClick={() => changeMode("keyword")}
+          >
+            <span aria-hidden="true">⌁</span> {copy.keywordMode}
+          </button>
         </div>
 
         <form onSubmit={generate} className="generator-form">
           {mode === "keyword" && (
             <div className="keyword-field">
-              <label htmlFor="keyword">What is on your mind?</label>
+              <label htmlFor="keyword">{copy.keywordPrompt}</label>
               <div className="input-wrap">
                 <input
                   id="keyword"
@@ -307,12 +415,12 @@ export default function Home() {
                     setError("");
                   }}
                   maxLength={48}
-                  placeholder={language === "zh" ? "月光，初雪，故乡…" : "moonlight, first snow, home…"}
+                  placeholder={copy.keywordPlaceholder}
                   autoComplete="off"
                 />
                 <span>{keyword.length}/48</span>
               </div>
-              <p className="ai-note"><span aria-hidden="true">✦</span> Written, reviewed, and painted with DeepSeek</p>
+              <p className="ai-note"><span aria-hidden="true">✦</span> {copy.aiNote}</p>
             </div>
           )}
 
@@ -336,7 +444,7 @@ export default function Home() {
             {haiku ? (
               <div
                 className={poemLinesClassName(haiku.lines, displayed?.language ?? "en")}
-                lang={displayed?.language === "zh" ? "zh-CN" : "en"}
+                lang={languageTag(displayed?.language ?? "en")}
               >
                 {haiku.lines.map((line, index) => (
                   <div className="poem-line" key={`${haiku.seed}-${index}`}>
@@ -346,14 +454,18 @@ export default function Home() {
               </div>
             ) : (
               <div className="poem-lines poem-empty">
-                <p>Your next small moment will appear here.</p>
+                <p>{copy.emptyPoem}</p>
               </div>
             )}
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
-              <span className="poem-source">{haiku ? generationSourceLabel("deepseek") : "DeepSeek studio"}</span>
-              <button type="button" onClick={saveHaiku} aria-label="Save haiku as a picture" disabled={!haiku}>
-                {saved ? "Saved" : "Save Haiku"}
+              <span className="poem-source">
+                {haiku
+                  ? generationSourceLabel("deepseek", displayed?.language ?? "en")
+                  : copy.deepSeekStudio}
+              </span>
+              <button type="button" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>
+                {saved ? copy.saved : copy.save}
               </button>
             </div>
           </div>
@@ -361,7 +473,9 @@ export default function Home() {
           <div className="action-row">
             <p className="error-message" role="alert">{error}</p>
             <button type="submit" className="generate-button" disabled={isGenerating}>
-              {isGenerating ? "Writing, reviewing, and painting…" : mode === "random" ? "Write a haiku" : "Write my haiku"}
+              {isGenerating
+                ? copy.generating
+                : mode === "random" ? copy.generateRandom : copy.generateKeyword}
               <span aria-hidden="true">↗</span>
             </button>
           </div>

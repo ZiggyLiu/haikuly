@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   countPoeticUnits,
+  countJapaneseMora,
   estimateSyllables,
   generationSourceLabel,
   haikuDateLabel,
@@ -14,6 +15,7 @@ test("creation dates use the selected poem language", () => {
   const createdAt = new Date(2026, 7, 10, 12).toISOString();
   assert.equal(haikuDateLabel(createdAt, "en"), "AUG 10, 2026");
   assert.equal(haikuDateLabel(createdAt, "zh"), "2026年8月10日");
+  assert.equal(haikuDateLabel(createdAt, "ja"), "2026年8月10日");
   assert.equal(haikuDateLabel("not-a-date", "en"), "DATE —");
 });
 
@@ -46,8 +48,20 @@ test("Chinese poetic units count Han characters", () => {
   assert.equal(countPoeticUnits("春雨，落花间", "zh"), 5);
 });
 
+test("Japanese mora counting handles contracted and independent kana", () => {
+  assert.equal(countJapaneseMora("ふるいけや"), 5);
+  assert.equal(countJapaneseMora("かわずとびこむ"), 7);
+  assert.equal(countJapaneseMora("みずのおと"), 5);
+  assert.equal(countJapaneseMora("きょう"), 2);
+  assert.equal(countJapaneseMora("がっこう"), 4);
+  assert.equal(countJapaneseMora("スーパー"), 4);
+  assert.equal(countPoeticUnits("ふるいけや", "ja"), 5);
+});
+
 test("the only generation source is DeepSeek", () => {
   assert.equal(generationSourceLabel("deepseek"), "Written & painted with DeepSeek");
+  assert.equal(generationSourceLabel("deepseek", "zh"), "由 DeepSeek 创作与绘制");
+  assert.equal(generationSourceLabel("deepseek", "ja"), "DeepSeekによる作句・描画");
 });
 
 test("illustration recipes allow only the restrained render vocabulary", () => {
@@ -85,4 +99,8 @@ test("the longest English line selects one shared poem size", () => {
 
 test("Chinese lines keep their standard presentation", () => {
   assert.equal(poemLinesClassName(["春雨落花间", "远山藏入暮云中", "归鸟过长空"], "zh"), "poem-lines");
+});
+
+test("Japanese lines keep their standard presentation", () => {
+  assert.equal(poemLinesClassName(["古池や", "蛙飛びこむ", "水の音"], "ja"), "poem-lines");
 });

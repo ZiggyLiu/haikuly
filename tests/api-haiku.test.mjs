@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { POST, isValidHaiku } from "../app/api/haiku/route.ts";
-import { countPoeticUnits, estimateSyllables } from "../app/haiku.ts";
+import { countJapaneseMora, countPoeticUnits, estimateSyllables } from "../app/haiku.ts";
 
 function request(body) {
   return new Request("http://localhost/api/haiku", {
@@ -27,8 +27,8 @@ const validIllustration = {
   placement: "right",
 };
 
-function poemResult(lines, illustration = validIllustration, finishReason = "stop") {
-  return deepSeekResult({ lines, illustration }, finishReason);
+function poemResult(lines, illustration = validIllustration, finishReason = "stop", readings) {
+  return deepSeekResult({ lines, ...(readings ? { readings } : {}), illustration }, finishReason);
 }
 
 function reviewResult(verdict, reason = "The poem is internally consistent.") {
@@ -46,6 +46,9 @@ const validChineseLines = [
   "远山藏入暮云中",
   "一灯照归舟",
 ];
+
+const validJapaneseLines = ["古池や", "蛙飛びこむ", "水の音"];
+const validJapaneseReadings = ["ふるいけや", "かわずとびこむ", "みずのおと"];
 
 function restoreAfter(context) {
   const originalFetch = globalThis.fetch;
@@ -174,6 +177,55 @@ test("Chinese mode removes harmless punctuation and spaces before validation", a
   assert.equal(response.status, 200);
   assert.deepEqual(result.haiku.lines, validChineseLines);
   assert.equal(result.language, "zh");
+});
+
+test("Japanese mode validates natural lines through matching 5–7–5 mora readings", async (context) => {
+  restoreAfter(context);
+  const bodies = [];
+  globalThis.fetch = async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    return Response.json(bodies.length === 1
+      ? poemResult(validJapaneseLines, validIllustration, "stop", validJapaneseReadings)
+      : reviewResult("coherent"));
+  };
+
+  const response = await POST(request({ mode: "keyword", language: "ja", keyword: "初雪" }));
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.source, "deepseek");
+  assert.equal(result.language, "ja");
+  assert.deepEqual(result.haiku.lines, validJapaneseLines);
+  assert.deepEqual(result.haiku.readings, validJapaneseReadings);
+  assert.deepEqual(result.haiku.readings.map(countJapaneseMora), [5, 7, 5]);
+  assert.match(bodies[0].messages[0].content, /natural Japanese/);
+  assert.match(bodies[0].messages[0].content, /Japanese mora/);
+  assert.deepEqual(JSON.parse(bodies[1].messages[1].content), {
+    mode: "keyword",
+    language: "ja",
+    keyword: "初雪",
+    lines: validJapaneseLines,
+    readings: validJapaneseReadings,
+    illustration: validIllustration,
+  });
+});
+
+test("Japanese mode rejects missing or invalid mora readings", async (context) => {
+  restoreAfter(context);
+  const drafts = [
+    deepSeekResult({ lines: validJapaneseLines, illustration: validIllustration }),
+    poemResult(validJapaneseLines, validIllustration, "stop", ["ふるいけ", "かわずとびこむ", "みずのおと"]),
+  ];
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    const result = drafts[callCount] ?? drafts[1];
+    callCount += 1;
+    return Response.json(result);
+  };
+
+  const response = await POST(request({ mode: "random", language: "ja" }));
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).haiku, undefined);
+  assert.equal(callCount, 2);
 });
 
 test("keyword content stays data even when it looks like an instruction", async (context) => {
@@ -392,4 +444,8 @@ test("haiku validation enforces exactly 5–7–5", () => {
   assert.equal(isValidHaiku(validChineseLines, "zh"), true);
   assert.equal(isValidHaiku(["春雨落花间。", validChineseLines[1], validChineseLines[2]], "zh"), false);
   assert.equal(isValidHaiku(validLines, "zh"), false);
+  assert.equal(isValidHaiku(validJapaneseLines, "ja", validJapaneseReadings), true);
+  assert.equal(isValidHaiku(validJapaneseLines, "ja"), false);
+  assert.equal(isValidHaiku(validJapaneseLines, "ja", ["ふるいけ", validJapaneseReadings[1], validJapaneseReadings[2]]), false);
+  assert.equal(isValidHaiku(["Old pond", validJapaneseLines[1], validJapaneseLines[2]], "ja", validJapaneseReadings), false);
 });

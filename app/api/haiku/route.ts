@@ -33,14 +33,18 @@ function readOutputText(response: DeepSeekResponse): string | null {
   return typeof choice.message?.content === "string" ? choice.message.content : null;
 }
 
-function parseHaikuDraft(text: string | null): { lines: unknown; illustration: unknown } | null {
+function parseHaikuDraft(
+  text: string | null,
+  language: Language,
+): { lines: unknown; readings?: unknown; illustration: unknown } | null {
   if (!text) return null;
   try {
     const parsed: unknown = JSON.parse(text);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
     const keys = Object.keys(parsed).sort();
-    if (keys.join(",") !== "illustration,lines") return null;
-    return parsed as { lines: unknown; illustration: unknown };
+    const requiredKeys = language === "ja" ? "illustration,lines,readings" : "illustration,lines";
+    if (keys.join(",") !== requiredKeys) return null;
+    return parsed as { lines: unknown; readings?: unknown; illustration: unknown };
   } catch {
     return null;
   }
@@ -50,9 +54,16 @@ function normalizeHaikuLines(lines: unknown, language: Language): unknown {
   if (!Array.isArray(lines) || lines.length !== 3 ||
     !lines.every((line) => typeof line === "string")) return null;
 
-  return lines.map((line) => language === "zh"
+  return lines.map((line) => language === "zh" || language === "ja"
     ? line.replace(/[\p{P}\p{S}\s]/gu, "")
     : line.trim());
+}
+
+function normalizeJapaneseReadings(readings: unknown, language: Language): unknown {
+  if (language !== "ja") return undefined;
+  if (!Array.isArray(readings) || readings.length !== 3 ||
+    !readings.every((reading) => typeof reading === "string")) return null;
+  return readings.map((reading) => reading.replace(/[\p{P}\p{S}\s]/gu, ""));
 }
 
 function parseReviewVerdict(text: string | null): ReviewVerdict | null {
@@ -102,20 +113,25 @@ async function requestDeepSeek(
 function haikuRequest(mode: Mode, language: Language, keyword: string | null, attempt: number) {
   const formInstruction = language === "zh"
     ? "Write in natural Chinese. The three lines must contain exactly 5, 7, and 5 Chinese Han characters. Do not use punctuation, spaces, Latin letters, or digits."
-    : "Write in natural English. The three lines must contain exactly 5, 7, and 5 syllables.";
+    : language === "ja"
+      ? "Write in natural Japanese using kanji and kana as appropriate. The three displayed lines must contain no punctuation, spaces, Latin letters, or digits. Also return readings as an array of exactly three hiragana strings that precisely match the pronunciation of the displayed lines and contain exactly 5, 7, and 5 Japanese mora. In mora counting, small ゃ, ゅ, ょ and other combining small kana join the preceding kana, while っ, ん, and ー each count as one mora."
+      : "Write in natural English. The three lines must contain exactly 5, 7, and 5 syllables.";
+  const schemaInstruction = language === "ja"
+    ? "Return only a JSON object with exactly three keys: lines, readings, and illustration. Lines and readings must each be an array of exactly three strings. "
+    : "Return only a JSON object with exactly two keys: lines and illustration. Lines must be an array of exactly three strings. ";
 
   return {
     model: MODEL,
     thinking: { type: "disabled" },
-    max_tokens: 260,
+    max_tokens: 320,
     temperature: 1.1,
     response_format: { type: "json_object" },
     messages: [
       {
         role: "system",
         content:
-          "Write one vivid haiku and direct one matching ink-wash illustration. Return only a JSON object with exactly two keys: lines and illustration. " +
-          "Lines must be an array of exactly three strings. Illustration must be an object with exactly four keys: motif, accent, tone, and placement. " +
+          "Write one vivid haiku and direct one matching ink-wash illustration. " + schemaInstruction +
+          "Illustration must be an object with exactly four keys: motif, accent, tone, and placement. " +
           "Use one motif from mountains, river, pine, rain, blossoms, reeds, shore, snow, field, or mist. " +
           "Use one accent from moon, sun, bird, blossoms, lantern, or none. Use one tone from sage, blue-gray, sepia, or plum-gray. " +
           "Use left or right placement. Choose an illustration that is physically consistent with and clearly relevant to the poem. " +
@@ -147,6 +163,7 @@ async function commonSenseReview(
   language: Language,
   keyword: string | null,
   lines: [string, string, string],
+  readings: Haiku["readings"] | undefined,
   illustration: IllustrationRecipe,
   apiKey: string,
 ): Promise<ReviewResult> {
@@ -164,6 +181,7 @@ async function commonSenseReview(
           "Check seasonal and weather consistency, setting, time, physical plausibility, living things, cause and effect, " +
           "internal coherence, and keyword relevance when a keyword exists. Also check that the illustration motif, accent, tone, and placement " +
           "form a sensible, relevant, understated visual interpretation of the poem without adding a contradiction. Allow normal poetic compression and metaphor. " +
+          "For Japanese, verify that each kana reading matches its displayed line and follows the stated 5-7-5 mora form. " +
           "Use artistic only when the poem itself clearly frames an apparent contradiction as memory, dream, metaphor, absence, " +
           "or deliberate contrast. Use contradictory for accidental or unexplained conflicts. " +
           "Return only a JSON object with exactly two keys: verdict and reason. " +
@@ -171,7 +189,7 @@ async function commonSenseReview(
       },
       {
         role: "user",
-        content: JSON.stringify({ mode, language, keyword, lines, illustration }),
+        content: JSON.stringify({ mode, language, keyword, lines, readings, illustration }),
       },
     ],
   }, apiKey);
@@ -185,18 +203,36 @@ async function commonSenseReview(
 export function isValidHaiku(
   lines: unknown,
   language: Language = "en",
+  readings?: unknown,
 ): lines is [string, string, string] {
   const validChineseLines = language !== "zh" || (
     Array.isArray(lines) &&
     lines.every((line) => typeof line === "string" &&
       Array.from(line.trim()).every((character) => /\p{Script=Han}/u.test(character)))
   );
+  const validJapaneseLines = language !== "ja" || (
+    Array.isArray(lines) &&
+    lines.every((line) => typeof line === "string" &&
+      Array.from(line.trim()).every((character) =>
+        /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々]$/u.test(character)))
+  );
+  const validJapaneseReadings = language !== "ja" || (
+    Array.isArray(readings) &&
+    readings.length === 3 &&
+    readings.every((reading) => typeof reading === "string" &&
+      reading.length > 0 &&
+      Array.from(reading).every((character) =>
+        /^[\p{Script=Hiragana}\p{Script=Katakana}ー]$/u.test(character))) &&
+    readings.map((reading) => countPoeticUnits(reading, "ja")).join(",") === "5,7,5"
+  );
   return (
     Array.isArray(lines) &&
     lines.length === 3 &&
     lines.every((line) => typeof line === "string" && line.trim().length > 0) &&
     validChineseLines &&
-    lines.map((line) => countPoeticUnits(line, language)).join(",") === "5,7,5"
+    validJapaneseLines &&
+    validJapaneseReadings &&
+    (language === "ja" || lines.map((line) => countPoeticUnits(line, language)).join(",") === "5,7,5")
   );
 }
 
@@ -219,8 +255,8 @@ export async function POST(request: Request) {
   const mode: Mode = modeValue;
 
   const languageValue = (body as { language?: unknown }).language ?? "en";
-  if (languageValue !== "en" && languageValue !== "zh") {
-    return json({ error: "Choose English or Chinese." }, 400);
+  if (languageValue !== "en" && languageValue !== "zh" && languageValue !== "ja") {
+    return json({ error: "Choose English, Chinese, or Japanese." }, 400);
   }
   const language: Language = languageValue;
 
@@ -247,17 +283,22 @@ export async function POST(request: Request) {
       return json({ error: "DeepSeek could not be reached. Please try again later." }, 503);
     }
 
-    const draft = parseHaikuDraft(readOutputText(response));
+    const draft = parseHaikuDraft(readOutputText(response), language);
     const lines = normalizeHaikuLines(draft?.lines, language);
-    if (!isValidHaiku(lines, language) || !isIllustrationRecipe(draft?.illustration)) continue;
+    const readings = normalizeJapaneseReadings(draft?.readings, language);
+    if (!isValidHaiku(lines, language, readings) || !isIllustrationRecipe(draft?.illustration)) continue;
 
     const trimmedLines = lines.map((line) => line.trim()) as Haiku["lines"];
+    const trimmedReadings = language === "ja"
+      ? (readings as string[]).map((reading) => reading.trim()) as NonNullable<Haiku["readings"]>
+      : undefined;
     const illustration = draft.illustration;
     const review = await commonSenseReview(
       mode,
       language,
       mode === "keyword" ? keyword : null,
       trimmedLines,
+      trimmedReadings,
       illustration,
       apiKey,
     );
@@ -269,6 +310,7 @@ export async function POST(request: Request) {
     const generatedAt = Date.now();
     const haiku: Haiku = {
       lines: trimmedLines,
+      ...(trimmedReadings ? { readings: trimmedReadings } : {}),
       seed: generatedAt + Math.floor(Math.random() * 10000),
       createdAt: new Date(generatedAt).toISOString(),
       illustration,
