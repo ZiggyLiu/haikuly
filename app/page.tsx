@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import InkWashIllustration from "./ink-wash";
 import {
   generationSourceLabel,
@@ -140,6 +140,15 @@ export default function Home() {
   } | null>(null);
   const haiku = displayed?.haiku ?? null;
   const copy = UI_COPY[language];
+
+  useEffect(() => {
+    const refreshRestoredPage = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload();
+    };
+
+    window.addEventListener("pageshow", refreshRestoredPage);
+    return () => window.removeEventListener("pageshow", refreshRestoredPage);
+  }, []);
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();

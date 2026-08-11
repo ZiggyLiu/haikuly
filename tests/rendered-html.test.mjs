@@ -78,6 +78,8 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /俳句を詠む/);
   assert.match(page, /onClick=\{\(\) => changeLanguage\("ja"\)\}/);
   assert.ok(page.indexOf('className="language-control"') < page.indexOf('className="mode-switch"'));
+  assert.match(page, /event\.persisted/);
+  assert.match(page, /window\.location\.reload\(\)/);
   assert.doesNotMatch(page, /navigator\.clipboard\.writeText/);
   assert.match(page, /Save Haiku/);
   assert.match(page, /Save haiku as a picture/);
@@ -117,4 +119,17 @@ test("includes both generator modes and removes starter assets", async () => {
   await access(new URL(".openai/hosting.json", projectRoot));
   await access(new URL("public/og.png", projectRoot));
   await access(new URL(".env.example", projectRoot));
+});
+
+test("keeps mobile Safari controls tappable and browser-compatible", async () => {
+  const [styles, viteConfig] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(styles, /\.mode-switch button \{ min-width: 0; min-height: 44px;/);
+  assert.match(styles, /\.language-switch button \{ min-height: 44px;/);
+  assert.match(styles, /\.generate-button \{ grid-column: 1; grid-row: 1; width: 100%; min-height: 48px;/);
+  assert.match(styles, /\.generator-form \{[\s\S]*?isolation: isolate;[\s\S]*?pointer-events: auto;/);
+  assert.match(viteConfig, /target: "safari13"/);
 });

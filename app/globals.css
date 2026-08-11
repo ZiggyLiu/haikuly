@@ -29,6 +29,7 @@ button {
   color: inherit;
   -webkit-appearance: none;
   appearance: none;
+  -webkit-tap-highlight-color: rgba(54, 83, 71, 0.12);
   touch-action: manipulation;
 }
 
@@ -150,6 +151,8 @@ h1 em {
   background: rgba(247, 244, 236, 0.56);
   position: relative;
   z-index: 3;
+  isolation: isolate;
+  pointer-events: auto;
 }
 
 .mode-switch button {
@@ -181,6 +184,8 @@ h1 em {
   gap: 12px;
   position: relative;
   z-index: 3;
+  isolation: isolate;
+  pointer-events: auto;
 }
 
 .language-label,
@@ -197,6 +202,10 @@ h1 em {
   border: 1px solid var(--line);
   border-radius: 100px;
   background: rgba(247, 244, 236, 0.56);
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  pointer-events: auto;
 }
 
 .language-switch button {
@@ -216,7 +225,12 @@ h1 em {
   font-weight: 600;
 }
 
-.generator-form { position: relative; z-index: 3; }
+.generator-form {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  pointer-events: auto;
+}
 
 .keyword-field {
   width: min(600px, 100%);
@@ -569,9 +583,10 @@ footer p {
   h1 { font-size: clamp(49px, 15vw, 72px); }
   .studio { margin-bottom: 64px; }
   .mode-switch { width: 100%; }
-  .mode-switch button { min-width: 0; flex: 1; }
+  .mode-switch button { min-width: 0; min-height: 44px; flex: 1; }
   .language-control { flex-wrap: wrap; gap: 8px 10px; }
   .language-label { width: 100%; text-align: center; }
+  .language-switch button { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
   .poem-paper { min-height: 370px; padding: 76px 14px 26px; }
   .sun-seal {
     width: 46px;
@@ -597,7 +612,7 @@ footer p {
   .poem-lines.lines-tight .poem-line p { font-size: clamp(16px, 4.7vw, 20px); }
   .poem-lines.lines-extra-tight .poem-line p { font-size: clamp(14px, 4vw, 17px); }
   .action-row { grid-template-columns: 1fr; }
-  .generate-button { grid-column: 1; grid-row: 1; width: 100%; }
+  .generate-button { grid-column: 1; grid-row: 1; width: 100%; min-height: 48px; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }
   .ambient { border-color: rgba(54, 83, 71, 0.2); }
   .ambient-left { width: 210px; height: 210px; left: -118px; top: 210px; }
