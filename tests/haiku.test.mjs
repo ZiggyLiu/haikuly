@@ -4,6 +4,7 @@ import {
   countPoeticUnits,
   estimateSyllables,
   generationSourceLabel,
+  isIllustrationRecipe,
   poemLinesClassName,
 } from "../app/haiku.ts";
 
@@ -31,7 +32,28 @@ test("Chinese poetic units count Han characters", () => {
 });
 
 test("the only generation source is DeepSeek", () => {
-  assert.equal(generationSourceLabel("deepseek"), "Written with DeepSeek");
+  assert.equal(generationSourceLabel("deepseek"), "Written & painted with DeepSeek");
+});
+
+test("illustration recipes allow only the restrained render vocabulary", () => {
+  assert.equal(isIllustrationRecipe({
+    motif: "mountains",
+    accent: "bird",
+    tone: "blue-gray",
+    placement: "left",
+  }), true);
+  assert.equal(isIllustrationRecipe({
+    motif: "mountains",
+    accent: "bird",
+    tone: "neon",
+    placement: "left",
+  }), false);
+  assert.equal(isIllustrationRecipe({
+    motif: "mountains",
+    accent: "bird",
+    tone: "sage",
+    placement: "center",
+  }), false);
 });
 
 test("the longest English line selects one shared poem size", () => {

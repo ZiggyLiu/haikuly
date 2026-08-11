@@ -2,10 +2,37 @@ export type Mode = "random" | "keyword";
 export type Language = "en" | "zh";
 export type GenerationSource = "deepseek";
 
+export const ILLUSTRATION_MOTIFS = [
+  "mountains", "river", "pine", "rain", "blossoms",
+  "reeds", "shore", "snow", "field", "mist",
+] as const;
+export const ILLUSTRATION_ACCENTS = ["moon", "sun", "bird", "blossoms", "lantern", "none"] as const;
+export const ILLUSTRATION_TONES = ["sage", "blue-gray", "sepia", "plum-gray"] as const;
+export const ILLUSTRATION_PLACEMENTS = ["left", "right"] as const;
+
+export type IllustrationRecipe = {
+  motif: (typeof ILLUSTRATION_MOTIFS)[number];
+  accent: (typeof ILLUSTRATION_ACCENTS)[number];
+  tone: (typeof ILLUSTRATION_TONES)[number];
+  placement: (typeof ILLUSTRATION_PLACEMENTS)[number];
+};
+
 export type Haiku = {
   lines: [string, string, string];
   seed: number;
+  illustration: IllustrationRecipe;
 };
+
+export function isIllustrationRecipe(value: unknown): value is IllustrationRecipe {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const keys = Object.keys(value).sort();
+  if (keys.join(",") !== "accent,motif,placement,tone") return false;
+  const recipe = value as Record<string, unknown>;
+  return ILLUSTRATION_MOTIFS.includes(recipe.motif as IllustrationRecipe["motif"]) &&
+    ILLUSTRATION_ACCENTS.includes(recipe.accent as IllustrationRecipe["accent"]) &&
+    ILLUSTRATION_TONES.includes(recipe.tone as IllustrationRecipe["tone"]) &&
+    ILLUSTRATION_PLACEMENTS.includes(recipe.placement as IllustrationRecipe["placement"]);
+}
 
 export function estimateSyllables(text: string): number {
   const exceptions: Record<string, number> = {
@@ -63,6 +90,6 @@ export function poemLinesClassName(lines: readonly string[], language: Language)
 }
 
 export function generationSourceLabel(source: GenerationSource): string {
-  const labels: Record<GenerationSource, string> = { deepseek: "Written with DeepSeek" };
+  const labels: Record<GenerationSource, string> = { deepseek: "Written & painted with DeepSeek" };
   return labels[source];
 }

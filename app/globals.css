@@ -266,6 +266,8 @@ h1 em {
   min-height: 390px;
   padding: 48px 44px 32px;
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -277,6 +279,32 @@ h1 em {
   box-shadow: 0 25px 70px rgba(62, 72, 60, 0.12);
 }
 
+.ink-wash-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  opacity: 0.82;
+}
+
+.poem-paper.has-illustration::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(248, 245, 237, 0.78) 0%,
+    rgba(248, 245, 237, 0.58) 42%,
+    rgba(248, 245, 237, 0.14) 76%,
+    transparent 100%
+  );
+}
+
 .paper-number {
   position: absolute;
   top: 28px;
@@ -285,6 +313,7 @@ h1 em {
   font-family: var(--font-geist-mono), monospace;
   font-size: 10px;
   letter-spacing: 0.14em;
+  z-index: 2;
 }
 
 .sun-seal {
@@ -295,6 +324,7 @@ h1 em {
   right: 48px;
   border-radius: 50%;
   background: rgba(201, 111, 76, 0.12);
+  z-index: 2;
 }
 
 .sun-seal::after {
@@ -312,6 +342,8 @@ h1 em {
 .poem-lines {
   width: min(650px, 100%);
   margin: 30px auto;
+  position: relative;
+  z-index: 2;
 }
 
 .poem-empty {
@@ -341,6 +373,11 @@ h1 em {
   line-height: 1.35;
   white-space: nowrap;
   animation: reveal 500ms ease both;
+}
+
+.poem-paper.has-illustration .poem-line p {
+  font-weight: 600;
+  text-shadow: 0 1px 0 rgba(248, 245, 237, 0.9), 0 0 12px rgba(248, 245, 237, 0.72);
 }
 
 .poem-lines.lines-tight .poem-line p {
@@ -373,6 +410,8 @@ h1 em {
   font-family: var(--font-geist-mono), monospace;
   font-size: 10px;
   letter-spacing: 0.13em;
+  position: relative;
+  z-index: 2;
 }
 
 .paper-footer button {
@@ -494,7 +533,7 @@ footer p {
     height: 62px;
     top: 24px;
     right: 26px;
-    z-index: 0;
+    z-index: 2;
     background: rgba(201, 111, 76, 0.18);
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
@@ -504,8 +543,8 @@ footer p {
     left: 28px;
     box-shadow: 0 0 0 11px rgba(201,111,76,.16), 0 0 0 22px rgba(201,111,76,.11);
   }
-  .poem-lines, .paper-footer { position: relative; z-index: 1; }
-  .paper-number { z-index: 1; }
+  .poem-lines, .paper-footer { position: relative; z-index: 2; }
+  .paper-number { z-index: 2; }
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { gap: 6px; grid-template-columns: minmax(0, 1fr) 16px; }
   .poem-line p { font-size: clamp(20px, 6vw, 25px); }

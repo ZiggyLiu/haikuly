@@ -35,12 +35,13 @@ test("server-renders the finished Stillpoint experience", async () => {
 });
 
 test("includes both generator modes and removes starter assets", async () => {
-  const [page, haiku, layout, packageJson, styles] = await Promise.all([
+  const [page, haiku, layout, packageJson, styles, inkWash] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/haiku.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/ink-wash.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
@@ -50,9 +51,14 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.doesNotMatch(haiku, /LOCAL_COMPOSITION_BANKS|makeRandomHaiku|makeKeywordHaiku/);
   assert.match(page, /aria-pressed/);
   assert.match(page, /\/api\/haiku/);
-  assert.match(haiku, /Written with DeepSeek/);
+  assert.match(haiku, /Written & painted with DeepSeek/);
   assert.match(page, /generationSourceLabel/);
-  assert.match(page, /Written and reviewed by DeepSeek/);
+  assert.match(page, /Written, reviewed, and painted with DeepSeek/);
+  assert.match(page, /InkWashIllustration/);
+  assert.match(inkWash, /<canvas/);
+  assert.match(inkWash, /ResizeObserver/);
+  assert.match(styles, /\.ink-wash-canvas/);
+  assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p/);
   assert.match(page, /mode === "keyword"/);
   assert.match(page, /mode,/);
   assert.match(page, /language,/);

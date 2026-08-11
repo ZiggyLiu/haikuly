@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import InkWashIllustration from "./ink-wash";
 import {
   countPoeticUnits,
   generationSourceLabel,
@@ -107,7 +108,7 @@ export default function Home() {
         <p className="eyebrow">Make room for a small moment</p>
         <h1>Three lines.<br /><em>One quiet world.</em></h1>
         <p className="intro">
-          Find a poem by chance, or begin with a word that is already on your mind.
+          Find a poem and its quiet ink-wash world by chance, or begin with a word already on your mind.
         </p>
       </section>
 
@@ -175,11 +176,12 @@ export default function Home() {
                 />
                 <span>{keyword.length}/48</span>
               </div>
-              <p className="ai-note"><span aria-hidden="true">✦</span> Written and reviewed by DeepSeek</p>
+              <p className="ai-note"><span aria-hidden="true">✦</span> Written, reviewed, and painted with DeepSeek</p>
             </div>
           )}
 
-          <div className="poem-paper" aria-live="polite" aria-atomic="true">
+          <div className={`poem-paper${haiku ? " has-illustration" : ""}`} aria-live="polite" aria-atomic="true">
+            {haiku && <InkWashIllustration recipe={haiku.illustration} seed={haiku.seed} />}
             <span className="paper-number" aria-hidden="true">
               {haiku ? String((haiku.seed % 99) + 1).padStart(2, "0") : "—"}
             </span>
@@ -213,7 +215,7 @@ export default function Home() {
           <div className="action-row">
             <p className="error-message" role="alert">{error}</p>
             <button type="submit" className="generate-button" disabled={isGenerating}>
-              {isGenerating ? "Writing and reviewing…" : mode === "random" ? "Write a haiku" : "Write my haiku"}
+              {isGenerating ? "Writing, reviewing, and painting…" : mode === "random" ? "Write a haiku" : "Write my haiku"}
               <span aria-hidden="true">↗</span>
             </button>
           </div>

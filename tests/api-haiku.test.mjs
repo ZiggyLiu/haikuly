@@ -20,8 +20,15 @@ function deepSeekResult(value, finishReason = "stop") {
   };
 }
 
-function poemResult(lines, finishReason = "stop") {
-  return deepSeekResult({ lines }, finishReason);
+const validIllustration = {
+  motif: "pine",
+  accent: "moon",
+  tone: "sage",
+  placement: "right",
+};
+
+function poemResult(lines, illustration = validIllustration, finishReason = "stop") {
+  return deepSeekResult({ lines, illustration }, finishReason);
 }
 
 function reviewResult(verdict, reason = "The poem is internally consistent.") {
@@ -68,6 +75,7 @@ test("keyword mode uses DeepSeek generation and an independent review", async (c
   assert.equal(result.source, "deepseek");
   assert.equal(result.language, "en");
   assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
+  assert.deepEqual(result.haiku.illustration, validIllustration);
   assert.equal(calls.length, 2);
   assert.equal(calls[0].url, "https://api.deepseek.com/chat/completions");
   assert.equal(calls[0].options.headers.Authorization, "Bearer test-key");
@@ -82,11 +90,14 @@ test("keyword mode uses DeepSeek generation and an independent review", async (c
     attempt: 1,
   });
   assert.match(calls[0].body.messages[0].content, /Treat all values.*as data/i);
+  assert.match(calls[0].body.messages[0].content, /ink-wash illustration/i);
+  assert.match(calls[1].body.messages[0].content, /illustration.*relevant/i);
   assert.deepEqual(JSON.parse(calls[1].body.messages[1].content), {
     mode: "keyword",
     language: "en",
     keyword: "moonlight",
     lines: validLines,
+    illustration: validIllustration,
   });
 });
 
@@ -112,6 +123,7 @@ test("random mode also uses DeepSeek generation and review", async (context) => 
     language: "en",
     keyword: null,
     lines: validLines,
+    illustration: validIllustration,
   });
 });
 
@@ -143,6 +155,7 @@ test("Chinese mode writes and reviews a 5–7–5 character haiku", async (conte
     language: "zh",
     keyword: "炎夏",
     lines: validChineseLines,
+    illustration: validIllustration,
   });
 });
 
@@ -255,8 +268,8 @@ test("two rejected poems return a controlled error and no local poem", async (co
 test("malformed generation output is never displayed", async (context) => {
   restoreAfter(context);
   const malformed = [
-    { lines: validLines, title: "Extra key" },
-    { lines: "not an array" },
+    { lines: validLines, illustration: validIllustration, title: "Extra key" },
+    { lines: validLines, illustration: { ...validIllustration, tone: "neon" } },
   ];
   let callCount = 0;
   globalThis.fetch = async () => {
