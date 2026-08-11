@@ -20,8 +20,39 @@ export type IllustrationRecipe = {
 export type Haiku = {
   lines: [string, string, string];
   seed: number;
+  createdAt: string;
   illustration: IllustrationRecipe;
 };
+
+const ENGLISH_MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+] as const;
+
+function localDateParts(createdAt: string) {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return {
+    day: date.getDate(),
+    month: date.getMonth(),
+    year: date.getFullYear(),
+  };
+}
+
+export function haikuDateLabel(createdAt: string, language: Language): string {
+  const parts = localDateParts(createdAt);
+  if (!parts) return "DATE —";
+  if (language === "zh") return `${parts.year}年${parts.month + 1}月${parts.day}日`;
+  return `${ENGLISH_MONTHS[parts.month]} ${parts.day}, ${parts.year}`;
+}
+
+export function haikuImageFilename(createdAt: string): string {
+  const parts = localDateParts(createdAt);
+  if (!parts) return "stillpoint-haiku.png";
+  const month = String(parts.month + 1).padStart(2, "0");
+  const day = String(parts.day).padStart(2, "0");
+  return `stillpoint-haiku-${parts.year}-${month}-${day}.png`;
+}
 
 export function isIllustrationRecipe(value: unknown): value is IllustrationRecipe {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;

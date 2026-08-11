@@ -67,7 +67,14 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /mode,/);
   assert.match(page, /language,/);
   assert.match(page, /Poem language/);
-  assert.match(page, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(page, /navigator\.clipboard\.writeText/);
+  assert.match(page, /Save Haiku/);
+  assert.match(page, /Save haiku as a picture/);
+  assert.match(page, /toDataURL\("image\/png"\)/);
+  assert.match(page, /link\.download = haikuImageFilename/);
+  assert.match(page, /\.ink-wash-canvas/);
+  assert.match(page, /paper-date/);
+  assert.match(page, /haikuDateLabel/);
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);

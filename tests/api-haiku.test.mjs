@@ -76,6 +76,7 @@ test("keyword mode uses DeepSeek generation and an independent review", async (c
   assert.equal(result.language, "en");
   assert.deepEqual(result.haiku.lines.map(estimateSyllables), [5, 7, 5]);
   assert.deepEqual(result.haiku.illustration, validIllustration);
+  assert.equal(Number.isNaN(Date.parse(result.haiku.createdAt)), false);
   assert.equal(calls.length, 2);
   assert.equal(calls[0].url, "https://api.deepseek.com/chat/completions");
   assert.equal(calls[0].options.headers.Authorization, "Bearer test-key");

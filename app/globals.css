@@ -323,7 +323,8 @@ h1 em {
   color: #5f6c64;
   font-family: var(--font-geist-mono), monospace;
   font-size: 10px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   z-index: 2;
 }
 

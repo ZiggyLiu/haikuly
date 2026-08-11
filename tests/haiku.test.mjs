@@ -4,9 +4,24 @@ import {
   countPoeticUnits,
   estimateSyllables,
   generationSourceLabel,
+  haikuDateLabel,
+  haikuImageFilename,
   isIllustrationRecipe,
   poemLinesClassName,
 } from "../app/haiku.ts";
+
+test("creation dates use the selected poem language", () => {
+  const createdAt = new Date(2026, 7, 10, 12).toISOString();
+  assert.equal(haikuDateLabel(createdAt, "en"), "AUG 10, 2026");
+  assert.equal(haikuDateLabel(createdAt, "zh"), "2026年8月10日");
+  assert.equal(haikuDateLabel("not-a-date", "en"), "DATE —");
+});
+
+test("saved haiku pictures get a clear dated filename", () => {
+  const createdAt = new Date(2026, 7, 10, 12).toISOString();
+  assert.equal(haikuImageFilename(createdAt), "stillpoint-haiku-2026-08-10.png");
+  assert.equal(haikuImageFilename("not-a-date"), "stillpoint-haiku.png");
+});
 
 test("the syllable estimator verifies representative 5–7–5 lines", () => {
   const lines = [

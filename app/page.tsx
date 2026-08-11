@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import InkWashIllustration from "./ink-wash";
 import {
   generationSourceLabel,
+  haikuDateLabel,
+  haikuImageFilename,
   poemLinesClassName,
   type GenerationSource,
   type Haiku,
@@ -11,13 +13,26 @@ import {
   type Mode,
 } from "./haiku";
 
+function setCanvasFont(context: CanvasRenderingContext2D, style: CSSStyleDeclaration) {
+  context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+  context.fillStyle = style.color;
+  context.textAlign = "left";
+  context.textBaseline = "top";
+}
+
+function elementPosition(element: Element, paperBounds: DOMRect) {
+  const bounds = element.getBoundingClientRect();
+  return { x: bounds.left - paperBounds.left, y: bounds.top - paperBounds.top };
+}
+
 export default function Home() {
   const [mode, setMode] = useState<Mode>("random");
   const [language, setLanguage] = useState<Language>("en");
   const [keyword, setKeyword] = useState("");
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const poemPaperRef = useRef<HTMLDivElement>(null);
   const [displayed, setDisplayed] = useState<{
     haiku: Haiku;
     source: GenerationSource;
@@ -27,7 +42,7 @@ export default function Home() {
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
-    setCopied(false);
+    setSaved(false);
 
     if (mode === "keyword" && !keyword.trim()) {
       setError("Enter a word or short phrase first.");
@@ -66,23 +81,140 @@ export default function Home() {
     setError("");
   }
 
-  async function copyHaiku() {
-    if (!haiku) return;
-    await navigator.clipboard.writeText(haiku.lines.join("\n"));
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+  function saveHaiku() {
+    const paper = poemPaperRef.current;
+    if (!haiku || !paper) return;
+
+    try {
+      const paperBounds = paper.getBoundingClientRect();
+      const width = Math.round(paperBounds.width);
+      const height = Math.round(paperBounds.height);
+      if (width <= 0 || height <= 0) throw new Error("The haiku card is not ready.");
+
+      const scale = Math.min(3, 2048 / Math.max(width, height));
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = Math.round(width * scale);
+      exportCanvas.height = Math.round(height * scale);
+      const context = exportCanvas.getContext("2d");
+      if (!context) throw new Error("Image export is not available.");
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+
+      context.fillStyle = "#f8f5ed";
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = "rgba(54, 83, 71, 0.025)";
+      context.lineWidth = 1;
+      for (let y = 30; y < height; y += 30) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(width, y);
+        context.stroke();
+      }
+
+      const illustration = paper.querySelector<HTMLCanvasElement>(".ink-wash-canvas");
+      if (illustration && illustration.width > 0 && illustration.height > 0) {
+        context.save();
+        context.globalAlpha = 0.82;
+        context.drawImage(illustration, 0, 0, width, height);
+        context.restore();
+      }
+
+      const readabilityWash = context.createRadialGradient(
+        width / 2, height / 2, 0,
+        width / 2, height / 2, width * 0.55,
+      );
+      readabilityWash.addColorStop(0, "rgba(248, 245, 237, 0.42)");
+      readabilityWash.addColorStop(0.55, "rgba(248, 245, 237, 0.2)");
+      readabilityWash.addColorStop(1, "rgba(248, 245, 237, 0)");
+      context.fillStyle = readabilityWash;
+      context.fillRect(0, 0, width, height);
+
+      const seal = paper.querySelector<HTMLElement>(".sun-seal");
+      if (seal) {
+        const sealBounds = seal.getBoundingClientRect();
+        const sealPosition = elementPosition(seal, paperBounds);
+        const centerX = sealPosition.x + sealBounds.width / 2;
+        const centerY = sealPosition.y + sealBounds.height / 2;
+        context.strokeStyle = "rgba(201, 111, 76, 0.13)";
+        context.fillStyle = "rgba(201, 111, 76, 0.04)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.arc(centerX, centerY, sealBounds.width / 2, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.arc(centerX, centerY, sealBounds.width * 0.16, 0, Math.PI * 2);
+        context.stroke();
+      }
+
+      const date = paper.querySelector<HTMLElement>(".paper-date");
+      if (date) {
+        const position = elementPosition(date, paperBounds);
+        const style = window.getComputedStyle(date);
+        setCanvasFont(context, style);
+        context.fillText(date.textContent?.trim() ?? "", position.x, position.y);
+      }
+
+      paper.querySelectorAll<HTMLElement>(".poem-line p").forEach((line) => {
+        const position = elementPosition(line, paperBounds);
+        const style = window.getComputedStyle(line);
+        setCanvasFont(context, style);
+        context.shadowColor = "rgba(248, 245, 237, 0.9)";
+        context.shadowBlur = 12;
+        context.shadowOffsetY = 1;
+        context.fillText(line.textContent ?? "", position.x, position.y, width - position.x - 20);
+        context.shadowColor = "transparent";
+        context.shadowBlur = 0;
+        context.shadowOffsetY = 0;
+      });
+
+      const footer = paper.querySelector<HTMLElement>(".paper-footer");
+      if (footer) {
+        const footerPosition = elementPosition(footer, paperBounds);
+        context.strokeStyle = "rgba(54, 83, 71, 0.17)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(footerPosition.x, footerPosition.y);
+        context.lineTo(width - footerPosition.x, footerPosition.y);
+        context.stroke();
+
+        footer.querySelectorAll<HTMLElement>("span").forEach((label) => {
+          const position = elementPosition(label, paperBounds);
+          const style = window.getComputedStyle(label);
+          setCanvasFont(context, style);
+          const text = label.classList.contains("poem-source")
+            ? (label.textContent ?? "").toUpperCase()
+            : label.textContent ?? "";
+          context.fillText(text, position.x, position.y);
+        });
+      }
+
+      context.strokeStyle = "rgba(54, 83, 71, 0.13)";
+      context.lineWidth = 1;
+      context.strokeRect(0.5, 0.5, width - 1, height - 1);
+
+      const link = document.createElement("a");
+      link.href = exportCanvas.toDataURL("image/png");
+      link.download = haikuImageFilename(haiku.createdAt);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 1800);
+    } catch {
+      setError("The haiku image could not be saved. Please try again.");
+    }
   }
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
     setError("");
-    setCopied(false);
+    setSaved(false);
   }
 
   function changeLanguage(nextLanguage: Language) {
     setLanguage(nextLanguage);
     setError("");
-    setCopied(false);
+    setSaved(false);
   }
 
   return (
@@ -174,11 +306,20 @@ export default function Home() {
             </div>
           )}
 
-          <div className={`poem-paper${haiku ? " has-illustration" : ""}`} aria-live="polite" aria-atomic="true">
+          <div
+            ref={poemPaperRef}
+            className={`poem-paper${haiku ? " has-illustration" : ""}`}
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {haiku && <InkWashIllustration recipe={haiku.illustration} seed={haiku.seed} />}
-            <span className="paper-number" aria-hidden="true">
-              {haiku ? String((haiku.seed % 99) + 1).padStart(2, "0") : "—"}
-            </span>
+            {haiku ? (
+              <time className="paper-number paper-date" dateTime={haiku.createdAt}>
+                {haikuDateLabel(haiku.createdAt, displayed?.language ?? "en")}
+              </time>
+            ) : (
+              <span className="paper-number paper-date" aria-hidden="true">DATE —</span>
+            )}
             <div className="sun-seal" aria-hidden="true" />
             {haiku ? (
               <div
@@ -199,8 +340,8 @@ export default function Home() {
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
               <span className="poem-source">{haiku ? generationSourceLabel("deepseek") : "DeepSeek studio"}</span>
-              <button type="button" onClick={copyHaiku} aria-label="Copy haiku" disabled={!haiku}>
-                {copied ? "Copied" : "Copy poem"}
+              <button type="button" onClick={saveHaiku} aria-label="Save haiku as a picture" disabled={!haiku}>
+                {saved ? "Saved" : "Save Haiku"}
               </button>
             </div>
           </div>

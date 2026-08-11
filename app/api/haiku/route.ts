@@ -266,9 +266,11 @@ export async function POST(request: Request) {
     }
     if (review === "reject") continue;
 
+    const generatedAt = Date.now();
     const haiku: Haiku = {
       lines: trimmedLines,
-      seed: Date.now() + Math.floor(Math.random() * 10000),
+      seed: generatedAt + Math.floor(Math.random() * 10000),
+      createdAt: new Date(generatedAt).toISOString(),
       illustration,
     };
     return json({ haiku, source: "deepseek", language });
