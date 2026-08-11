@@ -229,8 +229,10 @@ export default function InkWashIllustration({ recipe, seed }: InkWashProps) {
       const bounds = canvas.getBoundingClientRect();
       if (bounds.width <= 0 || bounds.height <= 0) return;
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(bounds.width * pixelRatio);
-      canvas.height = Math.round(bounds.height * pixelRatio);
+      const targetWidth = Math.round(bounds.width * pixelRatio);
+      const targetHeight = Math.round(bounds.height * pixelRatio);
+      if (canvas.width !== targetWidth) canvas.width = targetWidth;
+      if (canvas.height !== targetHeight) canvas.height = targetHeight;
       const context = canvas.getContext("2d");
       if (!context) return;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
@@ -241,11 +243,28 @@ export default function InkWashIllustration({ recipe, seed }: InkWashProps) {
       drawAccent(context, bounds.width, bounds.height, recipe, palette, random);
     };
 
-    paint();
-    const observer = new ResizeObserver(paint);
-    observer.observe(canvas);
-    return () => observer.disconnect();
+    let frameId = 0;
+    const schedulePaint = () => {
+      window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(paint);
+    };
+
+    schedulePaint();
+    window.addEventListener("resize", schedulePaint, { passive: true });
+    window.addEventListener("orientationchange", schedulePaint, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", schedulePaint);
+      window.removeEventListener("orientationchange", schedulePaint);
+    };
   }, [recipe, seed]);
 
-  return <canvas ref={canvasRef} className="ink-wash-canvas" aria-hidden="true" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="ink-wash-canvas"
+      aria-hidden="true"
+      style={{ pointerEvents: "none" }}
+    />
+  );
 }

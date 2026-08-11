@@ -56,8 +56,12 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /Written, reviewed, and painted with DeepSeek/);
   assert.match(page, /InkWashIllustration/);
   assert.match(inkWash, /<canvas/);
-  assert.match(inkWash, /ResizeObserver/);
+  assert.match(inkWash, /requestAnimationFrame/);
+  assert.match(inkWash, /orientationchange/);
+  assert.doesNotMatch(inkWash, /ResizeObserver/);
   assert.match(styles, /\.ink-wash-canvas/);
+  assert.match(styles, /pointer-events:\s*none\s*!important/);
+  assert.match(styles, /touch-action:\s*manipulation/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p/);
   assert.match(page, /mode === "keyword"/);
   assert.match(page, /mode,/);
