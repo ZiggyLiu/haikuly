@@ -70,6 +70,8 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.page-shell::before \{ position: absolute; opacity: 0\.28; \}/);
   assert.match(styles, /\.ambient-left \{ width: 210px; height: 210px; left: -118px; top: 210px; \}/);
   assert.match(styles, /-webkit-transform:\s*translateZ\(0\)/);
+  assert.match(styles, /\.sun-seal::after[\s\S]*background:\s*transparent/);
+  assert.doesNotMatch(styles, /\.sun-seal::after[\s\S]{0,300}background:\s*var\(--rust\)/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
