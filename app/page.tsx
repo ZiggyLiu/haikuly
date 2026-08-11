@@ -144,6 +144,16 @@ export default function Home() {
         context.beginPath();
         context.arc(centerX, centerY, sealBounds.width * 0.16, 0, Math.PI * 2);
         context.stroke();
+
+        const sealLabel = seal.querySelector<HTMLElement>(".sun-seal-label");
+        if (sealLabel) {
+          const labelStyle = window.getComputedStyle(sealLabel);
+          const lineHeight = Number.parseFloat(labelStyle.lineHeight) || 10;
+          setCanvasFont(context, labelStyle);
+          context.textAlign = "center";
+          context.fillText("Daily", centerX, centerY - lineHeight);
+          context.fillText("Haiku", centerX, centerY);
+        }
       }
 
       const date = paper.querySelector<HTMLElement>(".paper-date");
@@ -320,7 +330,9 @@ export default function Home() {
             ) : (
               <span className="paper-number paper-date" aria-hidden="true">DATE —</span>
             )}
-            <div className="sun-seal" aria-hidden="true" />
+            <div className="sun-seal" aria-hidden="true">
+              <span className="sun-seal-label">Daily<br />Haiku</span>
+            </div>
             {haiku ? (
               <div
                 className={poemLinesClassName(haiku.lines, displayed?.language ?? "en")}

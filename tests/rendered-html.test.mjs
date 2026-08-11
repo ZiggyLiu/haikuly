@@ -75,6 +75,8 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /\.ink-wash-canvas/);
   assert.match(page, /paper-date/);
   assert.match(page, /haikuDateLabel/);
+  assert.match(page, /Daily<br \/>Haiku/);
+  assert.match(page, /sun-seal-label/);
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);
@@ -90,6 +92,10 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /-webkit-transform:\s*translateZ\(0\)/);
   assert.match(styles, /\.sun-seal::after[\s\S]*background:\s*transparent/);
   assert.doesNotMatch(styles, /\.sun-seal::after[\s\S]{0,300}background:\s*var\(--rust\)/);
+  assert.match(styles, /\.sun-seal-label[\s\S]*font-family:\s*var\(--font-geist-sans\), Arial, sans-serif/);
+  assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
+  assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-geist-sans\)/);
+  assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
