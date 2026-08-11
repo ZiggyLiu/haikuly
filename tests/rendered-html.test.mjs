@@ -121,6 +121,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
   assert.match(layout, /Stillpoint — Haiku Generator/);
+  assert.match(layout, /RscBootstrap/);
   assert.match(layout, /\/og\.png/);
   assert.match(layout, /summary_large_image/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
