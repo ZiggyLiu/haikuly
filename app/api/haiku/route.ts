@@ -112,7 +112,7 @@ async function requestDeepSeek(
 
 function haikuRequest(mode: Mode, language: Language, keyword: string | null, attempt: number) {
   const formInstruction = language === "zh"
-    ? "Write in natural Chinese. The three lines must contain exactly 5, 7, and 5 Chinese Han characters. Do not use punctuation, spaces, Latin letters, or digits."
+    ? "Write in natural Chinese. The three lines must contain exactly 5, 7, and 5 Chinese Han characters. Do not use punctuation, spaces, Latin letters, or digits. Use plain, modern, everyday vocabulary and simple natural phrasing — never classical, literary, or archaic wording. Write for a woman in her twenties or thirties: warm, sincere, and lightly personal, observant of small everyday moments, gentle and honest with a touch of soft humor — not solemn, grandiose, or old-fashioned."
     : language === "ja"
       ? "Write in natural Japanese using kanji and kana as appropriate. The three displayed lines must contain no punctuation, spaces, Latin letters, or digits. Also return readings as an array of exactly three hiragana strings that precisely match the pronunciation of the displayed lines and contain exactly 5, 7, and 5 Japanese mora. In mora counting, small ゃ, ゅ, ょ and other combining small kana join the preceding kana, while っ, ん, and ー each count as one mora."
       : "Write in natural English. The three lines must contain exactly 5, 7, and 5 syllables.";
