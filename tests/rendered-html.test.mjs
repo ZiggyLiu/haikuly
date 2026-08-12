@@ -41,8 +41,8 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.match(html, /data-stillpoint-critical="true"[^>]*>[^<]*\.page-shell/);
   assert.match(html, /data-stillpoint-runtime="true"/);
   assert.match(html, /<title>Spring Whispers, Haiku-ly~<\/title>/i);
-  assert.match(html, /Three lines\./);
-  assert.match(html, /One quiet world\./);
+  assert.match(html, /Spring Whispers,/);
+  assert.match(html, /<em id="hero-accent">Haiku-ly~<\/em>/);
   assert.match(html, /By chance/);
   assert.match(html, /From a word/);
   assert.match(html, /English/);

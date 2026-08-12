@@ -59,6 +59,8 @@ const UI_COPY: Record<Language, {
   generationError: string;
   unreachableError: string;
   pageTitle: string;
+  heroTitle: string;
+  heroTitleAccent: string;
 }> = {
   en: {
     languageLabel: "Poem language",
@@ -81,6 +83,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeek could not write a poem. Please try again.",
     unreachableError: "DeepSeek could not be reached. Please try again.",
     pageTitle: "Spring Whispers, Haiku-ly~",
+    heroTitle: "Spring Whispers,",
+    heroTitleAccent: "Haiku-ly~",
   },
   zh: {
     languageLabel: "诗歌语言",
@@ -103,6 +107,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeek 暂时无法创作俳句，请重试。",
     unreachableError: "暂时无法连接 DeepSeek，请重试。",
     pageTitle: "春风十里，Haiku-ly~",
+    heroTitle: "春风十里，",
+    heroTitleAccent: "Haiku-ly~",
   },
   ja: {
     languageLabel: "俳句の言語",
@@ -125,6 +131,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
     unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
     pageTitle: "春のささやき、Haiku-ly~",
+    heroTitle: "春のささやき、",
+    heroTitleAccent: "Haiku-ly~",
   },
 };
 
@@ -424,7 +432,7 @@ export default function Home() {
 
       <section className="hero" id="top">
         <p className="eyebrow">Make room for a small moment</p>
-        <h1>Three lines.<br /><em>One quiet world.</em></h1>
+        <h1><span id="hero-title">{copy.heroTitle}</span><br /><em id="hero-accent">{copy.heroTitleAccent}</em></h1>
         <p className="intro">
           Find a poem and its quiet ink-wash world by chance, or begin with a word already on your mind.
         </p>
