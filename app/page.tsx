@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import InkWashIllustration from "./ink-wash";
 import {
-  generationSourceLabel,
   haikuDateLabel,
   haikuImageFilename,
   poemLinesClassName,
@@ -49,9 +48,7 @@ const UI_COPY: Record<Language, {
   keywordPrompt: string;
   keywordPlaceholder: string;
   keywordError: string;
-  aiNote: string;
   emptyPoem: string;
-  deepSeekStudio: string;
   save: string;
   saved: string;
   saveAria: string;
@@ -72,9 +69,7 @@ const UI_COPY: Record<Language, {
     keywordPrompt: "What is on your mind?",
     keywordPlaceholder: "moonlight, first snow, home…",
     keywordError: "Enter a word or short phrase first.",
-    aiNote: "Written, reviewed, and painted with DeepSeek",
     emptyPoem: "Your next small moment will appear here.",
-    deepSeekStudio: "DeepSeek studio",
     save: "Save Haiku",
     saved: "Saved",
     saveAria: "Save haiku as a picture",
@@ -95,9 +90,7 @@ const UI_COPY: Record<Language, {
     keywordPrompt: "此刻你在想什么？",
     keywordPlaceholder: "月光，初雪，故乡…",
     keywordError: "请先输入一个词或短语。",
-    aiNote: "由 DeepSeek 创作、审校与绘制",
     emptyPoem: "下一刻诗意将在此浮现。",
-    deepSeekStudio: "DeepSeek 俳句工房",
     save: "保存俳句",
     saved: "已保存",
     saveAria: "将俳句保存为图片",
@@ -118,9 +111,7 @@ const UI_COPY: Record<Language, {
     keywordPrompt: "今、心にあるものは？",
     keywordPlaceholder: "月明かり、初雪、故郷…",
     keywordError: "言葉または短いフレーズを入力してください。",
-    aiNote: "DeepSeekが作句・推敲・描画",
     emptyPoem: "次の小さな瞬間がここに現れます。",
-    deepSeekStudio: "DeepSeek 俳句工房",
     save: "俳句を保存",
     saved: "保存しました",
     saveAria: "俳句を画像として保存",
@@ -360,9 +351,7 @@ export default function Home() {
           const position = elementPosition(label, paperBounds);
           const style = window.getComputedStyle(label);
           setCanvasFont(context, style);
-          const text = label.classList.contains("poem-source")
-            ? (label.textContent ?? "").toUpperCase()
-            : label.textContent ?? "";
+          const text = label.textContent ?? "";
           context.fillText(text, position.x, position.y);
         });
       }
@@ -508,7 +497,6 @@ export default function Home() {
                 />
                 <span>{keyword.length}/48</span>
               </div>
-              <p className="ai-note" id="ai-note"><span aria-hidden="true">✦</span> {copy.aiNote}</p>
           </div>
 
           <div
@@ -548,11 +536,6 @@ export default function Home() {
             )}
             <div className="paper-footer">
               <span>5 · 7 · 5</span>
-              <span className="poem-source" id="poem-source">
-                {haiku
-                  ? generationSourceLabel("deepseek", displayed?.language ?? "en")
-                  : copy.deepSeekStudio}
-              </span>
               <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>
                 {saved ? copy.saved : copy.save}
               </button>

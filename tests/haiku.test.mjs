@@ -4,7 +4,6 @@ import {
   countPoeticUnits,
   countJapaneseMora,
   estimateSyllables,
-  generationSourceLabel,
   haikuDateLabel,
   haikuImageFilename,
   isIllustrationRecipe,
@@ -56,12 +55,6 @@ test("Japanese mora counting handles contracted and independent kana", () => {
   assert.equal(countJapaneseMora("がっこう"), 4);
   assert.equal(countJapaneseMora("スーパー"), 4);
   assert.equal(countPoeticUnits("ふるいけや", "ja"), 5);
-});
-
-test("the only generation source is DeepSeek", () => {
-  assert.equal(generationSourceLabel("deepseek"), "Written & painted with DeepSeek");
-  assert.equal(generationSourceLabel("deepseek", "zh"), "由 DeepSeek 创作与绘制");
-  assert.equal(generationSourceLabel("deepseek", "ja"), "DeepSeekによる作句・描画");
 });
 
 test("illustration recipes allow only the restrained render vocabulary", () => {

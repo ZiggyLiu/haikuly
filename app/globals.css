@@ -284,16 +284,6 @@ h1 em {
   font-size: 10px;
 }
 
-.ai-note {
-  margin: 8px 2px 0;
-  color: var(--ink-soft);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-}
-
-.ai-note span { color: var(--rust); }
-
 .poem-paper {
   min-height: 390px;
   padding: 48px 44px 32px;
@@ -481,12 +471,6 @@ h1 em {
 .paper-footer button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
-}
-
-.poem-source {
-  color: var(--ink-soft);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .action-row {

@@ -6,8 +6,8 @@
       languageLabel: "Poem language", languageRule: "5 · 7 · 5 syllables", languageGroup: "Poem language",
       modeGroup: "Generation mode", randomMode: "By chance", keywordMode: "From a word",
       keywordPrompt: "What is on your mind?", keywordPlaceholder: "moonlight, first snow, home…",
-      keywordError: "Enter a word or short phrase first.", aiNote: "Written, reviewed, and painted with DeepSeek",
-      emptyPoem: "Your next small moment will appear here.", studio: "DeepSeek studio", save: "Save Haiku",
+      keywordError: "Enter a word or short phrase first.",
+      emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
       saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
       generateRandom: "Write a haiku", generateKeyword: "Write my haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again."
@@ -16,7 +16,7 @@
       languageLabel: "诗歌语言", languageRule: "5 · 7 · 5 字", languageGroup: "诗歌语言", modeGroup: "生成方式",
       randomMode: "随机生成", keywordMode: "关键词生成", keywordPrompt: "此刻你在想什么？",
       keywordPlaceholder: "月光，初雪，故乡…", keywordError: "请先输入一个词或短语。",
-      aiNote: "由 DeepSeek 创作、审校与绘制", emptyPoem: "下一刻诗意将在此浮现。", studio: "DeepSeek 俳句工房",
+      emptyPoem: "下一刻诗意将在此浮现。",
       save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存俳句图片，请重试。",
       generateRandom: "写一首俳句", generateKeyword: "写我的俳句", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。"
@@ -25,7 +25,7 @@
       languageLabel: "俳句の言語", languageRule: "5 · 7 · 5 音", languageGroup: "俳句の言語", modeGroup: "作句方法",
       randomMode: "おまかせ", keywordMode: "言葉から", keywordPrompt: "今、心にあるものは？",
       keywordPlaceholder: "月明かり、初雪、故郷…", keywordError: "言葉または短いフレーズを入力してください。",
-      aiNote: "DeepSeekが作句・推敲・描画", emptyPoem: "次の小さな瞬間がここに現れます。", studio: "DeepSeek 俳句工房",
+      emptyPoem: "次の小さな瞬間がここに現れます。",
       save: "俳句を保存", saved: "保存しました", saveAria: "俳句を画像として保存",
       saveError: "俳句の画像を保存できませんでした。もう一度お試しください。", generateRandom: "俳句を詠む",
       generateKeyword: "私の俳句を詠む", generating: "作句・推敲・描画中…",
@@ -108,21 +108,11 @@
     setText(byId("keyword-label"), current.keywordPrompt);
     var input = byId("keyword");
     if (input) input.setAttribute("placeholder", current.keywordPlaceholder);
-    var note = byId("ai-note");
-    if (note) {
-      while (note.firstChild) note.removeChild(note.firstChild);
-      var noteSymbol = document.createElement("span");
-      noteSymbol.setAttribute("aria-hidden", "true");
-      noteSymbol.textContent = "✦";
-      note.appendChild(noteSymbol);
-      note.appendChild(document.createTextNode(" " + current.aiNote));
-    }
 
     var keywordField = byId("keyword-field");
     if (keywordField) keywordField.hidden = state.mode !== "keyword";
     if (!state.haiku) {
       setText(byId("empty-poem"), current.emptyPoem);
-      setText(byId("poem-source"), current.studio);
     }
     var save = byId("save-haiku");
     if (save) {
@@ -150,12 +140,6 @@
     }
     var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     return months[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
-  }
-
-  function sourceLabel(language) {
-    if (language === "zh") return "由 DeepSeek 创作与绘制";
-    if (language === "ja") return "DeepSeekによる作句・描画";
-    return "Written & painted with DeepSeek";
   }
 
   function seededRandom(seed) {
@@ -289,7 +273,6 @@
         lines.appendChild(row);
       }
     }
-    setText(byId("poem-source"), sourceLabel(language));
     var save = byId("save-haiku");
     if (save) save.disabled = false;
     drawInk(canvas, haiku);

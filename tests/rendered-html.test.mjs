@@ -74,9 +74,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.doesNotMatch(haiku, /LOCAL_COMPOSITION_BANKS|makeRandomHaiku|makeKeywordHaiku/);
   assert.match(page, /aria-pressed/);
   assert.match(page, /\/api\/haiku/);
-  assert.match(haiku, /Written & painted with DeepSeek/);
-  assert.match(page, /generationSourceLabel/);
-  assert.match(page, /Written, reviewed, and painted with DeepSeek/);
+  assert.doesNotMatch(haiku, /Written & painted with DeepSeek/);
+  assert.doesNotMatch(page, /generationSourceLabel/);
+  assert.doesNotMatch(page, /Written, reviewed, and painted with DeepSeek/);
   assert.match(page, /InkWashIllustration/);
   assert.match(inkWash, /<canvas/);
   assert.match(inkWash, /requestAnimationFrame/);

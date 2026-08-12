@@ -134,12 +134,3 @@ export function poemLinesClassName(lines: readonly string[], language: Language)
   if (longestLine > 27) return "poem-lines lines-tight";
   return "poem-lines";
 }
-
-export function generationSourceLabel(source: GenerationSource, language: Language = "en"): string {
-  const labels: Record<Language, Record<GenerationSource, string>> = {
-    en: { deepseek: "Written & painted with DeepSeek" },
-    zh: { deepseek: "由 DeepSeek 创作与绘制" },
-    ja: { deepseek: "DeepSeekによる作句・描画" },
-  };
-  return labels[language][source];
-}
