@@ -58,6 +58,7 @@ const UI_COPY: Record<Language, {
   generating: string;
   generationError: string;
   unreachableError: string;
+  pageTitle: string;
 }> = {
   en: {
     languageLabel: "Poem language",
@@ -79,6 +80,7 @@ const UI_COPY: Record<Language, {
     generating: "Writing, reviewing, and painting…",
     generationError: "DeepSeek could not write a poem. Please try again.",
     unreachableError: "DeepSeek could not be reached. Please try again.",
+    pageTitle: "Spring Whispers, Haiku-ly~",
   },
   zh: {
     languageLabel: "诗歌语言",
@@ -100,6 +102,7 @@ const UI_COPY: Record<Language, {
     generating: "正在创作、审校与绘制…",
     generationError: "DeepSeek 暂时无法创作俳句，请重试。",
     unreachableError: "暂时无法连接 DeepSeek，请重试。",
+    pageTitle: "春风十里，Haiku-ly~",
   },
   ja: {
     languageLabel: "俳句の言語",
@@ -121,6 +124,7 @@ const UI_COPY: Record<Language, {
     generating: "作句・推敲・描画中…",
     generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
     unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+    pageTitle: "春のささやき、Haiku-ly~",
   },
 };
 
@@ -199,6 +203,10 @@ export default function Home() {
     window.addEventListener("pageshow", refreshRestoredPage);
     return () => window.removeEventListener("pageshow", refreshRestoredPage);
   }, []);
+
+  useEffect(() => {
+    document.title = UI_COPY[language].pageTitle;
+  }, [language]);
 
   async function generate(event?: FormEvent) {
     event?.preventDefault();
@@ -407,9 +415,9 @@ export default function Home() {
       <div className="ambient ambient-right" aria-hidden="true" />
 
       <header className="site-header">
-        <a className="brand" href="#top" aria-label="Stillpoint home">
+        <a className="brand" href="#top" aria-label="Haiku-ly home">
           <span className="brand-mark" aria-hidden="true">間</span>
-          <span>Stillpoint</span>
+          <span>Haiku-ly</span>
         </a>
         <span className="header-note">A haiku studio</span>
       </header>
@@ -561,7 +569,7 @@ export default function Home() {
           <a
             className="footer-contact"
             href="mailto:zhiguoinusa@gmail.com"
-            aria-label="Email Stillpoint at zhiguoinusa@gmail.com"
+            aria-label="Email Haiku-ly at zhiguoinusa@gmail.com"
           >
             zhiguoinusa@gmail.com
           </a>

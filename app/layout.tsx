@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = incomingHeaders.get("x-forwarded-host") ?? incomingHeaders.get("host") ?? "localhost";
   const protocol = incomingHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "Stillpoint — Haiku Generator";
+  const title = "Spring Whispers, Haiku-ly~";
   const description = "Create a quiet 5–7–5 poem by chance or from a word on your mind.";
 
   return {

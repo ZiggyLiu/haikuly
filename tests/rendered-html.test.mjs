@@ -40,7 +40,7 @@ test("server-renders the finished Stillpoint experience", async () => {
   assert.equal((html.match(/data-stillpoint-runtime/g) ?? []).length, 1);
   assert.match(html, /data-stillpoint-critical="true"[^>]*>[^<]*\.page-shell/);
   assert.match(html, /data-stillpoint-runtime="true"/);
-  assert.match(html, /<title>Stillpoint — Haiku Generator<\/title>/i);
+  assert.match(html, /<title>Spring Whispers, Haiku-ly~<\/title>/i);
   assert.match(html, /Three lines\./);
   assert.match(html, /One quiet world\./);
   assert.match(html, /By chance/);
@@ -126,7 +126,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /fillText\("ly"/);
   assert.doesNotMatch(page, /"Daily"/);
   assert.match(page, /sun-seal-label/);
-  assert.match(page, /aria-label="Email Stillpoint at zhiguoinusa@gmail\.com"/);
+  assert.match(page, /aria-label="Email Haiku-ly at zhiguoinusa@gmail\.com"/);
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);
@@ -147,7 +147,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-geist-sans\)/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
-  assert.match(layout, /Stillpoint — Haiku Generator/);
+  assert.match(layout, /Spring Whispers, Haiku-ly~/);
   assert.match(layout, /RscBootstrap/);
   assert.match(bootstrap, /globals\.css\?raw/);
   assert.match(bootstrap, /mobile-runtime\.js\?raw/);

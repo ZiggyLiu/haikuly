@@ -10,7 +10,8 @@
       emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
       saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
       generateRandom: "Write a haiku", generateKeyword: "Write my haiku", generating: "Writing, reviewing, and painting…",
-      generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again."
+      generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
+      pageTitle: "Spring Whispers, Haiku-ly~"
     },
     zh: {
       languageLabel: "诗歌语言", languageRule: "5 · 7 · 5 字", languageGroup: "诗歌语言", modeGroup: "生成方式",
@@ -19,7 +20,8 @@
       emptyPoem: "下一刻诗意将在此浮现。",
       save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存俳句图片，请重试。",
       generateRandom: "写一首俳句", generateKeyword: "写我的俳句", generating: "正在创作、审校与绘制…",
-      generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。"
+      generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
+      pageTitle: "春风十里，Haiku-ly~"
     },
     ja: {
       languageLabel: "俳句の言語", languageRule: "5 · 7 · 5 音", languageGroup: "俳句の言語", modeGroup: "作句方法",
@@ -30,7 +32,8 @@
       saveError: "俳句の画像を保存できませんでした。もう一度お試しください。", generateRandom: "俳句を詠む",
       generateKeyword: "私の俳句を詠む", generating: "作句・推敲・描画中…",
       generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
-      unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。"
+      unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+      pageTitle: "春のささやき、Haiku-ly~"
     }
   };
 
@@ -82,6 +85,7 @@
 
   function updateControls() {
     var current = copy();
+    document.title = current.pageTitle;
     var languageButtons = document.querySelectorAll("[data-language]");
     var modeButtons = document.querySelectorAll("[data-mode]");
     var index;
