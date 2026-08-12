@@ -432,7 +432,7 @@ export default function Home() {
 
       <section className="hero" id="top">
         <p className="eyebrow">Make room for a small moment</p>
-        <h1 lang={languageTag(language)}><span id="hero-title">{copy.heroTitle}</span><br /><em id="hero-accent">{copy.heroTitleAccent}</em></h1>
+        <h1><span id="hero-title">{copy.heroTitle}</span><br /><em id="hero-accent">{copy.heroTitleAccent}</em></h1>
         <p className="intro">
           Find a poem and its quiet ink-wash world by chance, or begin with a word already on your mind.
         </p>

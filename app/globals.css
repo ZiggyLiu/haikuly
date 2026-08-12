@@ -119,23 +119,17 @@ button {
 
 h1 {
   margin: 0;
-  font-family: var(--font-lato), Lato, sans-serif;
+  font-family: var(--font-dancing-script), "Dancing Script", cursive;
   font-size: 54px;
   font-size: clamp(38px, 5.2vw, 66px);
   font-weight: 400;
-  letter-spacing: -0.06em;
+  letter-spacing: 0;
   line-height: 2;
 }
 
 h1 em {
   color: var(--moss);
   font-weight: 400;
-}
-
-/* Chinese hero title uses the artistic ZCOOL XiaoWei display font. */
-h1[lang="zh-CN"] #hero-title {
-  font-family: var(--font-zcool-xiaowei), "ZCOOL XiaoWei", "PingFang SC", "Microsoft YaHei", sans-serif;
-  letter-spacing: 0;
 }
 
 .intro {

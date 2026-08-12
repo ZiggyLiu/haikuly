@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lato, ZCOOL_XiaoWei } from "next/font/google";
+import { Dancing_Script, Geist, Geist_Mono, Lato } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import RscBootstrap from "./rsc-bootstrap";
@@ -20,8 +20,8 @@ const lato = Lato({
   subsets: ["latin"],
 });
 
-const zcoolXiaoWei = ZCOOL_XiaoWei({
-  variable: "--font-zcool-xiaowei",
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
   weight: "400",
   subsets: ["latin"],
 });
@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${zcoolXiaoWei.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${dancingScript.variable}`}>
         <RscBootstrap />
         {children}
       </body>

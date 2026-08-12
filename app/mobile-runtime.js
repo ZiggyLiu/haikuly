@@ -91,10 +91,6 @@
     document.title = current.pageTitle;
     setText(byId("hero-title"), current.heroTitle);
     setText(byId("hero-accent"), current.heroTitleAccent);
-    var heroHeading = byId("hero-title");
-    if (heroHeading && heroHeading.parentElement) {
-      heroHeading.parentElement.setAttribute("lang", state.language === "zh" ? "zh-CN" : state.language);
-    }
     var languageButtons = document.querySelectorAll("[data-language]");
     var modeButtons = document.querySelectorAll("[data-mode]");
     var index;
