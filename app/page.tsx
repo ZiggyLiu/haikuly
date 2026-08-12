@@ -311,8 +311,8 @@ export default function Home() {
           const lineHeight = Number.parseFloat(labelStyle.lineHeight) || 10;
           setCanvasFont(context, labelStyle);
           context.textAlign = "center";
-          context.fillText("Daily", centerX, centerY - lineHeight);
-          context.fillText("Haiku", centerX, centerY);
+          context.fillText("Haiku-", centerX, centerY - lineHeight);
+          context.fillText("ly", centerX, centerY);
         }
       }
 
@@ -515,7 +515,7 @@ export default function Home() {
               <span className="paper-number paper-date" id="paper-date" aria-hidden="true">DATE —</span>
             )}
             <div className="sun-seal" aria-hidden="true">
-              <span className="sun-seal-label">Daily<br />Haiku</span>
+              <span className="sun-seal-label">Haiku-<br />ly</span>
             </div>
             {haiku ? (
               <div

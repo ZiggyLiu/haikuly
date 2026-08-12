@@ -121,7 +121,10 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /\.ink-wash-canvas/);
   assert.match(page, /paper-date/);
   assert.match(page, /haikuDateLabel/);
-  assert.match(page, /Daily<br \/>Haiku/);
+  assert.match(page, /Haiku-<br \/>ly/);
+  assert.match(page, /fillText\("Haiku-"/);
+  assert.match(page, /fillText\("ly"/);
+  assert.doesNotMatch(page, /"Daily"/);
   assert.match(page, /sun-seal-label/);
   assert.match(page, /aria-label="Email Stillpoint at zhiguoinusa@gmail\.com"/);
   assert.match(page, /poemLinesClassName/);
