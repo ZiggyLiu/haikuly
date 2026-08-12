@@ -119,7 +119,7 @@ button {
 
 h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-lato), Lato, sans-serif;
   font-size: 54px;
   font-size: clamp(38px, 5.2vw, 66px);
   font-weight: 400;
