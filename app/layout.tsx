@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Dancing_Script, Geist, Geist_Mono, Lato } from "next/font/google";
+import { Dancing_Script, Geist, Geist_Mono, Lato, Zhi_Mang_Xing } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import RscBootstrap from "./rsc-bootstrap";
@@ -22,6 +22,12 @@ const lato = Lato({
 
 const dancingScript = Dancing_Script({
   variable: "--font-dancing-script",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const zhiMangXing = Zhi_Mang_Xing({
+  variable: "--font-zhi-mang-xing",
   weight: "400",
   subsets: ["latin"],
 });
@@ -56,7 +62,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${dancingScript.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${dancingScript.variable} ${zhiMangXing.variable}`}>
         <RscBootstrap />
         {children}
       </body>

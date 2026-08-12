@@ -132,6 +132,12 @@ h1 em {
   font-weight: 400;
 }
 
+/* Chinese and Japanese hero lines use the flowing cursive Zhi Mang Xing. */
+h1[lang="zh-CN"] #hero-title,
+h1[lang="ja"] #hero-title {
+  font-family: var(--font-zhi-mang-xing), "Zhi Mang Xing", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
 .intro {
   width: min(510px, 100%);
   margin: 28px auto 0;
