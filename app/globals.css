@@ -422,6 +422,13 @@ h1 em {
   animation: reveal 500ms ease both;
 }
 
+/* Chinese and Japanese poems render slightly smaller (20% below the base size). */
+.poem-lines[lang="zh-CN"] .poem-line p,
+.poem-lines[lang="ja"] .poem-line p {
+  font-size: 19.2px;
+  font-size: clamp(19px, 2.56vw, 27px);
+}
+
 .poem-paper.has-illustration .poem-line p {
   font-weight: 400;
   text-shadow: 0 1px 0 rgba(248, 245, 237, 0.9), 0 0 12px rgba(248, 245, 237, 0.72);
@@ -616,6 +623,8 @@ footer p {
   .poem-line p { font-size: 22px; font-size: clamp(20px, 6vw, 25px); }
   .poem-lines.lines-tight .poem-line p { font-size: 18px; font-size: clamp(16px, 4.7vw, 20px); }
   .poem-lines.lines-extra-tight .poem-line p { font-size: 15px; font-size: clamp(14px, 4vw, 17px); }
+  .poem-lines[lang="zh-CN"] .poem-line p,
+  .poem-lines[lang="ja"] .poem-line p { font-size: 16px; font-size: clamp(16px, 4.8vw, 20px); }
   .action-row { grid-template-columns: 1fr; }
   .generate-button { grid-column: 1; grid-row: 1; width: 100%; min-height: 48px; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }
