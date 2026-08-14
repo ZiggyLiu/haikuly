@@ -5,8 +5,13 @@ export type GenerationSource = "deepseek";
 export const ILLUSTRATION_MOTIFS = [
   "mountains", "river", "pine", "rain", "blossoms",
   "reeds", "shore", "snow", "field", "mist",
+  "window", "skyline", "transit", "cafe", "desk",
+  "doorway", "street", "phone", "laundry", "bicycle",
 ] as const;
-export const ILLUSTRATION_ACCENTS = ["moon", "sun", "bird", "blossoms", "lantern", "none"] as const;
+export const ILLUSTRATION_ACCENTS = [
+  "moon", "sun", "bird", "blossoms", "lantern",
+  "lamp", "cup", "umbrella", "plant", "cat", "none",
+] as const;
 export const ILLUSTRATION_TONES = ["sage", "blue-gray", "sepia", "plum-gray"] as const;
 export const ILLUSTRATION_PLACEMENTS = ["left", "right"] as const;
 

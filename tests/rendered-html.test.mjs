@@ -4,17 +4,122 @@ import test from "node:test";
 
 const projectRoot = new URL("../", import.meta.url);
 
-async function render() {
+async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", { headers: { accept: "text/html" } }),
+    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
     { waitUntil() {}, passThroughOnException() {} },
   );
 }
+
+test("modern short-haiku experiment uses the formal layout and DeepSeek service", async () => {
+  const response = await render("/modern-test");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Haiku-ly/);
+  assert.match(html, /English/);
+  assert.match(html, /中文/);
+  assert.match(html, /日本語/);
+  assert.match(html, /Three lines · modern voice/);
+  assert.match(html, /Write a modern haiku/);
+  assert.match(html, /data-language="en"/);
+  assert.match(html, /data-language="zh"/);
+  assert.match(html, /data-language="ja"/);
+  assert.match(html, /data-mode="random"/);
+  assert.match(html, /data-mode="keyword"/);
+  assert.match(html, /data-haiku-form="traditional"/);
+  assert.match(html, /data-haiku-form="modern"/);
+  assert.match(html, /5-7-5/);
+  assert.match(html, /Modern Haiku/);
+  assert.match(html, /Spring Whispers,/);
+  assert.match(html, /data-version="23"/);
+  assert.match(html, /id="poem-paper"/);
+  assert.match(html, /id="generate-haiku"/);
+
+  const [formalPage, modernPage, modernApi, v23Api, mobileRuntime, styles, inkWash] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/modern-test/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/modern-haiku/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/v23-haiku/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/mobile-runtime.js", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/ink-wash.tsx", import.meta.url), "utf8"),
+  ]);
+  const sharedLayoutClasses = [
+    "page-shell", "ambient ambient-left", "ambient ambient-right", "site-header",
+    "brand", "brand-mark", "header-note", "hero", "eyebrow", "intro", "studio",
+    "language-control", "language-label", "language-switch", "language-rule",
+    "mode-switch", "keyword-field", "input-wrap", "poem-paper", "sun-seal",
+    "sun-seal-label", "poem-line", "paper-footer", "action-row", "error-message",
+    "generate-button", "footer-meta", "footer-contact",
+  ];
+  for (const className of sharedLayoutClasses) {
+    assert.ok(modernPage.includes(className), `modern page must contain ${className}`);
+  }
+  assert.match(formalPage, /export \{ default \} from "\.\/modern-test\/page";/);
+  assert.match(modernPage, /isModernForm \? "\/api\/modern-haiku" : "\/api\/v23-haiku"/);
+  assert.match(modernPage, /"\/api\/v23-haiku"/);
+  assert.match(modernPage, /onClick=\{\(\) => changeLanguage\("en"\)\}/);
+  assert.match(modernPage, /onClick=\{\(\) => changeLanguage\("zh"\)\}/);
+  assert.match(modernPage, /onClick=\{\(\) => changeLanguage\("ja"\)\}/);
+  assert.match(modernPage, /className="modern-generator-form"/);
+  assert.match(modernPage, /data-language="en"/);
+  assert.match(modernPage, /data-mode="keyword"/);
+  assert.match(modernPage, /data-haiku-form="traditional"/);
+  assert.match(modernPage, /data-haiku-form="modern"/);
+  assert.match(modernPage, /onClick=\{\(\) => changeHaikuForm\("traditional"\)\}/);
+  assert.match(modernPage, /onClick=\{\(\) => changeHaikuForm\("modern"\)\}/);
+  assert.match(modernPage, /traditionalForm: "五七五俳句"/);
+  assert.match(modernPage, /modernForm: "現代短俳"/);
+  assert.match(modernPage, /heroTitle: "Spring Whispers,"/);
+  assert.doesNotMatch(modernPage, /heroTitle: "Right now,"/);
+  assert.match(modernPage, /id="keyword"/);
+  assert.match(modernPage, /id="keyword-field"/);
+  assert.match(modernPage, /id="poem-lines"/);
+  assert.match(modernPage, /id="save-haiku"/);
+  assert.match(modernPage, /id="error-message"/);
+  assert.match(modernPage, /__STILLPOINT_FALLBACK_ACTIVE__/);
+  assert.match(modernPage, /recentLinesRef/);
+  assert.match(modernPage, /recentLines: recentLinesRef\.current\[language\]/);
+  assert.match(modernPage, /isModernForm \? \{ recentLines:/);
+  assert.match(modernPage, /const filename = haikuImageFilename\(haiku\.createdAt\);/);
+  assert.match(modernPage, /await navigator\.share\(shareData\)/);
+  assert.match(modernPage, /link\.download = filename/);
+  assert.doesNotMatch(modernPage, /isAppleMobile|setSavePreview|save-preview|Touch and hold/);
+  assert.match(mobileRuntime, /var prefix = "stillpoint-haiku";/);
+  assert.match(mobileRuntime, /if \(!error \|\| error\.name !== "AbortError"\) downloadImage\(image\.dataUrl, name\);/);
+  assert.doesNotMatch(mobileRuntime, /isAppleMobile|showImagePreview|save-preview/);
+  assert.doesNotMatch(styles, /\.save-preview-/);
+  assert.match(styles, /\.haiku-form-switch/);
+  assert.match(modernApi, /const MODEL = "deepseek-v4-flash"/);
+  assert.match(modernApi, /languageValue !== "en" && languageValue !== "zh" && languageValue !== "ja"/);
+  assert.match(modernApi, /process\.env\.DEEPSEEK_API_KEY/);
+  assert.match(modernApi, /https:\/\/api\.deepseek\.com\/chat\/completions/);
+  assert.match(modernApi, /function illustrationForContent/);
+  assert.match(modernApi, /"window", "skyline", "transit", "cafe", "desk"/);
+  assert.match(modernApi, /Choose the motif and accent from a concrete image in the poem/);
+  assert.match(inkWash, /recipe\.motif === "transit"/);
+  assert.match(inkWash, /recipe\.motif === "phone"/);
+  assert.match(inkWash, /recipe\.motif === "laundry"/);
+  assert.match(inkWash, /recipe\.motif === "bicycle"/);
+  assert.match(mobileRuntime, /motif === "transit"/);
+  assert.match(mobileRuntime, /motif === "phone"/);
+  assert.match(mobileRuntime, /motif === "laundry"/);
+  assert.match(mobileRuntime, /motif === "bicycle"/);
+  assert.match(v23Api, /generateStrictHaiku\(request\)/);
+  assert.match(v23Api, /illustrationForContent\(result\.haiku\.lines, keyword, result\.haiku\.seed\)/);
+  assert.match(v23Api, /form: "5-7-5"/);
+  assert.match(v23Api, /version: 23/);
+  assert.match(mobileRuntime, /state\.haikuForm === "modern" \? fetchModernHaiku\(payload\) : fetchV23Haiku\(payload\)/);
+  assert.match(mobileRuntime, /fetch\("\/api\/v23-haiku"/);
+  assert.match(mobileRuntime, /heroTitle: "Spring Whispers,"/);
+  assert.match(mobileRuntime, /data-haiku-form/);
+  await assert.rejects(access(new URL("../app/modern-test/modern-test.module.css", import.meta.url)));
+});
 
 test("server-renders the finished Stillpoint experience", async () => {
   const response = await render();
@@ -56,8 +161,9 @@ test("server-renders the finished Stillpoint experience", async () => {
 });
 
 test("includes both generator modes and removes starter assets", async () => {
-  const [page, haiku, layout, packageJson, styles, inkWash, mobileRuntime, bootstrap] = await Promise.all([
+  const [rootPage, page, haiku, layout, packageJson, styles, inkWash, mobileRuntime, bootstrap] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/modern-test/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/haiku.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -67,13 +173,15 @@ test("includes both generator modes and removes starter assets", async () => {
     readFile(new URL("../app/rsc-bootstrap.tsx", import.meta.url), "utf8"),
   ]);
 
+  assert.match(rootPage, /export \{ default \} from "\.\/modern-test\/page";/);
   assert.match(haiku, /type Mode = "random" \| "keyword"/);
   assert.match(haiku, /type Language = "en" \| "zh" \| "ja"/);
   assert.match(haiku, /countPoeticUnits/);
   assert.match(haiku, /estimateSyllables/);
   assert.doesNotMatch(haiku, /LOCAL_COMPOSITION_BANKS|makeRandomHaiku|makeKeywordHaiku/);
   assert.match(page, /aria-pressed/);
-  assert.match(page, /\/api\/haiku/);
+  assert.match(page, /\/api\/modern-haiku/);
+  assert.match(page, /\/api\/v23-haiku/);
   assert.doesNotMatch(haiku, /Written & painted with DeepSeek/);
   assert.doesNotMatch(page, /generationSourceLabel/);
   assert.doesNotMatch(page, /Written, reviewed, and painted with DeepSeek/);
@@ -95,20 +203,17 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /おまかせ/);
   assert.match(page, /言葉から/);
   assert.match(page, /俳句を保存/);
-  assert.match(page, /俳句を詠む/);
+  assert.match(page, /現代短俳を詠む/);
+  assert.match(page, /五・七・五を詠む/);
   assert.match(page, /onClick=\{\(\) => changeLanguage\("ja"\)\}/);
   assert.match(page, /data-language="ja"/);
   assert.match(page, /data-mode="keyword"/);
-  assert.match(page, /id="stillpoint-app"/);
+  assert.match(page, /id="modern-short-haiku-app"/);
   assert.match(page, /id="generate-haiku"/);
   assert.match(page, /__STILLPOINT_REACT_READY__/);
   assert.match(page, /useLayoutEffect/);
   assert.match(page, /__STILLPOINT_FALLBACK_ACTIVE__/);
-  assert.match(page, /readFallbackSnapshot/);
-  assert.match(page, /__STILLPOINT_FALLBACK_STATE__/);
   assert.ok(page.indexOf('className="language-control"') < page.indexOf('className="mode-switch"'));
-  assert.match(page, /event\.persisted/);
-  assert.match(page, /window\.location\.reload\(\)/);
   assert.doesNotMatch(page, /navigator\.clipboard\.writeText/);
   assert.match(page, /Save Haiku/);
   assert.match(page, /Save haiku as a picture/);
@@ -130,7 +235,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);
-  assert.match(page, /<span>5 · 7 · 5<\/span>/);
+  assert.match(page, /<span id="paper-rule">\{formCopy\.paperRule\}<\/span>/);
   assert.match(styles, /white-space:\s*nowrap/);
   assert.doesNotMatch(styles, /\.poem-line > span/);
   assert.match(styles, /\.poem-lines\.lines-extra-tight \.poem-line p/);
@@ -161,6 +266,12 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(mobileRuntime, /function publishState\(\)/);
   assert.match(mobileRuntime, /__STILLPOINT_FALLBACK_STATE__/);
   assert.match(mobileRuntime, /fetch\("\/api\/haiku"/);
+  assert.match(mobileRuntime, /function isModernApp\(\)/);
+  assert.match(mobileRuntime, /fetch\("\/api\/modern-haiku"/);
+  assert.match(mobileRuntime, /form\.classList\.contains\("modern-generator-form"\)/);
+  assert.match(mobileRuntime, /isModernApp\(\) \? MODERN_COPY : COPY/);
+  assert.match(mobileRuntime, /recentLines: \{ en: \[\], zh: \[\], ja: \[\] \}/);
+  assert.match(mobileRuntime, /payload\.recentLines = state\.recentLines\[state\.language\]/);
   assert.match(mobileRuntime, /navigator\.canShare\(shareData\)/);
   assert.match(mobileRuntime, /navigator\.share\(shareData\)/);
   assert.match(mobileRuntime, /drawInk\(canvas, haiku\)/);
@@ -174,17 +285,20 @@ test("includes both generator modes and removes starter assets", async () => {
 });
 
 test("keeps mobile Safari controls tappable and browser-compatible", async () => {
-  const [styles, viteConfig] = await Promise.all([
+  const [styles, viteConfig, nextConfig] = await Promise.all([
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../vite.config.ts", import.meta.url), "utf8"),
+    readFile(new URL("../next.config.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(styles, /\.mode-switch button \{ min-width: 0; min-height: 44px;/);
   assert.match(styles, /\.language-switch button \{ min-height: 44px;/);
+  assert.match(styles, /\.haiku-form-switch button \{ min-width: 0; min-height: 44px; flex: 1; \}/);
   assert.match(styles, /\.generate-button \{ grid-column: 1; grid-row: 1; width: 100%; min-height: 48px;/);
   assert.match(styles, /\.generator-form \{[\s\S]*?isolation: isolate;[\s\S]*?pointer-events: auto;/);
   assert.match(styles, /\.ink-wash-canvas \{[\s\S]*?top:\s*0;[\s\S]*?right:\s*0;[\s\S]*?bottom:\s*0;[\s\S]*?left:\s*0;[\s\S]*?inset:\s*0;/);
   assert.match(styles, /\.brand > \* \+ \* \{ margin-left: 12px; \}/);
   assert.match(styles, /\.footer-meta > \* \+ \* \{ margin-left: 22px; \}/);
   assert.match(viteConfig, /target: "safari13"/);
+  assert.match(nextConfig, /allowedDevOrigins: \["192\.168\.12\.112"\]/);
 });

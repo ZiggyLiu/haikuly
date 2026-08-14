@@ -65,6 +65,12 @@ test("illustration recipes allow only the restrained render vocabulary", () => {
     placement: "left",
   }), true);
   assert.equal(isIllustrationRecipe({
+    motif: "transit",
+    accent: "umbrella",
+    tone: "blue-gray",
+    placement: "right",
+  }), true);
+  assert.equal(isIllustrationRecipe({
     motif: "mountains",
     accent: "bird",
     tone: "neon",

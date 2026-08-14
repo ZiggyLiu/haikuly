@@ -40,9 +40,78 @@
     }
   };
 
+  var MODERN_COPY = {
+    en: {
+      languageLabel: "Poem language", languageRule: "Three lines · modern voice", languageGroup: "Poem language",
+      modeGroup: "Generation mode", randomMode: "By chance", keywordMode: "From a word",
+      keywordPrompt: "What is on your mind?", keywordPlaceholder: "late train, low battery, home…",
+      keywordError: "Enter a word or short phrase first.",
+      emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
+      saved: "Saved", saveAria: "Save modern short haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
+      generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generating: "Writing, reviewing, and painting…",
+      generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
+      pageTitle: "Spring Whispers, Haiku-ly~",
+      eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
+      intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
+      paperRule: "Three lines · modern haiku"
+    },
+    zh: {
+      languageLabel: "诗歌语言", languageRule: "三行 · 当代中文", languageGroup: "诗歌语言", modeGroup: "生成方式",
+      randomMode: "随机生成", keywordMode: "关键词生成", keywordPrompt: "此刻你在想什么？",
+      keywordPlaceholder: "下班，雨夜，已读不回…", keywordError: "请先输入一个词或短语。",
+      emptyPoem: "下一刻诗意将在此浮现。",
+      save: "保存俳句", saved: "已保存", saveAria: "将现代短俳保存为图片", saveError: "无法保存短俳图片，请重试。",
+      generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generating: "正在创作、审校与绘制…",
+      generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
+      pageTitle: "春风十里，Haiku-ly~",
+      eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
+      intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
+      paperRule: "三行 · 现代短俳"
+    },
+    ja: {
+      languageLabel: "詩の言語", languageRule: "三行 · 現代語", languageGroup: "詩の言語", modeGroup: "作句方法",
+      randomMode: "おまかせ", keywordMode: "言葉から", keywordPrompt: "今、心にあるものは？",
+      keywordPlaceholder: "終電、通知、雨の夜…", keywordError: "言葉または短いフレーズを入力してください。",
+      emptyPoem: "次の小さな瞬間がここに現れます。",
+      save: "俳句を保存", saved: "保存しました", saveAria: "現代短俳を画像として保存",
+      saveError: "短俳の画像を保存できませんでした。もう一度お試しください。", generateRandom: "現代短俳を詠む",
+      generateKeyword: "私の現代短俳を詠む", generating: "作句・推敲・描画中…",
+      generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
+      unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+      pageTitle: "春のささやき、Haiku-ly~",
+      eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
+      intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
+      paperRule: "三行 · 現代短俳"
+    }
+  };
+
+  var V23_FORM_COPY = {
+    en: {
+      group: "Haiku form", traditional: "5-7-5", modern: "Modern Haiku",
+      languageRule: "5 · 7 · 5 syllables", generateRandom: "Write a 5-7-5 haiku",
+      generateKeyword: "Write my 5-7-5 haiku", generationError: "DeepSeek could not write a coherent 5-7-5 haiku. Please try again.",
+      intro: "Find a strict 5-7-5 haiku and its quiet watercolor world by chance, or begin with a word already on your mind.",
+      paperRule: "5 · 7 · 5 syllables"
+    },
+    zh: {
+      group: "俳句形式", traditional: "五七五俳句", modern: "现代短俳",
+      languageRule: "五 · 七 · 五字", generateRandom: "写一首五七五俳句",
+      generateKeyword: "写我的五七五俳句", generationError: "DeepSeek 暂时无法创作合规的五七五俳句，请重试。",
+      intro: "随机发现一首严格遵循五七五字数的俳句和它的水彩世界，或从此刻萦绕心头的一个词开始。",
+      paperRule: "五 · 七 · 五字"
+    },
+    ja: {
+      group: "俳句の形式", traditional: "五・七・五", modern: "現代短俳",
+      languageRule: "五 · 七 · 五音", generateRandom: "五・七・五を詠む",
+      generateKeyword: "私の五・七・五を詠む", generationError: "DeepSeekが五・七・五の俳句を作れませんでした。もう一度お試しください。",
+      intro: "五・七・五を守る俳句と静かな水彩の世界をおまかせで見つけるか、心にある一つの言葉から始めましょう。",
+      paperRule: "五 · 七 · 五音"
+    }
+  };
+
   var state = {
     language: "en", mode: "random", keyword: "", error: "", haiku: null,
-    haikuLanguage: "en", generating: false
+    haikuLanguage: "en", haikuForm: "modern", generating: false, recentLines: { en: [], zh: [], ja: [] }
   };
 
   function publishState() {
@@ -53,6 +122,7 @@
       error: state.error,
       haiku: state.haiku,
       haikuLanguage: state.haikuLanguage,
+      haikuForm: state.haikuForm,
       generating: state.generating
     };
   }
@@ -62,7 +132,12 @@
   }
   function activateFallback() { window.__STILLPOINT_FALLBACK_ACTIVE__ = true; publishState(); }
   function byId(id) { return document.getElementById(id); }
-  function copy() { return COPY[state.language]; }
+  function isModernApp() { return !!document.getElementById("modern-short-haiku-app"); }
+  function copy() { return (isModernApp() ? MODERN_COPY : COPY)[state.language]; }
+  function selectedFormCopy() {
+    if (!isModernApp() || state.haikuForm === "modern") return copy();
+    return V23_FORM_COPY[state.language];
+  }
   function setText(element, value) { if (element) element.textContent = value; }
   function setError(value) { state.error = value; setText(byId("error-message"), value); publishState(); }
 
@@ -88,20 +163,32 @@
 
   function updateControls() {
     var current = copy();
+    var currentForm = selectedFormCopy();
     document.title = current.pageTitle;
     setText(byId("hero-title"), current.heroTitle);
     setText(byId("hero-accent"), current.heroTitleAccent);
+    if (isModernApp()) {
+      setText(byId("modern-eyebrow"), current.eyebrow);
+      setText(byId("modern-intro"), currentForm.intro);
+      setText(byId("paper-rule"), currentForm.paperRule);
+    }
     var heroHeading = byId("hero-title");
     if (heroHeading && heroHeading.parentElement) {
       heroHeading.parentElement.setAttribute("lang", state.language === "zh" ? "zh-CN" : state.language);
     }
     var languageButtons = document.querySelectorAll("[data-language]");
+    var formButtons = document.querySelectorAll("[data-haiku-form]");
     var modeButtons = document.querySelectorAll("[data-mode]");
     var index;
     for (index = 0; index < languageButtons.length; index += 1) {
       var languageActive = languageButtons[index].getAttribute("data-language") === state.language;
       languageButtons[index].className = languageActive ? "active" : "";
       languageButtons[index].setAttribute("aria-pressed", languageActive ? "true" : "false");
+    }
+    for (index = 0; index < formButtons.length; index += 1) {
+      var formActive = formButtons[index].getAttribute("data-haiku-form") === state.haikuForm;
+      formButtons[index].className = formActive ? "active" : "";
+      formButtons[index].setAttribute("aria-pressed", formActive ? "true" : "false");
     }
     for (index = 0; index < modeButtons.length; index += 1) {
       var modeActive = modeButtons[index].getAttribute("data-mode") === state.mode;
@@ -110,10 +197,16 @@
     }
 
     setText(document.querySelector(".language-label"), current.languageLabel);
-    setText(document.querySelector(".language-rule"), current.languageRule);
+    setText(document.querySelector(".language-rule"), currentForm.languageRule);
     var languageGroup = document.querySelector(".language-switch");
+    var formGroup = document.querySelector(".haiku-form-switch");
     var modeGroup = document.querySelector(".mode-switch");
     if (languageGroup) languageGroup.setAttribute("aria-label", current.languageGroup);
+    if (formGroup && isModernApp()) {
+      formGroup.setAttribute("aria-label", V23_FORM_COPY[state.language].group);
+      setText(formGroup.querySelector('[data-haiku-form="traditional"]'), V23_FORM_COPY[state.language].traditional);
+      setText(formGroup.querySelector('[data-haiku-form="modern"]'), V23_FORM_COPY[state.language].modern);
+    }
     if (modeGroup) modeGroup.setAttribute("aria-label", current.modeGroup);
     setButtonCopy(document.querySelector('[data-mode="random"]'), "✦", current.randomMode);
     setButtonCopy(document.querySelector('[data-mode="keyword"]'), "⌁", current.keywordMode);
@@ -140,8 +233,9 @@
     var button = byId("generate-haiku");
     if (!button) return;
     var current = copy();
+    var currentForm = selectedFormCopy();
     button.disabled = state.generating;
-    setActionCopy(button, state.generating ? current.generating : (state.mode === "random" ? current.generateRandom : current.generateKeyword));
+    setActionCopy(button, state.generating ? current.generating : (state.mode === "random" ? currentForm.generateRandom : currentForm.generateKeyword));
     publishState();
   }
 
@@ -193,6 +287,19 @@
     context.restore();
   }
 
+  function roundedCanvasRect(context, x, y, width, height, radius) {
+    var corner = Math.min(radius, width / 2, height / 2);
+    context.moveTo(x + corner, y);
+    context.lineTo(x + width - corner, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + corner);
+    context.lineTo(x + width, y + height - corner);
+    context.quadraticCurveTo(x + width, y + height, x + width - corner, y + height);
+    context.lineTo(x + corner, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - corner);
+    context.lineTo(x, y + corner);
+    context.quadraticCurveTo(x, y, x + corner, y);
+  }
+
   function drawInk(canvas, haiku) {
     var bounds = canvas.getBoundingClientRect();
     if (bounds.width <= 0 || bounds.height <= 0) return;
@@ -218,8 +325,122 @@
     context.lineWidth = 1.2;
     var ground = height * 0.74;
     var motif = haiku.illustration && haiku.illustration.motif;
+    var side = haiku.illustration && haiku.illustration.placement === "left" ? 1 : -1;
+    var originX = haiku.illustration && haiku.illustration.placement === "left" ? width * 0.36 : width * 0.64;
+    var span = Math.min(width * 0.72, 560);
     context.beginPath();
-    if (motif === "mountains") {
+    if (motif === "window") {
+      var frameWidth = Math.min(span * 0.74, 360);
+      var frameHeight = Math.min(height * 0.48, 205);
+      var frameLeft = originX - frameWidth / 2;
+      var frameTop = height * 0.18;
+      context.rect(frameLeft, frameTop, frameWidth, frameHeight);
+      context.moveTo(originX, frameTop);
+      context.lineTo(originX, frameTop + frameHeight);
+      context.moveTo(frameLeft, frameTop + frameHeight * 0.54);
+      context.lineTo(frameLeft + frameWidth, frameTop + frameHeight * 0.54);
+    } else if (motif === "skyline") {
+      var skylineBase = ground + 38;
+      var skylineX = originX - span * 0.65;
+      context.moveTo(originX - span * 0.7, skylineBase);
+      context.lineTo(originX + span * 0.7, skylineBase);
+      for (index = 0; index < 9; index += 1) {
+        var buildingWidth = 28 + random() * 34;
+        var buildingHeight = 58 + random() * 105;
+        context.rect(skylineX, skylineBase - buildingHeight, buildingWidth, buildingHeight);
+        skylineX += buildingWidth + 8 + random() * 12;
+      }
+    } else if (motif === "transit") {
+      var carWidth = Math.min(span * 1.2, 520);
+      var carHeight = 112;
+      var carLeft = originX - carWidth / 2;
+      var carTop = ground - carHeight;
+      roundedCanvasRect(context, carLeft, carTop, carWidth, carHeight, 18);
+      context.moveTo(carLeft - 28, ground + 28);
+      context.lineTo(carLeft + carWidth + 28, ground + 28);
+      for (index = 0; index < 5; index += 1) {
+        context.rect(carLeft + 38 + index * ((carWidth - 76) / 5), carTop + 47, (carWidth - 110) / 5, 35);
+      }
+    } else if (motif === "cafe") {
+      var tableY = ground - 6;
+      context.moveTo(originX - span * 0.55, tableY);
+      context.lineTo(originX + span * 0.55, tableY);
+      context.moveTo(originX - span * 0.3, tableY);
+      context.lineTo(originX - span * 0.38, tableY + 90);
+      context.moveTo(originX + span * 0.3, tableY);
+      context.lineTo(originX + span * 0.38, tableY + 90);
+      context.ellipse(originX, tableY - 44, 24, 8, 0, 0, Math.PI * 2);
+      context.moveTo(originX - 20, tableY - 43);
+      context.lineTo(originX - 16, tableY - 12);
+      context.quadraticCurveTo(originX, tableY - 5, originX + 16, tableY - 12);
+      context.lineTo(originX + 20, tableY - 43);
+    } else if (motif === "desk") {
+      var deskY = ground + 8;
+      context.moveTo(originX - span * 0.62, deskY);
+      context.lineTo(originX + span * 0.62, deskY);
+      context.moveTo(originX - 72, deskY - 9);
+      context.lineTo(originX - 55, deskY - 84);
+      context.lineTo(originX + 62, deskY - 84);
+      context.lineTo(originX + 76, deskY - 9);
+      context.closePath();
+    } else if (motif === "doorway") {
+      var doorWidth = Math.min(span * 0.5, 210);
+      var doorHeight = Math.min(height * 0.58, 250);
+      var doorLeft = originX - doorWidth / 2;
+      var doorTop = ground - doorHeight + 44;
+      context.rect(doorLeft, doorTop, doorWidth, doorHeight);
+      context.moveTo(doorLeft + doorWidth * 0.3, doorTop + doorHeight * 0.42);
+      context.lineTo(doorLeft + doorWidth * 0.82, doorTop + doorHeight * 0.3);
+      context.lineTo(doorLeft + doorWidth * 0.82, doorTop + doorHeight);
+    } else if (motif === "street") {
+      var vanishX = originX + side * span * 0.08;
+      var vanishY = height * 0.37;
+      context.moveTo(vanishX, vanishY);
+      context.lineTo(originX - span * 0.72, ground + 92);
+      context.moveTo(vanishX, vanishY);
+      context.lineTo(originX + span * 0.72, ground + 92);
+      for (index = 0; index < 6; index += 1) {
+        var stripeY = vanishY + 38 + index * 23;
+        var stripeHalf = 18 + index * 13;
+        context.moveTo(vanishX - stripeHalf, stripeY);
+        context.lineTo(vanishX + stripeHalf, stripeY);
+      }
+    } else if (motif === "phone") {
+      var phoneWidth = 112;
+      var phoneHeight = 214;
+      var phoneLeft = originX - phoneWidth / 2;
+      var phoneTop = height * 0.2;
+      roundedCanvasRect(context, phoneLeft, phoneTop, phoneWidth, phoneHeight, 18);
+      context.moveTo(originX - 18, phoneTop + 15);
+      context.lineTo(originX + 18, phoneTop + 15);
+      context.moveTo(originX - 14, phoneTop + phoneHeight - 14);
+      context.lineTo(originX + 14, phoneTop + phoneHeight - 14);
+    } else if (motif === "laundry") {
+      var laundryY = height * 0.31;
+      context.moveTo(originX - span * 0.68, laundryY);
+      context.quadraticCurveTo(originX, laundryY + 32, originX + span * 0.68, laundryY);
+      for (index = 0; index < 4; index += 1) {
+        var itemX = originX - span * 0.42 + index * span * 0.28;
+        var itemY = laundryY + 18 + index % 2 * 6;
+        var itemWidth = 46 + random() * 24;
+        var itemHeight = 74 + random() * 42;
+        context.rect(itemX - itemWidth / 2, itemY, itemWidth, itemHeight);
+      }
+    } else if (motif === "bicycle") {
+      var wheelY = ground + 8;
+      var wheelRadius = Math.min(62, span * 0.15);
+      var leftWheel = originX - wheelRadius * 1.35;
+      var rightWheel = originX + wheelRadius * 1.35;
+      context.arc(leftWheel, wheelY, wheelRadius, 0, Math.PI * 2);
+      context.moveTo(rightWheel + wheelRadius, wheelY);
+      context.arc(rightWheel, wheelY, wheelRadius, 0, Math.PI * 2);
+      context.moveTo(leftWheel, wheelY);
+      context.lineTo(originX - 8, wheelY - 8);
+      context.lineTo(rightWheel, wheelY);
+      context.lineTo(originX + 24, wheelY - 78);
+      context.lineTo(originX - 8, wheelY - 8);
+      context.lineTo(originX - 34, wheelY - 82);
+    } else if (motif === "mountains") {
       context.moveTo(width * 0.08, ground);
       context.lineTo(width * 0.31, ground - 92);
       context.lineTo(width * 0.49, ground - 28);
@@ -247,9 +468,52 @@
       }
     }
     context.stroke();
+
+    var accent = haiku.illustration && haiku.illustration.accent;
+    var accentX = originX;
+    var accentY = height * 0.28;
+    context.strokeStyle = rgba(colors[0], 0.18);
+    context.fillStyle = rgba(colors[2], 0.08);
+    context.lineWidth = 0.8;
+    context.beginPath();
+    if (accent === "moon" || accent === "sun") {
+      context.arc(accentX, accentY, 18, 0, Math.PI * 2);
+      context.fill();
+    } else if (accent === "lamp") {
+      context.moveTo(accentX - side * 44, accentY + 92);
+      context.quadraticCurveTo(accentX - side * 34, accentY + 12, accentX, accentY + 8);
+      context.lineTo(accentX + side * 24, accentY + 24);
+      context.lineTo(accentX - side * 10, accentY + 29);
+    } else if (accent === "cup") {
+      context.ellipse(accentX, accentY + 8, 18, 6, 0, 0, Math.PI * 2);
+      context.moveTo(accentX - 17, accentY + 9);
+      context.lineTo(accentX - 13, accentY + 35);
+      context.quadraticCurveTo(accentX, accentY + 43, accentX + 13, accentY + 35);
+      context.lineTo(accentX + 17, accentY + 9);
+    } else if (accent === "umbrella") {
+      context.arc(accentX, accentY + 26, 43, Math.PI, Math.PI * 2);
+      context.moveTo(accentX, accentY - 17);
+      context.lineTo(accentX, accentY + 71);
+    } else if (accent === "plant") {
+      context.moveTo(accentX, accentY + 72);
+      context.quadraticCurveTo(accentX - side * 8, accentY + 34, accentX + side * 2, accentY - 8);
+      context.rect(accentX - 18, accentY + 72, 36, 24);
+    } else if (accent === "cat") {
+      context.moveTo(accentX - 17, accentY + 31);
+      context.lineTo(accentX - 12, accentY + 8);
+      context.lineTo(accentX, accentY + 20);
+      context.lineTo(accentX + 13, accentY + 7);
+      context.lineTo(accentX + 18, accentY + 31);
+      context.bezierCurveTo(accentX + 31, accentY + 62, accentX + 20, accentY + 91, accentX, accentY + 96);
+      context.bezierCurveTo(accentX - 24, accentY + 88, accentX - 31, accentY + 58, accentX - 17, accentY + 31);
+    }
+    context.stroke();
   }
 
   function renderHaiku(haiku, language) {
+    if (isModernApp() && state.haikuForm === "modern") {
+      state.recentLines[language] = haiku.lines.concat(state.recentLines[language] || []).slice(0, 15);
+    }
     state.haiku = haiku;
     state.haikuLanguage = language;
     publishState();
@@ -291,9 +555,36 @@
     drawInk(canvas, haiku);
   }
 
+  function clearRenderedHaiku() {
+    state.haiku = null;
+    state.haikuLanguage = state.language;
+    var paper = byId("poem-paper");
+    if (paper) {
+      paper.classList.remove("has-illustration");
+      var canvas = paper.querySelector(".ink-wash-canvas");
+      if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    }
+    var date = byId("paper-date");
+    setText(date, "DATE —");
+    if (date) date.removeAttribute("datetime");
+    var lines = byId("poem-lines");
+    if (lines) {
+      while (lines.firstChild) lines.removeChild(lines.firstChild);
+      lines.className = "poem-lines poem-empty";
+      var empty = document.createElement("p");
+      empty.id = "empty-poem";
+      empty.textContent = copy().emptyPoem;
+      lines.appendChild(empty);
+    }
+    var save = byId("save-haiku");
+    if (save) save.disabled = true;
+    publishState();
+  }
+
   function generate() {
     if (state.generating) return;
     var current = copy();
+    var currentForm = selectedFormCopy();
     var input = byId("keyword");
     var keyword = input ? input.value.replace(/^\s+|\s+$/g, "") : "";
     if (state.mode === "keyword" && !keyword) {
@@ -306,20 +597,44 @@
     updateGenerateButton();
     var payload = { mode: state.mode, language: state.language };
     if (state.mode === "keyword") payload.keyword = keyword;
-    fetch("/api/haiku", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    }).then(function (response) {
+    if (isModernApp() && state.haikuForm === "modern") payload.recentLines = state.recentLines[state.language] || [];
+    var request = isModernApp()
+      ? (state.haikuForm === "modern" ? fetchModernHaiku(payload) : fetchV23Haiku(payload))
+      : fetchFormalHaiku(payload);
+    request.then(function (response) {
       return response.json().then(function (result) { return { response: response, result: result }; });
     }).then(function (packet) {
       if (!packet.response.ok || !packet.result.haiku) throw new Error("generation");
       renderHaiku(packet.result.haiku, packet.result.language || state.language);
     }).catch(function (error) {
-      setError(error && error.message === "generation" ? current.generationError : current.unreachableError);
+      setError(error && error.message === "generation" ? currentForm.generationError : current.unreachableError);
     }).then(function () {
       state.generating = false;
       updateGenerateButton();
+    });
+  }
+
+  function fetchFormalHaiku(payload) {
+    return fetch("/api/haiku", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  function fetchModernHaiku(payload) {
+    return fetch("/api/modern-haiku", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  function fetchV23Haiku(payload) {
+    return fetch("/api/v23-haiku", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
   }
 
@@ -337,9 +652,10 @@
 
   function filename(createdAt) {
     var date = new Date(createdAt);
-    if (isNaN(date.getTime())) return "stillpoint-haiku.png";
+    var prefix = "stillpoint-haiku";
+    if (isNaN(date.getTime())) return prefix + ".png";
     function pad(value) { return value < 10 ? "0" + value : String(value); }
-    return "stillpoint-haiku-" + date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + ".png";
+    return prefix + "-" + date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) + ".png";
   }
 
   function imageFromCanvas(canvas, name) {
@@ -447,6 +763,15 @@
       setError(""); updateControls(); return;
     }
     var modeButton = closestWithAttribute(event.target, "data-mode");
+    var formButton = closestWithAttribute(event.target, "data-haiku-form");
+    if (formButton) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      activateFallback();
+      var nextForm = formButton.getAttribute("data-haiku-form") || "modern";
+      if (nextForm === state.haikuForm) return;
+      state.haikuForm = nextForm;
+      clearRenderedHaiku(); setError(""); updateControls(); return;
+    }
     if (modeButton) {
       event.preventDefault(); event.stopImmediatePropagation();
       activateFallback();
@@ -462,7 +787,7 @@
   document.addEventListener("submit", function (event) {
     if (reactReady()) return;
     var form = event.target;
-    if (form && form.classList && form.classList.contains("generator-form")) {
+    if (form && form.classList && (form.classList.contains("generator-form") || form.classList.contains("modern-generator-form"))) {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); generate();
     }
   }, true);
