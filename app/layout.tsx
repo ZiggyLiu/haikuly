@@ -38,7 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = incomingHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const metadataBase = new URL(`${protocol}://${host}`);
   const title = "Spring Whispers, Haiku-ly~";
-  const description = "Create a quiet 5–7–5 poem by chance or from a word on your mind.";
+  const description = "Create a strict 5–7–5 haiku or a modern three-line haiku by chance or from a word on your mind.";
 
   return {
     metadataBase,
@@ -48,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: "/og.png", width: 1730, height: 909, alt: "Stillpoint — Three lines. One quiet world." }],
+      images: [{ url: "/og.png", width: 1730, height: 909, alt: "Haiku-ly — Three lines. One quiet world." }],
     },
     twitter: {
       card: "summary_large_image",

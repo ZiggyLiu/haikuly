@@ -77,6 +77,9 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(modernPage, /modernForm: "現代短俳"/);
   assert.match(modernPage, /heroTitle: "Spring Whispers,"/);
   assert.doesNotMatch(modernPage, /heroTitle: "Right now,"/);
+  assert.match(modernPage, /document\.documentElement\.lang = languageTag\(language\)/);
+  assert.match(modernPage, /aria-label="Haiku-ly home"/);
+  assert.doesNotMatch(modernPage, /实验页首页/);
   assert.match(modernPage, /id="keyword"/);
   assert.match(modernPage, /id="keyword-field"/);
   assert.match(modernPage, /id="poem-lines"/);
@@ -118,6 +121,9 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(mobileRuntime, /fetch\("\/api\/v23-haiku"/);
   assert.match(mobileRuntime, /heroTitle: "Spring Whispers,"/);
   assert.match(mobileRuntime, /data-haiku-form/);
+  assert.match(mobileRuntime, /document\.documentElement\.lang = state\.language === "zh" \? "zh-CN" : state\.language/);
+  assert.match(mobileRuntime, /studio\.setAttribute\("aria-label", current\.pageTitle\)/);
+  assert.doesNotMatch(mobileRuntime, /Save modern short haiku as a picture|将现代短俳保存为图片|現代短俳を画像として保存/);
   await assert.rejects(access(new URL("../app/modern-test/modern-test.module.css", import.meta.url)));
 });
 
@@ -253,6 +259,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
   assert.match(layout, /Spring Whispers, Haiku-ly~/);
+  assert.match(layout, /strict 5–7–5 haiku or a modern three-line haiku/);
+  assert.match(layout, /Haiku-ly — Three lines\. One quiet world\./);
+  assert.doesNotMatch(layout, /Stillpoint — Three lines/);
   assert.match(layout, /RscBootstrap/);
   assert.match(bootstrap, /globals\.css\?raw/);
   assert.match(bootstrap, /mobile-runtime\.js\?raw/);

@@ -47,7 +47,7 @@
       keywordPrompt: "What is on your mind?", keywordPlaceholder: "late train, low battery, home…",
       keywordError: "Enter a word or short phrase first.",
       emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
-      saved: "Saved", saveAria: "Save modern short haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
+      saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
       generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       pageTitle: "Spring Whispers, Haiku-ly~",
@@ -60,7 +60,7 @@
       randomMode: "随机生成", keywordMode: "关键词生成", keywordPrompt: "此刻你在想什么？",
       keywordPlaceholder: "下班，雨夜，已读不回…", keywordError: "请先输入一个词或短语。",
       emptyPoem: "下一刻诗意将在此浮现。",
-      save: "保存俳句", saved: "已保存", saveAria: "将现代短俳保存为图片", saveError: "无法保存短俳图片，请重试。",
+      save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存短俳图片，请重试。",
       generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       pageTitle: "春风十里，Haiku-ly~",
@@ -73,7 +73,7 @@
       randomMode: "おまかせ", keywordMode: "言葉から", keywordPrompt: "今、心にあるものは？",
       keywordPlaceholder: "終電、通知、雨の夜…", keywordError: "言葉または短いフレーズを入力してください。",
       emptyPoem: "次の小さな瞬間がここに現れます。",
-      save: "俳句を保存", saved: "保存しました", saveAria: "現代短俳を画像として保存",
+      save: "俳句を保存", saved: "保存しました", saveAria: "俳句を画像として保存",
       saveError: "短俳の画像を保存できませんでした。もう一度お試しください。", generateRandom: "現代短俳を詠む",
       generateKeyword: "私の現代短俳を詠む", generating: "作句・推敲・描画中…",
       generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
@@ -165,6 +165,7 @@
     var current = copy();
     var currentForm = selectedFormCopy();
     document.title = current.pageTitle;
+    document.documentElement.lang = state.language === "zh" ? "zh-CN" : state.language;
     setText(byId("hero-title"), current.heroTitle);
     setText(byId("hero-accent"), current.heroTitleAccent);
     if (isModernApp()) {
@@ -201,6 +202,8 @@
     var languageGroup = document.querySelector(".language-switch");
     var formGroup = document.querySelector(".haiku-form-switch");
     var modeGroup = document.querySelector(".mode-switch");
+    var studio = document.querySelector(".studio");
+    if (studio) studio.setAttribute("aria-label", current.pageTitle);
     if (languageGroup) languageGroup.setAttribute("aria-label", current.languageGroup);
     if (formGroup && isModernApp()) {
       formGroup.setAttribute("aria-label", V23_FORM_COPY[state.language].group);

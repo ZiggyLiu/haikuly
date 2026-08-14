@@ -233,6 +233,7 @@ export default function ModernShortHaikuTest() {
 
   useEffect(() => {
     document.title = UI_COPY[language].pageTitle;
+    document.documentElement.lang = languageTag(language);
   }, [language]);
 
   async function generate(event: FormEvent<HTMLFormElement>) {
@@ -442,7 +443,7 @@ export default function ModernShortHaikuTest() {
       <div className="ambient ambient-right" aria-hidden="true" />
 
       <header className="site-header">
-        <a className="brand" href="#modern-top" aria-label="Haiku-ly 现代短俳实验页首页">
+        <a className="brand" href="#modern-top" aria-label="Haiku-ly home">
           <span className="brand-mark" aria-hidden="true">間</span>
           <span>Haiku-ly</span>
         </a>
