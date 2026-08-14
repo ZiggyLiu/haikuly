@@ -37,6 +37,8 @@ const UI_COPY: Record<Language, {
   generationError: string;
   unreachableError: string;
   pageTitle: string;
+  homeAria: string;
+  emailAria: string;
   eyebrow: string;
   heroTitle: string;
   heroAccent: string;
@@ -67,6 +69,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeek could not write a modern short haiku. Please try again.",
     unreachableError: "DeepSeek could not be reached. Please try again.",
     pageTitle: "Spring Whispers, Haiku-ly~",
+    homeAria: "Haiku-ly home",
+    emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
     eyebrow: "Make room for a small moment",
     heroTitle: "Spring Whispers,",
     heroAccent: "Haiku-ly~",
@@ -97,6 +101,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeek 暂时无法创作现代短俳，请重试。",
     unreachableError: "暂时无法连接 DeepSeek，请重试。",
     pageTitle: "春风十里，Haiku-ly~",
+    homeAria: "返回 Haiku-ly 首页",
+    emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
     eyebrow: "给一个小小的瞬间留点位置",
     heroTitle: "春风十里，",
     heroAccent: "Haiku-ly~",
@@ -127,6 +133,8 @@ const UI_COPY: Record<Language, {
     generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
     unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
     pageTitle: "春のささやき、Haiku-ly~",
+    homeAria: "Haiku-ly ホームへ戻る",
+    emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
     eyebrow: "小さな瞬間のために余白を",
     heroTitle: "今この時を、",
     heroAccent: "Haiku-ly~",
@@ -443,7 +451,7 @@ export default function ModernShortHaikuTest() {
       <div className="ambient ambient-right" aria-hidden="true" />
 
       <header className="site-header">
-        <a className="brand" href="#modern-top" aria-label="Haiku-ly home">
+        <a className="brand" id="brand-home" href="#modern-top" aria-label={copy.homeAria}>
           <span className="brand-mark" aria-hidden="true">間</span>
           <span>Haiku-ly</span>
         </a>
@@ -550,7 +558,7 @@ export default function ModernShortHaikuTest() {
         <p>Pause. Notice. Begin again.</p>
         <div className="footer-meta">
           <span>Built for brief moments of attention.</span>
-          <a className="footer-contact" href="mailto:zhiguoinusa@gmail.com" aria-label="Email Haiku-ly at zhiguoinusa@gmail.com">zhiguoinusa@gmail.com</a>
+          <a className="footer-contact" id="footer-contact" href="mailto:zhiguoinusa@gmail.com" aria-label={copy.emailAria}>zhiguoinusa@gmail.com</a>
         </div>
       </footer>
 

@@ -78,7 +78,14 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(modernPage, /heroTitle: "Spring Whispers,"/);
   assert.doesNotMatch(modernPage, /heroTitle: "Right now,"/);
   assert.match(modernPage, /document\.documentElement\.lang = languageTag\(language\)/);
-  assert.match(modernPage, /aria-label="Haiku-ly home"/);
+  assert.match(modernPage, /homeAria: "Haiku-ly home"/);
+  assert.match(modernPage, /homeAria: "返回 Haiku-ly 首页"/);
+  assert.match(modernPage, /homeAria: "Haiku-ly ホームへ戻る"/);
+  assert.match(modernPage, /emailAria: "Email Haiku-ly at zhiguoinusa@gmail\.com"/);
+  assert.match(modernPage, /emailAria: "发送邮件至 zhiguoinusa@gmail\.com 联系 Haiku-ly"/);
+  assert.match(modernPage, /emailAria: "zhiguoinusa@gmail\.com にメールで Haiku-ly へ連絡"/);
+  assert.match(modernPage, /id="brand-home"[\s\S]*?aria-label=\{copy\.homeAria\}/);
+  assert.match(modernPage, /id="footer-contact"[\s\S]*?aria-label=\{copy\.emailAria\}/);
   assert.doesNotMatch(modernPage, /实验页首页/);
   assert.match(modernPage, /id="keyword"/);
   assert.match(modernPage, /id="keyword-field"/);
@@ -123,6 +130,10 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(mobileRuntime, /data-haiku-form/);
   assert.match(mobileRuntime, /document\.documentElement\.lang = state\.language === "zh" \? "zh-CN" : state\.language/);
   assert.match(mobileRuntime, /studio\.setAttribute\("aria-label", current\.pageTitle\)/);
+  assert.match(mobileRuntime, /home\.setAttribute\("aria-label", current\.homeAria\)/);
+  assert.match(mobileRuntime, /contact\.setAttribute\("aria-label", current\.emailAria\)/);
+  assert.match(mobileRuntime, /homeAria: "返回 Haiku-ly 首页"/);
+  assert.match(mobileRuntime, /emailAria: "zhiguoinusa@gmail\.com にメールで Haiku-ly へ連絡"/);
   assert.doesNotMatch(mobileRuntime, /Save modern short haiku as a picture|将现代短俳保存为图片|現代短俳を画像として保存/);
   await assert.rejects(access(new URL("../app/modern-test/modern-test.module.css", import.meta.url)));
 });
@@ -237,7 +248,7 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /fillText\("ly"/);
   assert.doesNotMatch(page, /"Daily"/);
   assert.match(page, /sun-seal-label/);
-  assert.match(page, /aria-label="Email Haiku-ly at zhiguoinusa@gmail\.com"/);
+  assert.match(page, /aria-label=\{copy\.emailAria\}/);
   assert.match(page, /poemLinesClassName/);
   assert.doesNotMatch(page, /lineCounts/);
   assert.doesNotMatch(page, /title=\{displayed\?\.language === "zh" \? "characters" : "syllables"\}/);

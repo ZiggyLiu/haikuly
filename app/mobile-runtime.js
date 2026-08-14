@@ -12,6 +12,7 @@
       generateRandom: "Write a haiku", generateKeyword: "Write my haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       pageTitle: "Spring Whispers, Haiku-ly~",
+      homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~"
     },
     zh: {
@@ -23,6 +24,7 @@
       generateRandom: "写一首俳句", generateKeyword: "写我的俳句", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       pageTitle: "春风十里，Haiku-ly~",
+      homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~"
     },
     ja: {
@@ -36,6 +38,7 @@
       generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
       pageTitle: "春のささやき、Haiku-ly~",
+      homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~"
     }
   };
@@ -51,6 +54,7 @@
       generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       pageTitle: "Spring Whispers, Haiku-ly~",
+      homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
       intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
       paperRule: "Three lines · modern haiku"
@@ -64,6 +68,7 @@
       generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       pageTitle: "春风十里，Haiku-ly~",
+      homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
       intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
       paperRule: "三行 · 现代短俳"
@@ -79,6 +84,7 @@
       generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
       pageTitle: "春のささやき、Haiku-ly~",
+      homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
       intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
       paperRule: "三行 · 現代短俳"
@@ -204,6 +210,10 @@
     var modeGroup = document.querySelector(".mode-switch");
     var studio = document.querySelector(".studio");
     if (studio) studio.setAttribute("aria-label", current.pageTitle);
+    var home = byId("brand-home");
+    var contact = byId("footer-contact");
+    if (home) home.setAttribute("aria-label", current.homeAria);
+    if (contact) contact.setAttribute("aria-label", current.emailAria);
     if (languageGroup) languageGroup.setAttribute("aria-label", current.languageGroup);
     if (formGroup && isModernApp()) {
       formGroup.setAttribute("aria-label", V23_FORM_COPY[state.language].group);
