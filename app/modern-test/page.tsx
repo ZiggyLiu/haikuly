@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import {
+  countPoeticUnits,
   haikuDateLabel,
   haikuImageFilename,
   poemLinesClassName,
@@ -41,6 +42,12 @@ const UI_COPY: Record<Language, {
   copiedLine: string;
   copyLineError: string;
   lineMenuLabel: string;
+  edit: string;
+  done: string;
+  revert: string;
+  editLineAriaStart: string;
+  editLineAriaEnd: string;
+  humanEdited: string;
   pageTitle: string;
   homeAria: string;
   emailAria: string;
@@ -78,6 +85,12 @@ const UI_COPY: Record<Language, {
     copiedLine: "Copied",
     copyLineError: "Could not copy this line. Please try again.",
     lineMenuLabel: "Line actions",
+    edit: "Edit",
+    done: "Done",
+    revert: "Revert",
+    editLineAriaStart: "Edit line",
+    editLineAriaEnd: "",
+    humanEdited: "Human-edited",
     pageTitle: "Spring Whispers, Haiku-ly~",
     homeAria: "Haiku-ly home",
     emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
@@ -115,6 +128,12 @@ const UI_COPY: Record<Language, {
     copiedLine: "已复制",
     copyLineError: "无法复制这一句，请重试。",
     lineMenuLabel: "这一句的操作",
+    edit: "编辑",
+    done: "完成",
+    revert: "还原",
+    editLineAriaStart: "编辑第",
+    editLineAriaEnd: "行",
+    humanEdited: "人工编辑",
     pageTitle: "春风十里，Haiku-ly~",
     homeAria: "返回 Haiku-ly 首页",
     emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
@@ -152,6 +171,12 @@ const UI_COPY: Record<Language, {
     copiedLine: "コピーしました",
     copyLineError: "この句をコピーできませんでした。もう一度お試しください。",
     lineMenuLabel: "句の操作",
+    edit: "編集",
+    done: "完了",
+    revert: "元に戻す",
+    editLineAriaStart: "",
+    editLineAriaEnd: "行目を編集",
+    humanEdited: "人間編集",
     pageTitle: "春のささやき、Haiku-ly~",
     homeAria: "Haiku-ly ホームへ戻る",
     emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
@@ -220,6 +245,12 @@ function elementPosition(element: Element, paperBounds: DOMRect) {
   return { x: bounds.left - paperBounds.left, y: bounds.top - paperBounds.top };
 }
 
+function editableLineUnitCount(line: string, language: Language, form: HaikuForm) {
+  if (form === "traditional") return countPoeticUnits(line, language);
+  if (language === "en") return line.trim().split(/\s+/).filter(Boolean).length;
+  return Array.from(line.replace(/[\p{P}\p{S}\s]/gu, "")).length;
+}
+
 function pngFileFromCanvas(canvas: HTMLCanvasElement, filename: string) {
   const dataUrl = canvas.toDataURL("image/png");
   const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
@@ -244,11 +275,20 @@ export default function ModernShortHaikuTest() {
   const [openMenuLine, setOpenMenuLine] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [copiedLine, setCopiedLine] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [displayLines, setDisplayLines] = useState<string[] | null>(null);
   const poemPaperRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const recentLinesRef = useRef<Record<Language, string[]>>({ en: [], zh: [], ja: [] });
   const haiku = displayed?.haiku ?? null;
+  const lines = displayLines ?? haiku?.lines ?? null;
+  const displayedForm = displayed?.form ?? haikuForm;
+  const displayedLanguage = displayed?.language ?? language;
+  const isEdited = haiku !== null && lines !== null &&
+    lines.some((line, index) => line !== haiku.lines[index]);
+  const expectedCounts = [5, 7, 5];
+  const counts = lines?.map((line) => editableLineUnitCount(line, displayedLanguage, displayedForm)) ?? null;
   const copy = UI_COPY[language];
   const formCopy = haikuForm === "modern" ? copy : STRICT_FORM_COPY[language];
 
@@ -317,8 +357,8 @@ export default function ModernShortHaikuTest() {
   }, [openMenuLine]);
 
   function copyLineText(index: number) {
-    if (!haiku) return;
-    const line = haiku.lines[index];
+    if (!haiku || !lines) return;
+    const line = lines[index];
     const textarea = document.createElement("textarea");
     textarea.value = line;
     textarea.setAttribute("readonly", "");
@@ -345,14 +385,38 @@ export default function ModernShortHaikuTest() {
   }
 
   function haikulyThisLine(index: number) {
-    if (!haiku) return;
-    const line = haiku.lines[index];
+    if (!haiku || !lines) return;
+    const line = lines[index];
     const haikuLanguage = displayed?.language ?? language;
     closeLineMenu();
     setMode("keyword");
     setKeyword(line);
     setLanguage(haikuLanguage);
     void generate(undefined, { mode: "keyword", language: haikuLanguage, keyword: line });
+  }
+
+  function toggleEdit() {
+    if (!haiku) return;
+    closeLineMenu();
+    setIsEditing((editing) => !editing);
+    setDisplayLines((current) => current ?? [...haiku.lines]);
+  }
+
+  function handleEditLine(index: number, text: string) {
+    setDisplayLines((current) => {
+      const base = current ?? haiku?.lines ?? [];
+      if (base[index] === text) return current;
+      const next = [...base];
+      next[index] = text;
+      return next;
+    });
+    setSaved(false);
+  }
+
+  function revertEdit() {
+    if (!haiku) return;
+    setDisplayLines([...haiku.lines]);
+    setSaved(false);
   }
 
   async function generate(event?: FormEvent<HTMLFormElement>, overrides?: { mode?: Mode; language?: Language; keyword?: string }) {
@@ -394,6 +458,8 @@ export default function ModernShortHaikuTest() {
         ].slice(0, 15);
       }
       closeLineMenu();
+      setDisplayLines([...result.haiku.lines]);
+      setIsEditing(false);
       setDisplayed({ haiku: result.haiku, language: result.language ?? effectiveLanguage, form: haikuForm });
     } catch {
       setError(effectiveCopy.unreachableError);
@@ -473,8 +539,15 @@ export default function ModernShortHaikuTest() {
           const lineHeight = Number.parseFloat(labelStyle.lineHeight) || 10;
           setCanvasFont(context, labelStyle);
           context.textAlign = "center";
-          context.fillText("Haiku-", centerX, centerY - lineHeight);
-          context.fillText("ly", centerX, centerY);
+          const labelLines = Array.from(sealLabel.childNodes)
+            .filter((node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? "").trim().length > 0)
+            .map((node) => node.textContent ?? "");
+          if (labelLines.length === 2) {
+            context.fillText(labelLines[0].trim(), centerX, centerY - lineHeight);
+            context.fillText(labelLines[1].trim(), centerX, centerY);
+          } else {
+            context.fillText(sealLabel.textContent?.trim() ?? "", centerX, centerY);
+          }
         }
       }
 
@@ -483,6 +556,13 @@ export default function ModernShortHaikuTest() {
         const position = elementPosition(date, paperBounds);
         setCanvasFont(context, window.getComputedStyle(date));
         context.fillText(date.textContent?.trim() ?? "", position.x, position.y);
+      }
+
+      const humanBadge = paper.querySelector<HTMLElement>(".human-edited-badge");
+      if (humanBadge) {
+        const badgePosition = elementPosition(humanBadge, paperBounds);
+        setCanvasFont(context, window.getComputedStyle(humanBadge));
+        context.fillText(humanBadge.textContent?.trim() ?? "", badgePosition.x, badgePosition.y);
       }
 
       paper.querySelectorAll<HTMLElement>(".poem-line p").forEach((line) => {
@@ -562,12 +642,14 @@ export default function ModernShortHaikuTest() {
     closeLineMenu();
     setHaikuForm(nextForm);
     setDisplayed(null);
+    setDisplayLines(null);
+    setIsEditing(false);
     setError("");
     setSaved(false);
   }
 
   return (
-    <main className="page-shell" id="modern-short-haiku-app" data-version="24">
+    <main className="page-shell" id="modern-short-haiku-app" data-version="26">
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -649,24 +731,53 @@ export default function ModernShortHaikuTest() {
             ) : (
               <span className="paper-number paper-date" id="paper-date" aria-hidden="true">DATE —</span>
             )}
-            <div className="sun-seal" aria-hidden="true"><span className="sun-seal-label">Haiku-<br />ly</span></div>
+            {isEdited && (
+              <span className="human-edited-badge" id="human-edited-badge">
+                {UI_COPY[displayedLanguage].humanEdited}
+              </span>
+            )}
+            <div className="sun-seal" aria-hidden="true"><span className="sun-seal-label">https://<br />haikuly.fyi</span></div>
             {haiku ? (
-              <div className={poemLinesClassName(haiku.lines, displayed?.language ?? language)} id="poem-lines" lang={languageTag(displayed?.language ?? language)}>
-                {haiku.lines.map((line, index) => (
+              <div className={poemLinesClassName(lines ?? [], displayedLanguage)} id="poem-lines" lang={languageTag(displayedLanguage)}>
+                {lines?.map((line, index) => (
                   <div
-                    className="poem-line"
+                    className={`poem-line${isEditing ? " poem-line-editing" : ""}`}
                     key={`${haiku.seed}-${index}`}
                     ref={(node) => { lineRefs.current[index] = node; }}
                   >
-                    <button
-                      type="button"
-                      className="poem-line-trigger"
-                      onClick={(event) => openLineMenu(event, index)}
-                      aria-haspopup="menu"
-                      aria-expanded={openMenuLine === index}
-                    >
-                      <p>{line}</p>
-                    </button>
+                    {isEditing ? (
+                      <>
+                        <p
+                          className="poem-line-input"
+                          contentEditable
+                          suppressContentEditableWarning
+                          role="textbox"
+                          aria-label={`${copy.editLineAriaStart} ${index + 1} ${copy.editLineAriaEnd}`.trim()}
+                          onInput={(event) => handleEditLine(index, event.currentTarget.textContent ?? "")}
+                          ref={(node) => {
+                            if (node && node.textContent !== line) node.textContent = line;
+                          }}
+                        />
+                        {counts !== null && (
+                          <span
+                            className={`poem-line-count${displayedForm === "traditional" && counts[index] !== expectedCounts[index] ? " mismatch" : ""}`}
+                            aria-hidden="true"
+                          >
+                            {displayedForm === "traditional" ? `${counts[index]}/${expectedCounts[index]}` : counts[index]}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="poem-line-trigger"
+                        onClick={(event) => openLineMenu(event, index)}
+                        aria-haspopup="menu"
+                        aria-expanded={openMenuLine === index}
+                      >
+                        <p>{line}</p>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -675,7 +786,15 @@ export default function ModernShortHaikuTest() {
             )}
             <div className="paper-footer">
               <span id="paper-rule">{formCopy.paperRule}</span>
-              <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>{saved ? copy.saved : copy.save}</button>
+              <div className="footer-actions">
+                {isEditing && (
+                  <button type="button" id="revert-haiku" onClick={revertEdit} disabled={!isEdited}>{copy.revert}</button>
+                )}
+                <button type="button" id="edit-haiku" onClick={toggleEdit} aria-pressed={isEditing} disabled={!haiku || isGenerating}>
+                  {isEditing ? copy.done : copy.edit}
+                </button>
+                <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>{saved ? copy.saved : copy.save}</button>
+              </div>
             </div>
           </div>
 

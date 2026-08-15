@@ -36,7 +36,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /5-7-5/);
   assert.match(html, /Modern Haiku/);
   assert.match(html, /Spring Whispers,/);
-  assert.match(html, /data-version="24"/);
+  assert.match(html, /data-version="26"/);
   assert.match(html, /id="poem-paper"/);
   assert.match(html, /id="generate-haiku"/);
 
@@ -101,6 +101,21 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(modernPage, /document\.execCommand\("copy"\)/);
   assert.match(modernPage, /aria-haspopup="menu"/);
   assert.match(modernPage, /role="menuitem"/);
+  assert.match(modernPage, /id="edit-haiku"/);
+  assert.match(modernPage, /contentEditable/);
+  assert.match(modernPage, /function editableLineUnitCount/);
+  assert.match(modernPage, /displayedForm === "traditional"/);
+  assert.match(modernPage, /humanEdited: "Human-edited"/);
+  assert.match(modernPage, /humanEdited: "人工编辑"/);
+  assert.match(modernPage, /humanEdited: "人間編集"/);
+  assert.match(modernPage, /human-edited-badge/);
+  assert.match(modernPage, /https:\/\/<br \/>haikuly\.fyi/);
+  assert.match(styles, /\.poem-line-editing/);
+  assert.match(styles, /\.poem-line-count/);
+  assert.match(styles, /\.human-edited-badge/);
+  assert.match(mobileRuntime, /data-line-input/);
+  assert.match(mobileRuntime, /function editableLineUnits/);
+  assert.match(mobileRuntime, /context\.fillText\("haikuly\.fyi"/);
   assert.match(modernPage, /__STILLPOINT_FALLBACK_ACTIVE__/);
   assert.match(modernPage, /recentLinesRef/);
   assert.match(modernPage, /recentLines: recentLinesRef\.current\[effectiveLanguage\]/);
@@ -261,9 +276,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /\.ink-wash-canvas/);
   assert.match(page, /paper-date/);
   assert.match(page, /haikuDateLabel/);
-  assert.match(page, /Haiku-<br \/>ly/);
-  assert.match(page, /fillText\("Haiku-"/);
-  assert.match(page, /fillText\("ly"/);
+  assert.match(page, /https:\/\/<br \/>haikuly\.fyi/);
+  assert.match(page, /Node\.TEXT_NODE/);
+  assert.match(page, /labelLines\[0\]\.trim\(\)/);
   assert.doesNotMatch(page, /"Daily"/);
   assert.match(page, /sun-seal-label/);
   assert.match(page, /aria-label=\{copy\.emailAria\}/);

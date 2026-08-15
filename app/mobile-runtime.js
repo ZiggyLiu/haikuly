@@ -13,6 +13,8 @@
       generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       haikulyThis: "Haikuly this!", copyLine: "Copy", copiedLine: "Copied",
       copyLineError: "Could not copy this line. Please try again.", lineMenuLabel: "Line actions",
+      edit: "Edit", done: "Done", revert: "Revert", humanEdited: "Human-edited",
+      editLineAriaStart: "Edit line", editLineAriaEnd: "",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~"
@@ -27,6 +29,8 @@
       generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       haikulyThis: "以此句再作一首", copyLine: "复制", copiedLine: "已复制",
       copyLineError: "无法复制这一句，请重试。", lineMenuLabel: "这一句的操作",
+      edit: "编辑", done: "完成", revert: "还原", humanEdited: "人工编辑",
+      editLineAriaStart: "编辑第", editLineAriaEnd: "行",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~"
@@ -43,6 +47,8 @@
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
       haikulyThis: "この句で詠む", copyLine: "コピー", copiedLine: "コピーしました",
       copyLineError: "この句をコピーできませんでした。もう一度お試しください。", lineMenuLabel: "句の操作",
+      edit: "編集", done: "完了", revert: "元に戻す", humanEdited: "人間編集",
+      editLineAriaStart: "", editLineAriaEnd: "行目を編集",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~"
@@ -61,6 +67,8 @@
       generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       haikulyThis: "Haikuly this!", copyLine: "Copy", copiedLine: "Copied",
       copyLineError: "Could not copy this line. Please try again.", lineMenuLabel: "Line actions",
+      edit: "Edit", done: "Done", revert: "Revert", humanEdited: "Human-edited",
+      editLineAriaStart: "Edit line", editLineAriaEnd: "",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
@@ -77,6 +85,8 @@
       generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       haikulyThis: "以此句再作一首", copyLine: "复制", copiedLine: "已复制",
       copyLineError: "无法复制这一句，请重试。", lineMenuLabel: "这一句的操作",
+      edit: "编辑", done: "完成", revert: "还原", humanEdited: "人工编辑",
+      editLineAriaStart: "编辑第", editLineAriaEnd: "行",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
@@ -95,6 +105,8 @@
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
       haikulyThis: "この句で詠む", copyLine: "コピー", copiedLine: "コピーしました",
       copyLineError: "この句をコピーできませんでした。もう一度お試しください。", lineMenuLabel: "句の操作",
+      edit: "編集", done: "完了", revert: "元に戻す", humanEdited: "人間編集",
+      editLineAriaStart: "", editLineAriaEnd: "行目を編集",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
@@ -129,7 +141,8 @@
 
   var state = {
     language: "en", mode: "random", keyword: "", error: "", haiku: null,
-    haikuLanguage: "en", haikuForm: "modern", generating: false, recentLines: { en: [], zh: [], ja: [] }
+    haikuLanguage: "en", haikuForm: "modern", generating: false,
+    editing: false, displayLines: null, recentLines: { en: [], zh: [], ja: [] }
   };
 
   function publishState() {
@@ -141,7 +154,9 @@
       haiku: state.haiku,
       haikuLanguage: state.haikuLanguage,
       haikuForm: state.haikuForm,
-      generating: state.generating
+      generating: state.generating,
+      editing: state.editing,
+      displayLines: state.displayLines
     };
   }
 
@@ -250,6 +265,30 @@
       save.setAttribute("aria-label", current.saveAria);
       setText(save, current.save);
     }
+    var editButton = byId("edit-haiku");
+    if (editButton) {
+      editButton.disabled = !state.haiku || state.generating;
+      editButton.setAttribute("aria-pressed", state.editing ? "true" : "false");
+      setText(editButton, state.editing ? current.done : current.edit);
+    }
+    var revertButton = byId("revert-haiku");
+    if (state.editing) {
+      if (!revertButton) {
+        revertButton = document.createElement("button");
+        revertButton.type = "button";
+        revertButton.id = "revert-haiku";
+        var footerActions = document.querySelector(".footer-actions");
+        if (footerActions) footerActions.insertBefore(revertButton, editButton || footerActions.firstChild);
+      }
+      if (revertButton) {
+        revertButton.hidden = false;
+        revertButton.disabled = !edited();
+        setText(revertButton, current.revert);
+      }
+    } else if (revertButton) {
+      revertButton.hidden = true;
+    }
+    updateHumanBadge();
     updateGenerateButton();
     publishState();
   }
@@ -272,6 +311,51 @@
     }
     var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     return months[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
+  }
+
+  var SYLLABLE_EXCEPTIONS = {
+    autumn: 2, beautiful: 3, branches: 2, carries: 2, crosses: 2, evening: 3,
+    fire: 1, flower: 2, moonlight: 2, ocean: 2, pale: 1, poem: 2, quiet: 2,
+    rises: 2, river: 2, science: 2, settles: 2
+  };
+
+  function estimateSyllables(text) {
+    return String(text).toLowerCase().replace(/[^a-z\s'-]/g, " ").split(/\s+/).filter(Boolean)
+      .reduce(function (total, word) {
+        var clean = word.replace(/[^a-z]/g, "");
+        if (!clean) return total;
+        if (SYLLABLE_EXCEPTIONS[clean]) return total + SYLLABLE_EXCEPTIONS[clean];
+        if (clean.length <= 3) return total + 1;
+        var adjusted = clean.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/i, "").replace(/^y/, "");
+        var groups = adjusted.match(/[aeiouy]{1,2}/g);
+        return total + Math.max(1, groups ? groups.length : 1);
+      }, 0);
+  }
+
+  function countJapaneseMora(reading) {
+    var combiningKana = new Set([
+      "ぁ", "ぃ", "ぅ", "ぇ", "ぉ", "ゃ", "ゅ", "ょ", "ゎ", "ゕ", "ゖ",
+      "ァ", "ィ", "ゥ", "ェ", "ォ", "ャ", "ュ", "ョ", "ヮ", "ヵ", "ヶ"
+    ]);
+    var count = 0;
+    Array.from(String(reading).normalize("NFC")).forEach(function (character) {
+      if (!combiningKana.has(character)) count += 1;
+    });
+    return count;
+  }
+
+  function strictPoeticUnits(text, language) {
+    if (language === "zh") {
+      return Array.from(String(text)).filter(function (character) { return /\p{Script=Han}/u.test(character); }).length;
+    }
+    if (language === "ja") return countJapaneseMora(text);
+    return estimateSyllables(text);
+  }
+
+  function editableLineUnits(text, language, form) {
+    if (form === "traditional") return strictPoeticUnits(text, language);
+    if (language === "en") return String(text).trim().split(/\s+/).filter(Boolean).length;
+    return Array.from(String(text).replace(/[\p{P}\p{S}\s]/gu, "")).length;
   }
 
   function seededRandom(seed) {
@@ -557,20 +641,51 @@
     var date = byId("paper-date");
     setText(date, dateLabel(haiku.createdAt, language));
     if (date) date.setAttribute("datetime", haiku.createdAt);
-    var lines = byId("poem-lines");
-    if (lines) {
-      while (lines.firstChild) lines.removeChild(lines.firstChild);
-      lines.className = "poem-lines";
-      if (language === "en") {
-        var longest = Math.max(haiku.lines[0].length, haiku.lines[1].length, haiku.lines[2].length);
-        if (longest > 38) lines.className += " lines-extra-tight";
-        else if (longest > 27) lines.className += " lines-tight";
-      }
-      lines.setAttribute("lang", language === "zh" ? "zh-CN" : language);
-      for (var index = 0; index < haiku.lines.length; index += 1) {
-        var row = document.createElement("div");
-        row.className = "poem-line";
-        row.setAttribute("data-line-index", String(index));
+    state.displayLines = haiku.lines.slice();
+    state.editing = false;
+    renderLines();
+    updateHumanBadge();
+    var save = byId("save-haiku");
+    if (save) save.disabled = false;
+    var editButton = byId("edit-haiku");
+    if (editButton) editButton.disabled = false;
+    drawInk(canvas, haiku);
+  }
+
+  function renderLines() {
+    var linesNode = byId("poem-lines");
+    if (!linesNode || !state.haiku) return;
+    while (linesNode.firstChild) linesNode.removeChild(linesNode.firstChild);
+    var current = copy();
+    var language = state.haikuLanguage || state.language;
+    var source = state.displayLines || state.haiku.lines;
+    linesNode.className = "poem-lines";
+    if (language === "en") {
+      var longest = Math.max(source[0].length, source[1].length, source[2].length);
+      if (longest > 38) linesNode.className += " lines-extra-tight";
+      else if (longest > 27) linesNode.className += " lines-tight";
+    }
+    linesNode.setAttribute("lang", language === "zh" ? "zh-CN" : language);
+    for (var index = 0; index < source.length; index += 1) {
+      var row = document.createElement("div");
+      row.className = "poem-line" + (state.editing ? " poem-line-editing" : "");
+      row.setAttribute("data-line-index", String(index));
+      if (state.editing) {
+        var editable = document.createElement("p");
+        editable.className = "poem-line-input";
+        editable.setAttribute("contenteditable", "true");
+        editable.setAttribute("role", "textbox");
+        editable.setAttribute("data-line-input", String(index));
+        editable.setAttribute("aria-label",
+          (current.editLineAriaStart + " " + (index + 1) + " " + current.editLineAriaEnd).trim());
+        editable.textContent = source[index];
+        var count = document.createElement("span");
+        count.className = "poem-line-count";
+        count.setAttribute("data-line-count", String(index));
+        count.setAttribute("aria-hidden", "true");
+        row.appendChild(editable);
+        row.appendChild(count);
+      } else {
         var trigger = document.createElement("button");
         trigger.type = "button";
         trigger.className = "poem-line-trigger";
@@ -578,21 +693,80 @@
         trigger.setAttribute("aria-haspopup", "menu");
         trigger.setAttribute("aria-expanded", "false");
         var paragraph = document.createElement("p");
-        paragraph.textContent = haiku.lines[index];
+        paragraph.textContent = source[index];
         trigger.appendChild(paragraph);
         row.appendChild(trigger);
-        lines.appendChild(row);
       }
+      linesNode.appendChild(row);
     }
-    var save = byId("save-haiku");
-    if (save) save.disabled = false;
-    drawInk(canvas, haiku);
+    updateLineCounts();
+  }
+
+  function updateLineCounts() {
+    if (!state.editing || !state.haiku) return;
+    var language = state.haikuLanguage || state.language;
+    var source = state.displayLines || state.haiku.lines;
+    var expected = [5, 7, 5];
+    for (var index = 0; index < 3; index += 1) {
+      var label = document.querySelector('[data-line-count="' + index + '"]');
+      if (!label) continue;
+      var count = editableLineUnits(source[index] || "", language, state.haikuForm);
+      var strictMismatch = state.haikuForm === "traditional" && count !== expected[index];
+      label.textContent = state.haikuForm === "traditional" ? String(count) + "/" + expected[index] : String(count);
+      label.className = "poem-line-count" + (strictMismatch ? " mismatch" : "");
+    }
+  }
+
+  function edited() {
+    if (!state.haiku || !state.displayLines) return false;
+    for (var index = 0; index < state.haiku.lines.length; index += 1) {
+      if (state.displayLines[index] !== state.haiku.lines[index]) return true;
+    }
+    return false;
+  }
+
+  function toggleEdit() {
+    if (!state.haiku) return;
+    closeLineMenu();
+    state.editing = !state.editing;
+    if (!state.displayLines) state.displayLines = state.haiku.lines.slice();
+    setError("");
+    renderLines();
+    updateControls();
+  }
+
+  function revertEdit() {
+    if (!state.haiku) return;
+    state.displayLines = state.haiku.lines.slice();
+    renderLines();
+    updateControls();
+  }
+
+  function updateHumanBadge() {
+    var paper = byId("poem-paper");
+    if (!paper) return;
+    var badge = paper.querySelector(".human-edited-badge");
+    if (edited()) {
+      var sourceCopy = (isModernApp() ? MODERN_COPY : COPY)[state.haikuLanguage || state.language];
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "human-edited-badge";
+        badge.id = "human-edited-badge";
+        var date = byId("paper-date");
+        if (date && date.parentNode) date.parentNode.insertBefore(badge, date.nextSibling);
+      }
+      badge.textContent = sourceCopy.humanEdited;
+    } else if (badge && badge.parentNode) {
+      badge.parentNode.removeChild(badge);
+    }
   }
 
   function clearRenderedHaiku() {
     closeLineMenu();
     state.haiku = null;
     state.haikuLanguage = state.language;
+    state.displayLines = null;
+    state.editing = false;
     var paper = byId("poem-paper");
     if (paper) {
       paper.classList.remove("has-illustration");
@@ -613,6 +787,9 @@
     }
     var save = byId("save-haiku");
     if (save) save.disabled = true;
+    var editButton = byId("edit-haiku");
+    if (editButton) editButton.disabled = true;
+    updateHumanBadge();
     publishState();
   }
 
@@ -702,6 +879,7 @@
   }
 
   function saveHaiku() {
+    closeLineMenu();
     var paper = byId("poem-paper");
     if (!state.haiku || !paper) return;
     try {
@@ -729,11 +907,44 @@
       context.fillStyle = washGradient;
       context.fillRect(0, 0, width, height);
 
+      var seal = paper.querySelector(".sun-seal");
+      if (seal) {
+        var sealBounds = seal.getBoundingClientRect();
+        var sealPosition = relativePosition(seal, bounds);
+        var centerX = sealPosition.x + sealBounds.width / 2;
+        var centerY = sealPosition.y + sealBounds.height / 2;
+        context.strokeStyle = "rgba(201,111,76,0.13)";
+        context.fillStyle = "rgba(201,111,76,0.04)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.arc(centerX, centerY, sealBounds.width / 2, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.arc(centerX, centerY, sealBounds.width * 0.16, 0, Math.PI * 2);
+        context.stroke();
+        var sealLabel = seal.querySelector(".sun-seal-label");
+        if (sealLabel) {
+          var sealStyle = window.getComputedStyle(sealLabel);
+          var lineHeight = parseFloat(sealStyle.lineHeight) || 10;
+          canvasFont(context, sealStyle);
+          context.textAlign = "center";
+          context.fillText("https://", centerX, centerY - lineHeight);
+          context.fillText("haikuly.fyi", centerX, centerY);
+        }
+      }
+
       var date = byId("paper-date");
       if (date) {
         var datePosition = relativePosition(date, bounds);
         canvasFont(context, window.getComputedStyle(date));
         context.fillText(date.textContent || "", datePosition.x, datePosition.y);
+      }
+      var humanBadge = paper.querySelector(".human-edited-badge");
+      if (humanBadge) {
+        var badgePosition = relativePosition(humanBadge, bounds);
+        canvasFont(context, window.getComputedStyle(humanBadge));
+        context.fillText(humanBadge.textContent || "", badgePosition.x, badgePosition.y);
       }
       var lineNodes = paper.querySelectorAll(".poem-line p");
       for (var index = 0; index < lineNodes.length; index += 1) {
@@ -834,7 +1045,8 @@
   function haikulyThisLine(index) {
     closeLineMenu();
     if (!state.haiku) return;
-    var line = state.haiku.lines[index];
+    var source = state.displayLines || state.haiku.lines;
+    var line = source[index];
     var haikuLanguage = state.haikuLanguage || state.language;
     state.mode = "keyword";
     state.keyword = line;
@@ -850,7 +1062,8 @@
 
   function copyLine(index) {
     if (!state.haiku) return;
-    var line = state.haiku.lines[index];
+    var source = state.displayLines || state.haiku.lines;
+    var line = source[index];
     var current = copy();
     function finishCopy() {
       var button = lineMenu && lineMenu.querySelector("[data-line-copy]");
@@ -928,8 +1141,14 @@
       state.mode = modeButton.getAttribute("data-mode") || "random";
       setError(""); updateControls(); return;
     }
-    var saveButton = closestWithAttribute(event.target, "id");
-    if (saveButton && saveButton.id === "save-haiku") {
+    var idButton = closestWithAttribute(event.target, "id");
+    if (idButton && idButton.id === "edit-haiku") {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); toggleEdit(); return;
+    }
+    if (idButton && idButton.id === "revert-haiku") {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); revertEdit(); return;
+    }
+    if (idButton && idButton.id === "save-haiku") {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); saveHaiku();
     }
   }, true);
@@ -944,11 +1163,22 @@
 
   document.addEventListener("input", function (event) {
     if (reactReady()) return;
-    if (event.target && event.target.id === "keyword") {
-      state.keyword = event.target.value;
+    var target = event.target;
+    if (target && target.hasAttribute && target.hasAttribute("data-line-input")) {
+      var lineIndex = Number(target.getAttribute("data-line-input"));
+      if (state.displayLines) {
+        state.displayLines[lineIndex] = target.textContent || "";
+        updateLineCounts();
+        updateHumanBadge();
+        updateControls();
+      }
+      return;
+    }
+    if (target && target.id === "keyword") {
+      state.keyword = target.value;
       publishState();
       var counter = document.querySelector(".input-wrap span");
-      setText(counter, String(event.target.value.length) + "/48");
+      setText(counter, String(target.value.length) + "/48");
       setError("");
     }
   }, true);

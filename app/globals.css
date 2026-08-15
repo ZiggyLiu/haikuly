@@ -393,6 +393,18 @@ h1[lang="ja"] #hero-title {
   z-index: 2;
 }
 
+.human-edited-badge {
+  position: absolute;
+  top: 52px;
+  left: 30px;
+  color: var(--rust);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
 .sun-seal {
   width: 58px;
   height: 58px;
@@ -528,6 +540,39 @@ h1[lang="ja"] #hero-title {
   outline-offset: 4px;
 }
 
+.poem-line-editing {
+  position: relative;
+}
+
+.poem-line-editing .poem-line-input {
+  margin: 18px 0;
+  padding-right: 48px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  border-bottom: 1px dashed rgba(54, 83, 71, 0.28);
+  outline: none;
+  caret-color: var(--moss);
+}
+
+.poem-line-editing .poem-line-input:focus {
+  border-bottom-color: rgba(54, 83, 71, 0.6);
+}
+
+.poem-line-editing .poem-line-count {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  color: var(--moss);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.poem-line-editing .poem-line-count.mismatch {
+  color: var(--rust);
+}
+
 .line-menu {
   position: absolute;
   z-index: 60;
@@ -583,8 +628,16 @@ h1[lang="ja"] #hero-title {
   z-index: 2;
 }
 
+.footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
 .paper-footer button {
-  padding: 7px 0 7px 14px;
+  padding: 7px 0;
   border: 0;
   background: transparent;
   color: var(--moss);
@@ -739,6 +792,7 @@ footer p {
   }
   .poem-lines, .paper-footer { position: relative; z-index: 2; }
   .paper-number { z-index: 2; }
+  .human-edited-badge { top: 48px; left: 20px; }
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { display: block; }
   .poem-line p { font-size: 22px; font-size: clamp(20px, 6vw, 25px); }
@@ -746,6 +800,9 @@ footer p {
   .poem-lines.lines-extra-tight .poem-line p { font-size: 15px; font-size: clamp(14px, 4vw, 17px); }
   .poem-lines[lang="zh-CN"] .poem-line p,
   .poem-lines[lang="ja"] .poem-line p { font-size: 16px; font-size: clamp(16px, 4.8vw, 20px); }
+  .paper-footer { gap: 10px; }
+  .paper-footer > span { flex: 1 1 auto; }
+  .footer-actions { flex: 0 1 auto; gap: 2px 9px; }
   .action-row { grid-template-columns: 1fr; }
   .generate-button { grid-column: 1; grid-row: 1; width: 100%; min-height: 48px; }
   .error-message { grid-row: 2; margin: 10px 0 0; text-align: center; }
