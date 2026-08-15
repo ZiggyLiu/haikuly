@@ -117,6 +117,25 @@ test("keyword mode generates flexible modern Chinese and runs an independent rev
   assert.deepEqual(reviewInput.illustration, modernIllustration);
 });
 
+test("a complete modern-haiku line is accepted as keyword input", async (context) => {
+  restoreAfter(context);
+  const bodies = [];
+  globalThis.fetch = async (_url, options) => {
+    bodies.push(JSON.parse(options.body));
+    return Response.json(bodies.length === 1 ? poemResult(englishLines) : reviewResult("pass", "modern", "Natural contemporary English."));
+  };
+
+  const keyword = "Delivery waits downstairs";
+  const response = await POST(request({ mode: "keyword", language: "en", keyword }));
+  const result = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(result.source, "deepseek");
+  assert.equal(bodies.length, 2);
+  assert.equal(JSON.parse(bodies[0].messages[1].content).keyword, keyword);
+  assert.equal(JSON.parse(bodies[1].messages[1].content).keyword, keyword);
+});
+
 test("content-aware illustration fallback maps modern scenes across languages", () => {
   assert.equal(illustrationForContent(["Last train pauses", "my reflection stays", "one stop longer"], null, 1).motif, "transit");
   assert.equal(illustrationForContent(["手机亮了一下", "我没有回复", "夜继续安静"], null, 2).motif, "phone");

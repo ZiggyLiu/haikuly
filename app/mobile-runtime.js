@@ -11,6 +11,8 @@
       saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
       generateRandom: "Write a haiku", generateKeyword: "Write my haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a poem. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
+      haikulyThis: "Haikuly this!", copyLine: "Copy", copiedLine: "Copied",
+      copyLineError: "Could not copy this line. Please try again.", lineMenuLabel: "Line actions",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~"
@@ -23,6 +25,8 @@
       save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存俳句图片，请重试。",
       generateRandom: "写一首俳句", generateKeyword: "写我的俳句", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作俳句，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
+      haikulyThis: "以此句再作一首", copyLine: "复制", copiedLine: "已复制",
+      copyLineError: "无法复制这一句，请重试。", lineMenuLabel: "这一句的操作",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~"
@@ -37,6 +41,8 @@
       generateKeyword: "私の俳句を詠む", generating: "作句・推敲・描画中…",
       generationError: "DeepSeekが俳句を作れませんでした。もう一度お試しください。",
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+      haikulyThis: "この句で詠む", copyLine: "コピー", copiedLine: "コピーしました",
+      copyLineError: "この句をコピーできませんでした。もう一度お試しください。", lineMenuLabel: "句の操作",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~"
@@ -53,6 +59,8 @@
       saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
       generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generating: "Writing, reviewing, and painting…",
       generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
+      haikulyThis: "Haikuly this!", copyLine: "Copy", copiedLine: "Copied",
+      copyLineError: "Could not copy this line. Please try again.", lineMenuLabel: "Line actions",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
@@ -67,6 +75,8 @@
       save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存短俳图片，请重试。",
       generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generating: "正在创作、审校与绘制…",
       generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
+      haikulyThis: "以此句再作一首", copyLine: "复制", copiedLine: "已复制",
+      copyLineError: "无法复制这一句，请重试。", lineMenuLabel: "这一句的操作",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
@@ -83,6 +93,8 @@
       generateKeyword: "私の現代短俳を詠む", generating: "作句・推敲・描画中…",
       generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+      haikulyThis: "この句で詠む", copyLine: "コピー", copiedLine: "コピーしました",
+      copyLineError: "この句をコピーできませんでした。もう一度お試しください。", lineMenuLabel: "句の操作",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
@@ -530,6 +542,7 @@
     state.haiku = haiku;
     state.haikuLanguage = language;
     publishState();
+    closeLineMenu();
     var paper = byId("poem-paper");
     if (!paper) return;
     paper.classList.add("has-illustration");
@@ -557,9 +570,17 @@
       for (var index = 0; index < haiku.lines.length; index += 1) {
         var row = document.createElement("div");
         row.className = "poem-line";
+        row.setAttribute("data-line-index", String(index));
+        var trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "poem-line-trigger";
+        trigger.setAttribute("data-line-trigger", String(index));
+        trigger.setAttribute("aria-haspopup", "menu");
+        trigger.setAttribute("aria-expanded", "false");
         var paragraph = document.createElement("p");
         paragraph.textContent = haiku.lines[index];
-        row.appendChild(paragraph);
+        trigger.appendChild(paragraph);
+        row.appendChild(trigger);
         lines.appendChild(row);
       }
     }
@@ -569,6 +590,7 @@
   }
 
   function clearRenderedHaiku() {
+    closeLineMenu();
     state.haiku = null;
     state.haikuLanguage = state.language;
     var paper = byId("poem-paper");
@@ -766,8 +788,123 @@
     return null;
   }
 
+  var lineMenu = null;
+
+  function closeLineMenu() {
+    if (lineMenu && lineMenu.parentNode) lineMenu.parentNode.removeChild(lineMenu);
+    lineMenu = null;
+    var triggers = document.querySelectorAll("[data-line-trigger]");
+    for (var index = 0; index < triggers.length; index += 1) {
+      triggers[index].setAttribute("aria-expanded", "false");
+    }
+  }
+
+  function openLineMenu(index) {
+    closeLineMenu();
+    var current = copy();
+    var row = document.querySelector('[data-line-index="' + index + '"]');
+    var form = document.querySelector(".modern-generator-form, .generator-form");
+    if (!row || !form) return;
+    var menu = document.createElement("div");
+    menu.className = "line-menu";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", current.lineMenuLabel);
+    menu.setAttribute("data-index", String(index));
+    var haikulyButton = document.createElement("button");
+    haikulyButton.type = "button";
+    haikulyButton.setAttribute("data-line-haikuly", String(index));
+    haikulyButton.textContent = current.haikulyThis;
+    var copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.setAttribute("data-line-copy", String(index));
+    copyButton.textContent = current.copyLine;
+    menu.appendChild(haikulyButton);
+    menu.appendChild(copyButton);
+    var rowRect = row.getBoundingClientRect();
+    var formRect = form.getBoundingClientRect();
+    var left = Math.max(8, Math.min(rowRect.left - formRect.left, formRect.width - 190));
+    menu.style.top = String(rowRect.bottom - formRect.top + 6) + "px";
+    menu.style.left = String(left) + "px";
+    form.appendChild(menu);
+    lineMenu = menu;
+    var trigger = row.querySelector("[data-line-trigger]");
+    if (trigger) trigger.setAttribute("aria-expanded", "true");
+  }
+
+  function haikulyThisLine(index) {
+    closeLineMenu();
+    if (!state.haiku) return;
+    var line = state.haiku.lines[index];
+    var haikuLanguage = state.haikuLanguage || state.language;
+    state.mode = "keyword";
+    state.keyword = line;
+    state.language = haikuLanguage;
+    var input = byId("keyword");
+    if (input) input.value = line;
+    var counter = document.querySelector(".input-wrap span");
+    if (counter) setText(counter, String(line.length) + "/48");
+    setError("");
+    updateControls();
+    generate();
+  }
+
+  function copyLine(index) {
+    if (!state.haiku) return;
+    var line = state.haiku.lines[index];
+    var current = copy();
+    function finishCopy() {
+      var button = lineMenu && lineMenu.querySelector("[data-line-copy]");
+      if (button) setText(button, current.copiedLine);
+      window.setTimeout(closeLineMenu, 1200);
+    }
+    function fallbackCopy() {
+      var textarea = document.createElement("textarea");
+      textarea.value = line;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      var ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(textarea);
+      if (ok) finishCopy();
+      else setError(current.copyLineError);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(line).then(finishCopy, fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
   document.addEventListener("click", function (event) {
     if (reactReady()) return;
+    var lineTrigger = closestWithAttribute(event.target, "data-line-trigger");
+    if (lineTrigger) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      var triggerIndex = Number(lineTrigger.getAttribute("data-line-trigger"));
+      if (lineMenu && lineMenu.getAttribute("data-index") === String(triggerIndex)) closeLineMenu();
+      else openLineMenu(triggerIndex);
+      return;
+    }
+    var haikulyButton = closestWithAttribute(event.target, "data-line-haikuly");
+    if (haikulyButton) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      haikulyThisLine(Number(haikulyButton.getAttribute("data-line-haikuly")));
+      return;
+    }
+    var copyButton = closestWithAttribute(event.target, "data-line-copy");
+    if (copyButton) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      copyLine(Number(copyButton.getAttribute("data-line-copy")));
+      return;
+    }
+    if (lineMenu && !lineMenu.contains(event.target)) closeLineMenu();
     var languageButton = closestWithAttribute(event.target, "data-language");
     if (languageButton) {
       event.preventDefault(); event.stopImmediatePropagation();

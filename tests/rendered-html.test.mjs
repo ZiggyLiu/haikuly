@@ -36,7 +36,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /5-7-5/);
   assert.match(html, /Modern Haiku/);
   assert.match(html, /Spring Whispers,/);
-  assert.match(html, /data-version="23"/);
+  assert.match(html, /data-version="24"/);
   assert.match(html, /id="poem-paper"/);
   assert.match(html, /id="generate-haiku"/);
 
@@ -54,7 +54,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
     "brand", "brand-mark", "header-note", "hero", "eyebrow", "intro", "studio",
     "language-control", "language-label", "language-switch", "language-rule",
     "mode-switch", "keyword-field", "input-wrap", "poem-paper", "sun-seal",
-    "sun-seal-label", "poem-line", "paper-footer", "action-row", "error-message",
+    "sun-seal-label", "poem-line", "poem-line-trigger", "line-menu", "paper-footer", "action-row", "error-message",
     "generate-button", "footer-meta", "footer-contact",
   ];
   for (const className of sharedLayoutClasses) {
@@ -92,9 +92,18 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(modernPage, /id="poem-lines"/);
   assert.match(modernPage, /id="save-haiku"/);
   assert.match(modernPage, /id="error-message"/);
+  assert.match(modernPage, /haikulyThis: "Haikuly this!"/);
+  assert.match(modernPage, /haikulyThis: "以此句再作一首"/);
+  assert.match(modernPage, /haikulyThis: "この句で詠む"/);
+  assert.match(modernPage, /function haikulyThisLine\(index: number\)/);
+  assert.match(modernPage, /void generate\(undefined, \{ mode: "keyword", language: haikuLanguage, keyword: line \}\)/);
+  assert.match(modernPage, /function copyLineText\(index: number\)/);
+  assert.match(modernPage, /document\.execCommand\("copy"\)/);
+  assert.match(modernPage, /aria-haspopup="menu"/);
+  assert.match(modernPage, /role="menuitem"/);
   assert.match(modernPage, /__STILLPOINT_FALLBACK_ACTIVE__/);
   assert.match(modernPage, /recentLinesRef/);
-  assert.match(modernPage, /recentLines: recentLinesRef\.current\[language\]/);
+  assert.match(modernPage, /recentLines: recentLinesRef\.current\[effectiveLanguage\]/);
   assert.match(modernPage, /isModernForm \? \{ recentLines:/);
   assert.match(modernPage, /const filename = haikuImageFilename\(haiku\.createdAt\);/);
   assert.match(modernPage, /await navigator\.share\(shareData\)/);
@@ -134,6 +143,13 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(mobileRuntime, /contact\.setAttribute\("aria-label", current\.emailAria\)/);
   assert.match(mobileRuntime, /homeAria: "返回 Haiku-ly 首页"/);
   assert.match(mobileRuntime, /emailAria: "zhiguoinusa@gmail\.com にメールで Haiku-ly へ連絡"/);
+  assert.match(mobileRuntime, /function haikulyThisLine\(index\)/);
+  assert.match(mobileRuntime, /state\.mode = "keyword"/);
+  assert.match(mobileRuntime, /function copyLine\(index\)/);
+  assert.match(mobileRuntime, /data-line-trigger/);
+  assert.match(mobileRuntime, /data-line-haikuly/);
+  assert.match(mobileRuntime, /data-line-copy/);
+  assert.match(mobileRuntime, /\.modern-generator-form, \.generator-form/);
   assert.doesNotMatch(mobileRuntime, /Save modern short haiku as a picture|将现代短俳保存为图片|現代短俳を画像として保存/);
   await assert.rejects(access(new URL("../app/modern-test/modern-test.module.css", import.meta.url)));
 });
@@ -211,6 +227,8 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /pointer-events:\s*none\s*!important/);
   assert.match(styles, /touch-action:\s*manipulation/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p/);
+  assert.match(styles, /\.poem-line-trigger/);
+  assert.match(styles, /\.line-menu/);
   assert.match(page, /mode === "keyword"/);
   assert.match(page, /mode,/);
   assert.match(page, /language,/);

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import {
   haikuDateLabel,
   haikuImageFilename,
@@ -36,6 +36,11 @@ const UI_COPY: Record<Language, {
   generating: string;
   generationError: string;
   unreachableError: string;
+  haikulyThis: string;
+  copyLine: string;
+  copiedLine: string;
+  copyLineError: string;
+  lineMenuLabel: string;
   pageTitle: string;
   homeAria: string;
   emailAria: string;
@@ -68,6 +73,11 @@ const UI_COPY: Record<Language, {
     generating: "Writing, reviewing, and painting…",
     generationError: "DeepSeek could not write a modern short haiku. Please try again.",
     unreachableError: "DeepSeek could not be reached. Please try again.",
+    haikulyThis: "Haikuly this!",
+    copyLine: "Copy",
+    copiedLine: "Copied",
+    copyLineError: "Could not copy this line. Please try again.",
+    lineMenuLabel: "Line actions",
     pageTitle: "Spring Whispers, Haiku-ly~",
     homeAria: "Haiku-ly home",
     emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
@@ -100,6 +110,11 @@ const UI_COPY: Record<Language, {
     generating: "正在创作、审校与绘制…",
     generationError: "DeepSeek 暂时无法创作现代短俳，请重试。",
     unreachableError: "暂时无法连接 DeepSeek，请重试。",
+    haikulyThis: "以此句再作一首",
+    copyLine: "复制",
+    copiedLine: "已复制",
+    copyLineError: "无法复制这一句，请重试。",
+    lineMenuLabel: "这一句的操作",
     pageTitle: "春风十里，Haiku-ly~",
     homeAria: "返回 Haiku-ly 首页",
     emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
@@ -132,6 +147,11 @@ const UI_COPY: Record<Language, {
     generating: "作句・推敲・描画中…",
     generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
     unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
+    haikulyThis: "この句で詠む",
+    copyLine: "コピー",
+    copiedLine: "コピーしました",
+    copyLineError: "この句をコピーできませんでした。もう一度お試しください。",
+    lineMenuLabel: "句の操作",
     pageTitle: "春のささやき、Haiku-ly~",
     homeAria: "Haiku-ly ホームへ戻る",
     emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
@@ -221,7 +241,12 @@ export default function ModernShortHaikuTest() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [openMenuLine, setOpenMenuLine] = useState<number | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [copiedLine, setCopiedLine] = useState(false);
   const poemPaperRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const recentLinesRef = useRef<Record<Language, string[]>>({ en: [], zh: [], ja: [] });
   const haiku = displayed?.haiku ?? null;
   const copy = UI_COPY[language];
@@ -244,11 +269,102 @@ export default function ModernShortHaikuTest() {
     document.documentElement.lang = languageTag(language);
   }, [language]);
 
-  async function generate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function closeLineMenu() {
+    setOpenMenuLine(null);
+    setMenuPosition(null);
+  }
+
+  function openLineMenu(event: ReactMouseEvent, index: number) {
+    event.stopPropagation();
+    if (openMenuLine === index) {
+      closeLineMenu();
+      return;
+    }
+    const lineNode = lineRefs.current[index];
+    const form = formRef.current;
+    if (lineNode && form) {
+      const lineRect = lineNode.getBoundingClientRect();
+      const formRect = form.getBoundingClientRect();
+      const left = Math.max(8, Math.min(lineRect.left - formRect.left, formRect.width - 190));
+      setMenuPosition({ top: lineRect.bottom - formRect.top + 6, left });
+    }
+    setOpenMenuLine(index);
+  }
+
+  useEffect(() => {
+    if (openMenuLine === null) return;
+    const close = () => {
+      setOpenMenuLine(null);
+      setMenuPosition(null);
+    };
+    const onPointerDown = (event: globalThis.MouseEvent) => {
+      const target = event.target as Element | null;
+      if (target && target.closest?.(".poem-line, .line-menu")) return;
+      close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    const onScroll = () => close();
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("scroll", onScroll, true);
+    };
+  }, [openMenuLine]);
+
+  function copyLineText(index: number) {
+    if (!haiku) return;
+    const line = haiku.lines[index];
+    const textarea = document.createElement("textarea");
+    textarea.value = line;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch {
+      ok = false;
+    }
+    document.body.removeChild(textarea);
+    if (!ok) {
+      setError(copy.copyLineError);
+      return;
+    }
+    setCopiedLine(true);
+    window.setTimeout(() => {
+      setCopiedLine(false);
+      closeLineMenu();
+    }, 1200);
+  }
+
+  function haikulyThisLine(index: number) {
+    if (!haiku) return;
+    const line = haiku.lines[index];
+    const haikuLanguage = displayed?.language ?? language;
+    closeLineMenu();
+    setMode("keyword");
+    setKeyword(line);
+    setLanguage(haikuLanguage);
+    void generate(undefined, { mode: "keyword", language: haikuLanguage, keyword: line });
+  }
+
+  async function generate(event?: FormEvent<HTMLFormElement>, overrides?: { mode?: Mode; language?: Language; keyword?: string }) {
+    event?.preventDefault();
+    const effectiveMode = overrides?.mode ?? mode;
+    const effectiveLanguage = overrides?.language ?? language;
+    const effectiveKeyword = overrides?.keyword ?? keyword;
+    const effectiveCopy = UI_COPY[effectiveLanguage];
+    const effectiveFormCopy = haikuForm === "modern" ? effectiveCopy : STRICT_FORM_COPY[effectiveLanguage];
     setSaved(false);
-    if (mode === "keyword" && !keyword.trim()) {
-      setError(copy.keywordError);
+    if (effectiveMode === "keyword" && !effectiveKeyword.trim()) {
+      setError(effectiveCopy.keywordError);
       return;
     }
 
@@ -260,32 +376,34 @@ export default function ModernShortHaikuTest() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          mode,
-          language,
-          ...(isModernForm ? { recentLines: recentLinesRef.current[language] } : {}),
-          ...(mode === "keyword" ? { keyword: keyword.trim() } : {}),
+          mode: effectiveMode,
+          language: effectiveLanguage,
+          ...(isModernForm ? { recentLines: recentLinesRef.current[effectiveLanguage] } : {}),
+          ...(effectiveMode === "keyword" ? { keyword: effectiveKeyword.trim() } : {}),
         }),
       });
       const result = (await response.json()) as { haiku?: Haiku; error?: string; language?: Language };
       if (!response.ok || !result.haiku) {
-        setError(result.error ?? formCopy.generationError);
+        setError(result.error ?? effectiveFormCopy.generationError);
         return;
       }
       if (isModernForm) {
-        recentLinesRef.current[language] = [
+        recentLinesRef.current[effectiveLanguage] = [
           ...result.haiku.lines,
-          ...recentLinesRef.current[language],
+          ...recentLinesRef.current[effectiveLanguage],
         ].slice(0, 15);
       }
-      setDisplayed({ haiku: result.haiku, language: result.language ?? language, form: haikuForm });
+      closeLineMenu();
+      setDisplayed({ haiku: result.haiku, language: result.language ?? effectiveLanguage, form: haikuForm });
     } catch {
-      setError(copy.unreachableError);
+      setError(effectiveCopy.unreachableError);
     } finally {
       setIsGenerating(false);
     }
   }
 
   async function saveHaiku() {
+    closeLineMenu();
     const paper = poemPaperRef.current;
     if (!haiku || !paper) return;
 
@@ -426,12 +544,14 @@ export default function ModernShortHaikuTest() {
   }
 
   function changeMode(nextMode: Mode) {
+    closeLineMenu();
     setMode(nextMode);
     setError("");
     setSaved(false);
   }
 
   function changeLanguage(nextLanguage: Language) {
+    closeLineMenu();
     setLanguage(nextLanguage);
     setError("");
     setSaved(false);
@@ -439,6 +559,7 @@ export default function ModernShortHaikuTest() {
 
   function changeHaikuForm(nextForm: HaikuForm) {
     if (nextForm === haikuForm) return;
+    closeLineMenu();
     setHaikuForm(nextForm);
     setDisplayed(null);
     setError("");
@@ -446,7 +567,7 @@ export default function ModernShortHaikuTest() {
   }
 
   return (
-    <main className="page-shell" id="modern-short-haiku-app" data-version="23">
+    <main className="page-shell" id="modern-short-haiku-app" data-version="24">
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -505,7 +626,7 @@ export default function ModernShortHaikuTest() {
           </button>
         </div>
 
-        <form onSubmit={generate} className="modern-generator-form">
+        <form ref={formRef} onSubmit={generate} className="modern-generator-form">
           <div className="keyword-field" id="keyword-field" hidden={mode !== "keyword"}>
             <label htmlFor="keyword" id="keyword-label">{copy.keywordPrompt}</label>
             <div className="input-wrap">
@@ -532,7 +653,21 @@ export default function ModernShortHaikuTest() {
             {haiku ? (
               <div className={poemLinesClassName(haiku.lines, displayed?.language ?? language)} id="poem-lines" lang={languageTag(displayed?.language ?? language)}>
                 {haiku.lines.map((line, index) => (
-                  <div className="poem-line" key={`${haiku.seed}-${index}`}><p>{line}</p></div>
+                  <div
+                    className="poem-line"
+                    key={`${haiku.seed}-${index}`}
+                    ref={(node) => { lineRefs.current[index] = node; }}
+                  >
+                    <button
+                      type="button"
+                      className="poem-line-trigger"
+                      onClick={(event) => openLineMenu(event, index)}
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuLine === index}
+                    >
+                      <p>{line}</p>
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -543,6 +678,22 @@ export default function ModernShortHaikuTest() {
               <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>{saved ? copy.saved : copy.save}</button>
             </div>
           </div>
+
+          {openMenuLine !== null && haiku && menuPosition && (
+            <div
+              className="line-menu"
+              role="menu"
+              aria-label={copy.lineMenuLabel}
+              style={{ top: menuPosition.top, left: menuPosition.left }}
+            >
+              <button type="button" role="menuitem" onClick={() => haikulyThisLine(openMenuLine)}>
+                {copy.haikulyThis}
+              </button>
+              <button type="button" role="menuitem" onClick={() => copyLineText(openMenuLine)}>
+                {copiedLine ? copy.copiedLine : copy.copyLine}
+              </button>
+            </div>
+          )}
 
           <div className="action-row">
             <p className="error-message" id="error-message" role="alert">{error}</p>
