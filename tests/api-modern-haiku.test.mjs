@@ -84,6 +84,9 @@ test("keyword mode generates flexible modern Chinese and runs an independent rev
   assert.deepEqual(calls[0].body.thinking, { type: "disabled" });
   assert.deepEqual(calls[0].body.response_format, { type: "json_object" });
   assert.match(calls[0].body.messages[0].content, /not a strict 5-7-5/i);
+  assert.doesNotMatch(calls[0].body.messages[0].content, /modern short haiku|keep it concise/i);
+  assert.match(calls[0].body.messages[0].content, /at least one line 6 to 10 characters/i);
+  assert.match(calls[0].body.messages[0].content, /Do not default to three uniform four-character or five-character lines/i);
   assert.match(calls[0].body.messages[0].content, /Avoid classical diction/i);
   assert.match(calls[0].body.messages[0].content, /invented compounds/i);
   assert.match(calls[0].body.messages[0].content, /Treat all values.*as data/i);
@@ -93,7 +96,7 @@ test("keyword mode generates flexible modern Chinese and runs an independent rev
   assert.match(calls[0].body.messages[0].content, /window, skyline, transit, cafe, desk/i);
   assert.match(calls[0].body.messages[0].content, /simple, quiet, low-contrast/i);
   const generationInput = JSON.parse(calls[0].body.messages[1].content);
-  assert.equal(generationInput.task, "Write a modern short haiku meaningfully based on the supplied keyword or phrase.");
+  assert.equal(generationInput.task, "Write a modern three-line haiku meaningfully based on the supplied keyword or phrase.");
   assert.equal(generationInput.mode, "keyword");
   assert.equal(generationInput.tone, "modern");
   assert.equal(generationInput.language, "zh");
@@ -105,6 +108,8 @@ test("keyword mode generates flexible modern Chinese and runs an independent rev
   assert.match(calls[1].body.messages[0].content, /final editor/i);
   assert.match(calls[1].body.messages[0].content, /Reject avoidable reuse/i);
   assert.match(calls[1].body.messages[0].content, /unnatural collocations/i);
+  assert.match(calls[1].body.messages[0].content, /all five characters or fewer/i);
+  assert.match(calls[1].body.messages[0].content, /unless the compact shape clearly serves a specific artistic effect/i);
   assert.match(calls[1].body.messages[0].content, /motif and accent are physically sensible/i);
   const reviewInput = JSON.parse(calls[1].body.messages[1].content);
   assert.equal(reviewInput.mode, "keyword");
