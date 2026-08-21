@@ -299,7 +299,15 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.doesNotMatch(styles, /\.sun-seal::after[\s\S]{0,300}background:\s*var\(--rust\)/);
   assert.match(styles, /\.sun-seal-label[\s\S]*font-family:\s*var\(--font-geist-sans\), Arial, sans-serif/);
   assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
-  assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-geist-sans\)/);
+  assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-poem-en\)/);
+  assert.match(styles, /@font-face[\s\S]*font-family:\s*"DouyinSans"[\s\S]*DouyinSansBold\.ttf/);
+  assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*"DouyinSans"/);
+  assert.match(styles, /\.poem-lines\[lang="ja"\] \.poem-line p[\s\S]*font-family:\s*var\(--font-poem-ja\)/);
+  assert.match(layout, /Cormorant_Garamond/);
+  assert.doesNotMatch(layout, /Liu_Jian_Mao_Cao/);
+  assert.match(layout, /Shippori_Mincho/);
+  assert.match(page, /document\.fonts\.ready/);
+  assert.match(mobileRuntime, /document\.fonts\.ready/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
   assert.match(layout, /Spring Whispers, Haiku-ly~/);
@@ -334,6 +342,8 @@ test("includes both generator modes and removes starter assets", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
   await access(new URL(".openai/hosting.json", projectRoot));
   await access(new URL("public/og.png", projectRoot));
+  await access(new URL("public/fonts/DouyinSansBold.ttf", projectRoot));
+  await access(new URL("public/fonts/OFL.txt", projectRoot));
   await access(new URL(".env.example", projectRoot));
 });
 

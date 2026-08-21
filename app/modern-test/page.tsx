@@ -474,6 +474,7 @@ export default function ModernShortHaikuTest() {
     if (!haiku || !paper) return;
 
     try {
+      if ("fonts" in document) await document.fonts.ready;
       const paperBounds = paper.getBoundingClientRect();
       const width = Math.round(paperBounds.width);
       const height = Math.round(paperBounds.height);
