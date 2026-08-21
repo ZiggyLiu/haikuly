@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { Dancing_Script, Geist, Geist_Mono, Lato, Zhi_Mang_Xing } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Dancing_Script,
+  Geist,
+  Geist_Mono,
+  Lato,
+  Shippori_Mincho,
+  Zhi_Mang_Xing,
+} from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import RscBootstrap from "./rsc-bootstrap";
@@ -32,6 +40,20 @@ const zhiMangXing = Zhi_Mang_Xing({
   subsets: ["latin"],
 });
 
+const cormorantGaramond = Cormorant_Garamond({
+  variable: "--font-poem-en",
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const shipporiMincho = Shippori_Mincho({
+  variable: "--font-poem-ja",
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
   const host = incomingHeaders.get("x-forwarded-host") ?? incomingHeaders.get("host") ?? "localhost";
@@ -62,7 +84,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${dancingScript.variable} ${zhiMangXing.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} ${dancingScript.variable} ${zhiMangXing.variable} ${cormorantGaramond.variable} ${shipporiMincho.variable}`}>
         <RscBootstrap />
         {children}
       </body>

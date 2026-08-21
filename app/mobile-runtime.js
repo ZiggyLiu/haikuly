@@ -878,11 +878,12 @@
     return { dataUrl: dataUrl, file: new File([bytes], name, { type: "image/png", lastModified: Date.now() }) };
   }
 
-  function saveHaiku() {
+  async function saveHaiku() {
     closeLineMenu();
     var paper = byId("poem-paper");
     if (!state.haiku || !paper) return;
     try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
       var bounds = paper.getBoundingClientRect();
       var width = Math.round(bounds.width);
       var height = Math.round(bounds.height);

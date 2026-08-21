@@ -13,7 +13,15 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
-  compatibility_flags: ["nodejs_compat"],
+  // Pin the compatibility date: the local Miniflare tester only supports dates
+  // up to 2026-05-22, while the plugin would otherwise stamp today's date.
+  compatibility_date: "2026-05-15",
+  // Turn off the experimental container feature in the local tester — it can
+  // crash (segfault) on Macs without Docker/container support. Your site's
+  // runtime doesn't use containers; this only affects local dev.
+  dev: {
+    enable_containers: false,
+  },
   d1_databases: d1
     ? [
         {
@@ -31,6 +39,22 @@ const localBindingConfig = {
         },
       ]
     : [],
+  // Keep the guest book (visitor logs) on across every deploy.
+  observability: {
+    enabled: false,
+    head_sampling_rate: 1,
+    logs: {
+      enabled: true,
+      head_sampling_rate: 1,
+      persist: true,
+      invocation_logs: true,
+    },
+    traces: {
+      enabled: true,
+      persist: true,
+      head_sampling_rate: 1,
+    },
+  },
 };
 
 export default defineConfig(async () => {
