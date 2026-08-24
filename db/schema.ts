@@ -41,3 +41,15 @@ export const emailQuotas = sqliteTable("email_quotas", {
   confirmationCount: integer("confirmation_count").notNull().default(0),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const subscriptionFeedback = sqliteTable("subscription_feedback", {
+  id: text("id").primaryKey(),
+  subscriberId: text("subscriber_id").notNull(),
+  poemDate: text("poem_date"),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  index("subscription_feedback_created_idx").on(table.createdAt),
+  index("subscription_feedback_subscriber_idx").on(table.subscriberId),
+]);
