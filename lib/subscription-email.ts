@@ -125,7 +125,7 @@ export function buildDailyEmail(
   const copy = COPY[language];
   const unsubscribeUrl = `${normalizedBaseUrl(settings.baseUrl)}/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
   const safeUnsubscribeUrl = escapeHtml(unsubscribeUrl);
-  const feedbackUrl = `${normalizedBaseUrl(settings.baseUrl)}/feedback?token=${encodeURIComponent(unsubscribeToken)}`;
+  const feedbackUrl = `${normalizedBaseUrl(settings.baseUrl)}/feedback?token=${encodeURIComponent(unsubscribeToken)}&lang=${language}`;
   const safeFeedbackUrl = escapeHtml(feedbackUrl);
   const lines = haiku.lines.map(escapeHtml);
   const html = pageShell(language, `
