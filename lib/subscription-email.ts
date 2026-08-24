@@ -16,6 +16,7 @@ const COPY: Record<Language, {
   dailySubject: string;
   dailyTitle: string;
   dailyIntro: string;
+  feedback: string;
   unsubscribe: string;
   reason: string;
 }> = {
@@ -28,6 +29,7 @@ const COPY: Record<Language, {
     dailySubject: "Your daily Haiku-ly",
     dailyTitle: "A small moment for today",
     dailyIntro: "Pause for three lines.",
+    feedback: "Give feedback",
     unsubscribe: "Unsubscribe",
     reason: "You receive this message because you confirmed a daily Haiku-ly subscription.",
   },
@@ -40,6 +42,7 @@ const COPY: Record<Language, {
     dailySubject: "今日 Haiku-ly",
     dailyTitle: "给今天的一个小瞬间",
     dailyIntro: "为三行诗停一停。",
+    feedback: "反馈这首俳句",
     unsubscribe: "取消订阅",
     reason: "你收到此邮件，是因为你已确认订阅 Haiku-ly 每日俳句。",
   },
@@ -52,6 +55,7 @@ const COPY: Record<Language, {
     dailySubject: "今日の Haiku-ly",
     dailyTitle: "今日の小さな瞬間",
     dailyIntro: "三行のために、少し立ち止まる。",
+    feedback: "この俳句にフィードバック",
     unsubscribe: "購読を解除",
     reason: "Haiku-ly の毎日俳句を確認して購読したため、このメールをお送りしています。",
   },
@@ -121,6 +125,8 @@ export function buildDailyEmail(
   const copy = COPY[language];
   const unsubscribeUrl = `${normalizedBaseUrl(settings.baseUrl)}/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
   const safeUnsubscribeUrl = escapeHtml(unsubscribeUrl);
+  const feedbackUrl = `${normalizedBaseUrl(settings.baseUrl)}/feedback?token=${encodeURIComponent(unsubscribeToken)}`;
+  const safeFeedbackUrl = escapeHtml(feedbackUrl);
   const lines = haiku.lines.map(escapeHtml);
   const html = pageShell(language, `
       <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:28px;font-weight:400">${copy.dailyTitle}</h1>
@@ -130,7 +136,8 @@ export function buildDailyEmail(
         <div>${lines[1]}</div>
         <div>${lines[2]}</div>
       </div>
-      <p style="margin:0 0 8px;color:#6d7b74;font-size:11px;line-height:1.6">${copy.reason}</p>
+      <p style="margin:0 0 18px;color:#6d7b74;font-size:11px;line-height:1.6">${copy.reason}</p>
+      <p style="margin:0 0 18px"><a href="${safeFeedbackUrl}" style="display:inline-block;background:#365347;color:#fff;padding:11px 16px;text-decoration:none;font-size:12px">${copy.feedback}</a></p>
       <p style="margin:0"><a href="${safeUnsubscribeUrl}" style="color:#53665d;font-size:11px">${copy.unsubscribe}</a></p>
   `);
 
@@ -140,7 +147,7 @@ export function buildDailyEmail(
     reply_to: settings.replyTo,
     subject: copy.dailySubject,
     html,
-    text: `${copy.dailyTitle}\n\n${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
+    text: `${copy.dailyTitle}\n\n${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.feedback}: ${feedbackUrl}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
     headers: {
       "List-Unsubscribe": `<${unsubscribeUrl}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
