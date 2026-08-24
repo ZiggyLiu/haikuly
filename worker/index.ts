@@ -4,6 +4,7 @@ import handler from "vinext/server/app-router-entry";
 import { runDailyEmail } from "../lib/daily-email";
 import type { SecretBindings } from "../lib/runtime-config";
 import { handleConfirm, handleSubscribe, handleUnsubscribe } from "../lib/subscription-handlers";
+import { handleFeedback } from "../lib/feedback-handlers";
 
 function removeBulkFontPreloads(response: Response): Response {
   const link = response.headers.get("Link");
@@ -79,6 +80,7 @@ const worker = {
     if (pathname === "/api/subscribe") return handleSubscribe(request, env);
     if (pathname === "/api/confirm") return handleConfirm(request, env);
     if (pathname === "/api/unsubscribe") return handleUnsubscribe(request, env);
+    if (pathname === "/api/feedback") return handleFeedback(request, env);
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
