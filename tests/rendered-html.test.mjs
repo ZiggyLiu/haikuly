@@ -16,6 +16,37 @@ async function render(pathname = "/") {
   );
 }
 
+test("routes subscription requests through the Cloudflare Worker", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("subscription-test", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const env = { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } };
+  const context = { waitUntil() {}, passThroughOnException() {} };
+  const response = await worker.fetch(
+    new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://localhost" },
+      body: JSON.stringify({ email: "not-an-email", language: "en", website: "" }),
+    }),
+    env,
+    context,
+  );
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { message: "Enter a valid email address." });
+
+  const oversizedResponse = await worker.fetch(
+    new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "http://localhost" },
+      body: JSON.stringify({ email: "reader@example.com", language: "en", website: "x".repeat(5000) }),
+    }),
+    env,
+    context,
+  );
+  assert.equal(oversizedResponse.status, 413);
+});
+
 test("modern short-haiku experiment uses the formal layout and DeepSeek service", async () => {
   const response = await render("/modern-test");
   assert.equal(response.status, 200);
@@ -39,6 +70,10 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /data-version="26"/);
   assert.match(html, /id="poem-paper"/);
   assert.match(html, /id="generate-haiku"/);
+  assert.match(html, /id="daily-subscription-form"/);
+  assert.match(html, /id="subscription-email"/);
+  assert.match(html, /Send confirmation/);
+  assert.match(html, /Your email is encrypted/);
 
   const [formalPage, modernPage, modernApi, v23Api, mobileRuntime, styles, inkWash] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
@@ -173,8 +208,12 @@ test("server-renders the finished Stillpoint experience", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+  const linkHeader = response.headers.get("link") ?? "";
+  assert.doesNotMatch(linkHeader, /\/Volumes\/|\/Users\//);
+  assert.ok(linkHeader.length < 8192);
 
   const html = await response.text();
+  assert.doesNotMatch(html, /\/Volumes\/|\/Users\//);
   const rscBootstrapPosition = html.indexOf("self.__VINEXT_RSC_CHUNKS__");
   const criticalStylesPosition = html.indexOf("data-stillpoint-critical");
   const inlineRuntimePosition = html.indexOf("data-stillpoint-runtime");
@@ -310,6 +349,14 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(mobileRuntime, /document\.fonts\.ready/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
+  assert.match(styles, /\.subscription-section/);
+  assert.match(styles, /\.subscription-honeypot/);
+  assert.match(page, /fetch\("\/api\/subscribe"/);
+  assert.match(page, /language: submittedLanguage/);
+  assert.match(page, /subscriptionTitle: "每日一首，寄到邮箱"/);
+  assert.match(page, /subscriptionTitle: "毎日一篇をメールで"/);
+  assert.match(mobileRuntime, /function subscribeDaily\(form\)/);
+  assert.match(mobileRuntime, /form\.id === "daily-subscription-form"/);
   assert.match(layout, /Spring Whispers, Haiku-ly~/);
   assert.match(layout, /strict 5–7–5 haiku or a modern three-line haiku/);
   assert.match(layout, /Haiku-ly — Three lines\. One quiet world\./);
@@ -340,7 +387,8 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(layout, /summary_large_image/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
-  await access(new URL(".openai/hosting.json", projectRoot));
+  await assert.rejects(access(new URL(".openai/hosting.json", projectRoot)));
+  await assert.rejects(access(new URL("build/sites-vite-plugin.ts", projectRoot)));
   await access(new URL("public/og.png", projectRoot));
   await access(new URL("public/fonts/DouyinSansBold.ttf", projectRoot));
   await access(new URL("public/fonts/OFL.txt", projectRoot));

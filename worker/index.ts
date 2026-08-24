@@ -1,22 +1,27 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { runDailyEmail } from "../lib/daily-email";
+import type { SecretBindings } from "../lib/runtime-config";
+import { handleConfirm, handleSubscribe, handleUnsubscribe } from "../lib/subscription-handlers";
 
-interface Env {
-  ASSETS: Fetcher;
-  DB: D1Database;
-  IMAGES: {
-    input(stream: ReadableStream): {
-      transform(options: Record<string, unknown>): {
-        output(options: { format: string; quality: number }): Promise<{ response(): Response }>;
-      };
-    };
-  };
-}
+function removeBulkFontPreloads(response: Response): Response {
+  const link = response.headers.get("Link");
+  if (!link?.includes("/assets/_vinext_fonts/")) return response;
 
-interface ExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-  passThroughOnException(): void;
+  const filteredLink = link
+    .split(/,\s*(?=<)/u)
+    .filter((entry) => !entry.includes("/assets/_vinext_fonts/"))
+    .join(", ");
+  const headers = new Headers(response.headers);
+  if (filteredLink) headers.set("Link", filteredLink);
+  else headers.delete("Link");
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 // Image security config. SVG sources with .svg extension auto-skip the
@@ -26,7 +31,7 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 const worker = {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env & SecretBindings, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
@@ -71,19 +76,30 @@ const worker = {
       }));
     }
 
+    if (pathname === "/api/subscribe") return handleSubscribe(request, env);
+    if (pathname === "/api/confirm") return handleConfirm(request, env);
+    if (pathname === "/api/unsubscribe") return handleUnsubscribe(request, env);
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
         transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
+          const outputFormat = format === "image/avif" || format === "image/webp" || format === "image/jpeg"
+            ? format
+            : "image/jpeg";
+          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format: outputFormat, quality });
           return result.response();
         },
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    return removeBulkFontPreloads(await handler.fetch(request, env, ctx));
   },
-};
+
+  async scheduled(controller: ScheduledController, env: Env & SecretBindings): Promise<void> {
+    await runDailyEmail(env, controller.scheduledTime);
+  },
+} satisfies ExportedHandler<Env & SecretBindings>;
 
 export default worker;

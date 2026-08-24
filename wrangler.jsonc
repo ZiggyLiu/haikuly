@@ -1,11 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "stillpoint-haiku",
-  "compatibility_date": "2026-08-19",
+  "compatibility_date": "2026-08-23",
   "compatibility_flags": [
     "nodejs_compat"
   ],
   "main": "./worker/index.ts",
+  "routes": [
+    {
+      "pattern": "haikuly.fyi",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.haikuly.fyi",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "none",
@@ -13,5 +23,27 @@
   },
   "images": {
     "binding": "IMAGES"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "haikuly-subscriptions-prod",
+      "database_id": "970c566a-f0f6-4c17-a1bb-d7acf9e79dac",
+      "migrations_dir": "./drizzle"
+    }
+  ],
+  "vars": {
+    "EMAIL_FROM": "Haiku-ly <daily@haikuly.fyi>",
+    "EMAIL_REPLY_TO": "zhiguoinusa@gmail.com",
+    "PUBLIC_BASE_URL": "https://haikuly.fyi",
+    "MAX_DAILY_RECIPIENTS": "90",
+    "MAX_DAILY_CONFIRMATIONS": "10"
+  },
+  "triggers": {
+    "crons": ["0 8 * * *"]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
 }

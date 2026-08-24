@@ -73,7 +73,12 @@
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
       intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
-      paperRule: "Three lines · modern haiku"
+      paperRule: "Three lines · modern haiku",
+      subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
+      subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
+      subscriptionButton: "Send confirmation", subscriptionSending: "Sending…",
+      subscriptionPrivacy: "Confirmation is required. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+      subscriptionError: "The subscription could not be started. Please try again."
     },
     zh: {
       languageLabel: "诗歌语言", languageRule: "三行 · 当代中文", languageGroup: "诗歌语言", modeGroup: "生成方式",
@@ -91,7 +96,12 @@
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
       intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
-      paperRule: "三行 · 现代短俳"
+      paperRule: "三行 · 现代短俳",
+      subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
+      subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
+      subscriptionButton: "发送确认邮件", subscriptionSending: "正在发送…",
+      subscriptionPrivacy: "需要邮件确认。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+      subscriptionError: "暂时无法开始订阅，请重试。"
     },
     ja: {
       languageLabel: "詩の言語", languageRule: "三行 · 現代語", languageGroup: "詩の言語", modeGroup: "作句方法",
@@ -111,7 +121,12 @@
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
       intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
-      paperRule: "三行 · 現代短俳"
+      paperRule: "三行 · 現代短俳",
+      subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
+      subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
+      subscriptionButton: "確認メールを送る", subscriptionSending: "送信中…",
+      subscriptionPrivacy: "メールでの確認が必要です。アドレスは暗号化して保存し、販売しません。ワンクリックで解除できます。",
+      subscriptionError: "購読を開始できませんでした。もう一度お試しください。"
     }
   };
 
@@ -254,6 +269,15 @@
     setText(byId("keyword-label"), current.keywordPrompt);
     var input = byId("keyword");
     if (input) input.setAttribute("placeholder", current.keywordPlaceholder);
+    if (isModernApp()) {
+      setText(byId("subscription-title"), current.subscriptionTitle);
+      setText(byId("subscription-intro"), current.subscriptionIntro);
+      setText(byId("subscription-email-label"), current.subscriptionEmailLabel);
+      setText(byId("subscription-privacy"), current.subscriptionPrivacy);
+      setText(byId("subscription-submit"), current.subscriptionButton);
+      var subscriptionInput = byId("subscription-email");
+      if (subscriptionInput) subscriptionInput.setAttribute("placeholder", current.subscriptionPlaceholder);
+    }
 
     var keywordField = byId("keyword-field");
     if (keywordField) keywordField.hidden = state.mode !== "keyword";
@@ -850,6 +874,41 @@
     });
   }
 
+  function subscribeDaily(form) {
+    var current = copy();
+    var emailInput = byId("subscription-email");
+    var websiteInput = form.querySelector('[name="website"]');
+    var button = byId("subscription-submit");
+    var message = byId("subscription-message");
+    if (!emailInput || !button || !message) return;
+    button.disabled = true;
+    setText(button, current.subscriptionSending);
+    setText(message, "");
+    message.className = "subscription-message";
+    fetch("/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: emailInput.value,
+        language: state.language,
+        website: websiteInput ? websiteInput.value : ""
+      })
+    }).then(function (response) {
+      return response.json().then(function (result) { return { response: response, result: result }; });
+    }).then(function (packet) {
+      setText(message, packet.result && packet.result.message ? packet.result.message : current.subscriptionError);
+      if (packet.response.ok) {
+        message.className = "subscription-message success";
+        emailInput.value = "";
+      }
+    }).catch(function () {
+      setText(message, current.subscriptionError);
+    }).then(function () {
+      button.disabled = false;
+      setText(button, current.subscriptionButton);
+    });
+  }
+
   function canvasFont(context, style) {
     context.font = style.fontStyle + " " + style.fontWeight + " " + style.fontSize + " " + style.fontFamily;
     context.fillStyle = style.color;
@@ -1157,6 +1216,9 @@
   document.addEventListener("submit", function (event) {
     if (reactReady()) return;
     var form = event.target;
+    if (form && form.id === "daily-subscription-form") {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); subscribeDaily(form); return;
+    }
     if (form && form.classList && (form.classList.contains("generator-form") || form.classList.contains("modern-generator-form"))) {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); generate();
     }

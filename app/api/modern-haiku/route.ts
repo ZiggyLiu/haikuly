@@ -30,6 +30,18 @@ const CREATIVE_ANGLES = [
 
 export type ModernTone = "modern" | "internet";
 
+export type ModernGenerationInput = {
+  mode: Mode;
+  tone: ModernTone;
+  language: Language;
+  keyword: string | null;
+  recentLines: readonly string[];
+};
+
+export type ModernGenerationOutcome =
+  | { ok: true; haiku: Haiku }
+  | { ok: false; reason: "unavailable" | "review" | "rejected" };
+
 type DeepSeekResponse = {
   choices?: Array<{
     finish_reason?: string;
@@ -485,6 +497,58 @@ function illustrationFor(
   return illustrationForContent(lines, keyword, seed);
 }
 
+export async function generateModernHaiku(
+  input: ModernGenerationInput,
+  apiKey: string,
+): Promise<ModernGenerationOutcome> {
+  const { mode, tone, language, keyword, recentLines } = input;
+  const firstCreativeAngle = Math.floor(Math.random() * CREATIVE_ANGLES.length);
+  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
+    const creativeAngle = CREATIVE_ANGLES[(firstCreativeAngle + attempt - 1) % CREATIVE_ANGLES.length];
+    const response = await requestDeepSeek(
+      generationRequest(mode, tone, language, keyword, attempt, creativeAngle, recentLines),
+      apiKey,
+    );
+    if (!response) return { ok: false, reason: "unavailable" };
+
+    const draft = parseDraft(readOutputText(response));
+    const rawLines = draft?.lines;
+    if (!isValidModernShortHaiku(rawLines, language)) continue;
+    const lines = rawLines.map((line) => normalizeLine(line.trim(), language)) as Haiku["lines"];
+    const directedIllustration = isModernIllustrationRecipe(draft?.illustration)
+      ? draft.illustration
+      : null;
+
+    const review = await modernRegisterReview(
+      mode,
+      tone,
+      language,
+      keyword,
+      creativeAngle,
+      recentLines,
+      lines,
+      directedIllustration,
+      apiKey,
+    );
+    if (review === "unavailable") return { ok: false, reason: "review" };
+    if (review === "reject") continue;
+
+    const generatedAt = Date.now();
+    const seed = generatedAt + Math.floor(Math.random() * 10000);
+    return {
+      ok: true,
+      haiku: {
+        lines,
+        seed,
+        createdAt: new Date(generatedAt).toISOString(),
+        illustration: illustrationFor(directedIllustration, lines, keyword, seed),
+      },
+    };
+  }
+
+  return { ok: false, reason: "rejected" };
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -537,61 +601,16 @@ export async function POST(request: Request) {
 
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return json({ error: errorCopy.missingKey }, 503);
-
-  const firstCreativeAngle = Math.floor(Math.random() * CREATIVE_ANGLES.length);
-  for (let attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt += 1) {
-    const creativeAngle = CREATIVE_ANGLES[(firstCreativeAngle + attempt - 1) % CREATIVE_ANGLES.length];
-    const response = await requestDeepSeek(
-      generationRequest(
-        mode,
-        tone,
-        language,
-        mode === "keyword" ? keyword : null,
-        attempt,
-        creativeAngle,
-        recentLines,
-      ),
-      apiKey,
-    );
-    if (!response) return json({ error: errorCopy.unavailable }, 503);
-
-    const draft = parseDraft(readOutputText(response));
-    const rawLines = draft?.lines;
-    if (!isValidModernShortHaiku(rawLines, language)) continue;
-    const lines = rawLines.map((line) => normalizeLine(line.trim(), language)) as Haiku["lines"];
-    const directedIllustration = isModernIllustrationRecipe(draft?.illustration)
-      ? draft.illustration
-      : null;
-
-    const review = await modernRegisterReview(
-      mode,
-      tone,
-      language,
-      mode === "keyword" ? keyword : null,
-      creativeAngle,
-      recentLines,
-      lines,
-      directedIllustration,
-      apiKey,
-    );
-    if (review === "unavailable") return json({ error: errorCopy.review }, 503);
-    if (review === "reject") continue;
-
-    const generatedAt = Date.now();
-    const seed = generatedAt + Math.floor(Math.random() * 10000);
-    const haiku: Haiku = {
-      lines,
-      seed,
-      createdAt: new Date(generatedAt).toISOString(),
-      illustration: illustrationFor(
-        directedIllustration,
-        lines,
-        mode === "keyword" ? keyword : null,
-        seed,
-      ),
-    };
-    return json({ haiku, source: "deepseek", tone, language });
+  const outcome = await generateModernHaiku({
+    mode,
+    tone,
+    language,
+    keyword: mode === "keyword" ? keyword : null,
+    recentLines,
+  }, apiKey);
+  if (!outcome.ok) {
+    const status = outcome.reason === "rejected" ? 422 : 503;
+    return json({ error: errorCopy[outcome.reason] }, status);
   }
-
-  return json({ error: errorCopy.rejected }, 422);
+  return json({ haiku: outcome.haiku, source: "deepseek", tone, language });
 }

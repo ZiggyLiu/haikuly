@@ -15,29 +15,34 @@ import RscBootstrap from "./rsc-bootstrap";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 const lato = Lato({
   variable: "--font-lato",
   weight: "400",
   subsets: ["latin"],
+  preload: false,
 });
 
 const dancingScript = Dancing_Script({
   variable: "--font-dancing-script",
   weight: "400",
   subsets: ["latin"],
+  preload: false,
 });
 
 const zhiMangXing = Zhi_Mang_Xing({
   variable: "--font-zhi-mang-xing",
   weight: "400",
   subsets: ["latin"],
+  preload: false,
 });
 
 const cormorantGaramond = Cormorant_Garamond({
@@ -45,6 +50,7 @@ const cormorantGaramond = Cormorant_Garamond({
   weight: ["400", "500"],
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 const shipporiMincho = Shippori_Mincho({
@@ -52,6 +58,7 @@ const shipporiMincho = Shippori_Mincho({
   weight: "400",
   subsets: ["latin"],
   display: "swap",
+  preload: false,
 });
 
 export async function generateMetadata(): Promise<Metadata> {

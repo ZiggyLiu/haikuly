@@ -56,6 +56,14 @@ const UI_COPY: Record<Language, {
   heroAccent: string;
   intro: string;
   paperRule: string;
+  subscriptionTitle: string;
+  subscriptionIntro: string;
+  subscriptionEmailLabel: string;
+  subscriptionPlaceholder: string;
+  subscriptionButton: string;
+  subscriptionSending: string;
+  subscriptionPrivacy: string;
+  subscriptionError: string;
 }> = {
   en: {
     languageLabel: "Poem language",
@@ -99,6 +107,14 @@ const UI_COPY: Record<Language, {
     heroAccent: "Haiku-ly~",
     intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
     paperRule: "Three lines · modern haiku",
+    subscriptionTitle: "A haiku in your inbox",
+    subscriptionIntro: "Receive one quiet, three-line poem each day.",
+    subscriptionEmailLabel: "Email address",
+    subscriptionPlaceholder: "you@example.com",
+    subscriptionButton: "Send confirmation",
+    subscriptionSending: "Sending…",
+    subscriptionPrivacy: "Confirmation is required. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+    subscriptionError: "The subscription could not be started. Please try again.",
   },
   zh: {
     languageLabel: "诗歌语言",
@@ -142,6 +158,14 @@ const UI_COPY: Record<Language, {
     heroAccent: "Haiku-ly~",
     intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
     paperRule: "三行 · 现代短俳",
+    subscriptionTitle: "每日一首，寄到邮箱",
+    subscriptionIntro: "每天收到一首安静的三行短俳。",
+    subscriptionEmailLabel: "邮箱地址",
+    subscriptionPlaceholder: "you@example.com",
+    subscriptionButton: "发送确认邮件",
+    subscriptionSending: "正在发送…",
+    subscriptionPrivacy: "需要邮件确认。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+    subscriptionError: "暂时无法开始订阅，请重试。",
   },
   ja: {
     languageLabel: "詩の言語",
@@ -185,6 +209,14 @@ const UI_COPY: Record<Language, {
     heroAccent: "Haiku-ly~",
     intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
     paperRule: "三行 · 現代短俳",
+    subscriptionTitle: "毎日一篇をメールで",
+    subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
+    subscriptionEmailLabel: "メールアドレス",
+    subscriptionPlaceholder: "you@example.com",
+    subscriptionButton: "確認メールを送る",
+    subscriptionSending: "送信中…",
+    subscriptionPrivacy: "メールでの確認が必要です。アドレスは暗号化して保存し、販売しません。ワンクリックで解除できます。",
+    subscriptionError: "購読を開始できませんでした。もう一度お試しください。",
   },
 };
 
@@ -277,6 +309,10 @@ export default function ModernShortHaikuTest() {
   const [copiedLine, setCopiedLine] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [displayLines, setDisplayLines] = useState<string[] | null>(null);
+  const [subscriptionEmail, setSubscriptionEmail] = useState("");
+  const [subscriptionMessage, setSubscriptionMessage] = useState("");
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [subscriptionSucceeded, setSubscriptionSucceeded] = useState(false);
   const poemPaperRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -649,6 +685,41 @@ export default function ModernShortHaikuTest() {
     setSaved(false);
   }
 
+  async function subscribe(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSubscribing) return;
+    const submittedLanguage = language;
+    const submittedCopy = UI_COPY[submittedLanguage];
+    const formData = new FormData(event.currentTarget);
+    setIsSubscribing(true);
+    setSubscriptionMessage("");
+    setSubscriptionSucceeded(false);
+    try {
+      const response = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: subscriptionEmail,
+          language: submittedLanguage,
+          website: formData.get("website") ?? "",
+        }),
+      });
+      const result: unknown = await response.json();
+      const message = result && typeof result === "object" && !Array.isArray(result) &&
+        typeof (result as { message?: unknown }).message === "string"
+        ? (result as { message: string }).message
+        : submittedCopy.subscriptionError;
+      setSubscriptionMessage(message);
+      setSubscriptionSucceeded(response.ok);
+      if (response.ok) setSubscriptionEmail("");
+    } catch {
+      setSubscriptionMessage(submittedCopy.subscriptionError);
+      setSubscriptionSucceeded(false);
+    } finally {
+      setIsSubscribing(false);
+    }
+  }
+
   return (
     <main className="page-shell" id="modern-short-haiku-app" data-version="26">
       <div className="ambient ambient-left" aria-hidden="true" />
@@ -822,6 +893,48 @@ export default function ModernShortHaikuTest() {
               <span aria-hidden="true">↗</span>
             </button>
           </div>
+        </form>
+      </section>
+
+      <section className="subscription-section" aria-labelledby="subscription-title">
+        <div className="subscription-copy">
+          <p className="subscription-kicker">Daily Haiku-ly</p>
+          <h2 id="subscription-title">{copy.subscriptionTitle}</h2>
+          <p id="subscription-intro">{copy.subscriptionIntro}</p>
+        </div>
+        <form className="subscription-form" id="daily-subscription-form" onSubmit={subscribe}>
+          <label id="subscription-email-label" htmlFor="subscription-email">{copy.subscriptionEmailLabel}</label>
+          <div className="subscription-input-row">
+            <input
+              id="subscription-email"
+              name="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={subscriptionEmail}
+              placeholder={copy.subscriptionPlaceholder}
+              onChange={(event) => {
+                setSubscriptionEmail(event.target.value);
+                setSubscriptionMessage("");
+                setSubscriptionSucceeded(false);
+              }}
+            />
+            <button id="subscription-submit" type="submit" disabled={isSubscribing}>
+              {isSubscribing ? copy.subscriptionSending : copy.subscriptionButton}
+            </button>
+          </div>
+          <input className="subscription-honeypot" type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+          <p className="subscription-privacy" id="subscription-privacy">{copy.subscriptionPrivacy}</p>
+          <p
+            className={`subscription-message${subscriptionSucceeded ? " success" : ""}`}
+            id="subscription-message"
+            role="status"
+            aria-live="polite"
+          >
+            {subscriptionMessage}
+          </p>
         </form>
       </section>
 
