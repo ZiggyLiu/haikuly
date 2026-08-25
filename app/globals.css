@@ -814,6 +814,40 @@ h1[lang="ja"] #hero-title {
   box-shadow: 0 0 0 2px rgba(54, 83, 71, 0.1);
 }
 
+.subscription-timezone-field {
+  margin-top: 12px;
+}
+
+.subscription-timezone-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.subscription-timezone-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid rgba(54, 83, 71, 0.28);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--ink);
+  outline: none;
+}
+
+.subscription-timezone-field input:focus {
+  border-color: var(--moss);
+  box-shadow: 0 0 0 2px rgba(54, 83, 71, 0.1);
+}
+
+.subscription-timezone-field p {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .subscription-input-row button {
   min-height: 46px;
   padding: 10px 18px;

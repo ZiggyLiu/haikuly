@@ -76,8 +76,10 @@
       paperRule: "Three lines · modern haiku",
       subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
       subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
+      subscriptionTimezoneLabel: "Delivery timezone",
+      subscriptionTimezoneHelp: "Your haiku arrives around 8:00 AM in this timezone. Submit the same email again to change it later.",
       subscriptionButton: "Send confirmation", subscriptionSending: "Sending…",
-      subscriptionPrivacy: "Confirmation is required. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+      subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
       subscriptionError: "The subscription could not be started. Please try again."
     },
     zh: {
@@ -99,8 +101,10 @@
       paperRule: "三行 · 现代短俳",
       subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
       subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
+      subscriptionTimezoneLabel: "投递时区",
+      subscriptionTimezoneHelp: "俳句将在此时区每天上午 8 点左右送达。之后可用同一邮箱再次提交来更改。",
       subscriptionButton: "发送确认邮件", subscriptionSending: "正在发送…",
-      subscriptionPrivacy: "需要邮件确认。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+      subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
       subscriptionError: "暂时无法开始订阅，请重试。"
     },
     ja: {
@@ -124,8 +128,10 @@
       paperRule: "三行 · 現代短俳",
       subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
       subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
+      subscriptionTimezoneLabel: "配信タイムゾーン",
+      subscriptionTimezoneHelp: "このタイムゾーンの午前8時ごろに届きます。後から同じメールアドレスで変更できます。",
       subscriptionButton: "確認メールを送る", subscriptionSending: "送信中…",
-      subscriptionPrivacy: "メールでの確認が必要です。アドレスは暗号化して保存し、販売しません。ワンクリックで解除できます。",
+      subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
       subscriptionError: "購読を開始できませんでした。もう一度お試しください。"
     }
   };
@@ -273,6 +279,8 @@
       setText(byId("subscription-title"), current.subscriptionTitle);
       setText(byId("subscription-intro"), current.subscriptionIntro);
       setText(byId("subscription-email-label"), current.subscriptionEmailLabel);
+      setText(byId("subscription-timezone-label"), current.subscriptionTimezoneLabel);
+      setText(byId("subscription-timezone-help"), current.subscriptionTimezoneHelp);
       setText(byId("subscription-privacy"), current.subscriptionPrivacy);
       setText(byId("subscription-submit"), current.subscriptionButton);
       var subscriptionInput = byId("subscription-email");
@@ -877,10 +885,11 @@
   function subscribeDaily(form) {
     var current = copy();
     var emailInput = byId("subscription-email");
+    var timezoneInput = byId("subscription-timezone");
     var websiteInput = form.querySelector('[name="website"]');
     var button = byId("subscription-submit");
     var message = byId("subscription-message");
-    if (!emailInput || !button || !message) return;
+    if (!emailInput || !timezoneInput || !button || !message) return;
     button.disabled = true;
     setText(button, current.subscriptionSending);
     setText(message, "");
@@ -891,6 +900,7 @@
       body: JSON.stringify({
         email: emailInput.value,
         language: state.language,
+        timezone: timezoneInput.value,
         website: websiteInput ? websiteInput.value : ""
       })
     }).then(function (response) {
@@ -1254,5 +1264,13 @@
   });
 
   window.__STILLPOINT_INLINE_READY__ = true;
+  var detectedTimezoneInput = byId("subscription-timezone");
+  if (detectedTimezoneInput) {
+    try {
+      detectedTimezoneInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      detectedTimezoneInput.value = "UTC";
+    }
+  }
   publishState();
 }());

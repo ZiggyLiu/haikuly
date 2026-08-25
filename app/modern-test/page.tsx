@@ -60,6 +60,8 @@ const UI_COPY: Record<Language, {
   subscriptionIntro: string;
   subscriptionEmailLabel: string;
   subscriptionPlaceholder: string;
+  subscriptionTimezoneLabel: string;
+  subscriptionTimezoneHelp: string;
   subscriptionButton: string;
   subscriptionSending: string;
   subscriptionPrivacy: string;
@@ -111,9 +113,11 @@ const UI_COPY: Record<Language, {
     subscriptionIntro: "Receive one quiet, three-line poem each day.",
     subscriptionEmailLabel: "Email address",
     subscriptionPlaceholder: "you@example.com",
+    subscriptionTimezoneLabel: "Delivery timezone",
+    subscriptionTimezoneHelp: "Your haiku arrives around 8:00 AM in this timezone. Submit the same email again to change it later.",
     subscriptionButton: "Send confirmation",
     subscriptionSending: "Sending…",
-    subscriptionPrivacy: "Confirmation is required. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+    subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
     subscriptionError: "The subscription could not be started. Please try again.",
   },
   zh: {
@@ -162,9 +166,11 @@ const UI_COPY: Record<Language, {
     subscriptionIntro: "每天收到一首安静的三行短俳。",
     subscriptionEmailLabel: "邮箱地址",
     subscriptionPlaceholder: "you@example.com",
+    subscriptionTimezoneLabel: "投递时区",
+    subscriptionTimezoneHelp: "俳句将在此时区每天上午 8 点左右送达。之后可用同一邮箱再次提交来更改。",
     subscriptionButton: "发送确认邮件",
     subscriptionSending: "正在发送…",
-    subscriptionPrivacy: "需要邮件确认。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+    subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
     subscriptionError: "暂时无法开始订阅，请重试。",
   },
   ja: {
@@ -213,9 +219,11 @@ const UI_COPY: Record<Language, {
     subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
     subscriptionEmailLabel: "メールアドレス",
     subscriptionPlaceholder: "you@example.com",
+    subscriptionTimezoneLabel: "配信タイムゾーン",
+    subscriptionTimezoneHelp: "このタイムゾーンの午前8時ごろに届きます。後から同じメールアドレスで変更できます。",
     subscriptionButton: "確認メールを送る",
     subscriptionSending: "送信中…",
-    subscriptionPrivacy: "メールでの確認が必要です。アドレスは暗号化して保存し、販売しません。ワンクリックで解除できます。",
+    subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
     subscriptionError: "購読を開始できませんでした。もう一度お試しください。",
   },
 };
@@ -310,6 +318,7 @@ export default function ModernShortHaikuTest() {
   const [isEditing, setIsEditing] = useState(false);
   const [displayLines, setDisplayLines] = useState<string[] | null>(null);
   const [subscriptionEmail, setSubscriptionEmail] = useState("");
+  const [subscriptionTimezone, setSubscriptionTimezone] = useState("UTC");
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [subscriptionSucceeded, setSubscriptionSucceeded] = useState(false);
@@ -327,6 +336,18 @@ export default function ModernShortHaikuTest() {
   const counts = lines?.map((line) => editableLineUnitCount(line, displayedLanguage, displayedForm)) ?? null;
   const copy = UI_COPY[language];
   const formCopy = haikuForm === "modern" ? copy : STRICT_FORM_COPY[language];
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (detected) setSubscriptionTimezone(detected);
+      } catch {
+        // UTC remains the privacy-preserving fallback when the browser cannot report a timezone.
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useLayoutEffect(() => {
     const runtimeWindow = window as Window & {
@@ -701,6 +722,7 @@ export default function ModernShortHaikuTest() {
         body: JSON.stringify({
           email: subscriptionEmail,
           language: submittedLanguage,
+          timezone: subscriptionTimezone,
           website: formData.get("website") ?? "",
         }),
       });
@@ -924,6 +946,24 @@ export default function ModernShortHaikuTest() {
             <button id="subscription-submit" type="submit" disabled={isSubscribing}>
               {isSubscribing ? copy.subscriptionSending : copy.subscriptionButton}
             </button>
+          </div>
+          <div className="subscription-timezone-field">
+            <label id="subscription-timezone-label" htmlFor="subscription-timezone">{copy.subscriptionTimezoneLabel}</label>
+            <input
+              id="subscription-timezone"
+              name="timezone"
+              type="text"
+              required
+              maxLength={64}
+              value={subscriptionTimezone}
+              onChange={(event) => {
+                setSubscriptionTimezone(event.target.value);
+                setSubscriptionMessage("");
+                setSubscriptionSucceeded(false);
+              }}
+              aria-describedby="subscription-timezone-help"
+            />
+            <p id="subscription-timezone-help">{copy.subscriptionTimezoneHelp}</p>
           </div>
           <input className="subscription-honeypot" type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
           <p className="subscription-privacy" id="subscription-privacy">{copy.subscriptionPrivacy}</p>

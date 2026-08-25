@@ -100,7 +100,6 @@ const worker = {
       console.log(JSON.stringify({
         event: "visit",
         time: new Date().toISOString(),
-        ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
         country: request.headers.get("CF-IPCountry") ?? "unknown",
         method: request.method,
         path: pathname,

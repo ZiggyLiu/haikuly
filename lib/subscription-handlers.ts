@@ -3,6 +3,7 @@ import { sendResendEmail } from "./resend";
 import { requireSubscriptionConfig, type HaikulyRuntimeEnv } from "./runtime-config";
 import { buildConfirmationEmail, subscriptionResultHtml } from "./subscription-email";
 import { createSubscriptionCrypto, isValidEmail, normalizeEmail } from "./subscription-crypto";
+import { nextLocalDeliveryAt, normalizeTimeZone, timeZoneFromRequest } from "./timezone";
 import {
   activateSubscriber,
   claimConfirmationSend,
@@ -13,7 +14,7 @@ import {
   preparePendingSubscriber,
   reserveConfirmationQuota,
   unsubscribeSubscriber,
-  updateActiveSubscriberLanguage,
+  updateActiveSubscriberPreferences,
 } from "./subscriber-store";
 
 const MAX_BODY_BYTES = 4096;
@@ -23,6 +24,7 @@ const CONFIRMATION_COOLDOWN_MS = 15 * 60 * 1000;
 type SubscribePayload = {
   email?: unknown;
   language?: unknown;
+  timezone?: unknown;
   website?: unknown;
 };
 
@@ -35,27 +37,31 @@ const RESPONSE_COPY: Record<Language, {
   accepted: string;
   active: string;
   invalid: string;
+  invalidTimezone: string;
   unavailable: string;
   limited: string;
 }> = {
   en: {
     accepted: "Check your inbox and confirm your daily haiku subscription.",
-    active: "Your daily haiku subscription is active.",
+    active: "Your daily haiku preferences have been updated.",
     invalid: "Enter a valid email address.",
+    invalidTimezone: "Enter a valid timezone such as America/New_York.",
     unavailable: "The subscription service is not ready. Please try again later.",
     limited: "The daily confirmation limit is full. Please try again tomorrow.",
   },
   zh: {
     accepted: "请查看邮箱并确认每日俳句订阅。",
-    active: "你的每日俳句订阅已生效。",
+    active: "你的每日俳句偏好已更新。",
     invalid: "请输入有效的邮箱地址。",
+    invalidTimezone: "请输入有效时区，例如 Asia/Shanghai。",
     unavailable: "订阅服务暂时不可用，请稍后重试。",
     limited: "今天的确认邮件额度已满，请明天再试。",
   },
   ja: {
     accepted: "受信箱を確認し、毎日俳句の購読を確定してください。",
-    active: "毎日俳句の購読は有効です。",
+    active: "毎日俳句の設定を更新しました。",
     invalid: "有効なメールアドレスを入力してください。",
+    invalidTimezone: "Asia/Tokyo のような有効なタイムゾーンを入力してください。",
     unavailable: "購読サービスは現在利用できません。後でもう一度お試しください。",
     limited: "本日の確認メール上限に達しました。明日もう一度お試しください。",
   },
@@ -150,6 +156,10 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
   }
   const email = typeof payload.email === "string" ? normalizeEmail(payload.email) : "";
   if (!isValidEmail(email)) return jsonResponse(copy.invalid, 400);
+  const providedTimezone = typeof payload.timezone === "string" ? payload.timezone.trim() : "";
+  const normalizedTimezone = normalizeTimeZone(providedTimezone);
+  if (providedTimezone && !normalizedTimezone) return jsonResponse(copy.invalidTimezone, 400);
+  const timezone = normalizedTimezone ?? timeZoneFromRequest(request);
 
   try {
     const config = requireSubscriptionConfig(env);
@@ -175,6 +185,7 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
         email_ciphertext: emailCiphertext,
         email_hash: emailHash,
         language,
+        timezone,
         confirmation_token: confirmationToken,
         created_at: now,
         updated_at: now,
@@ -184,7 +195,15 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
 
     if (!subscriber) throw new Error("Subscriber creation failed.");
     if (subscriber.status === "active") {
-      await updateActiveSubscriberLanguage(config.db, subscriber.id, emailCiphertext, language, now);
+      await updateActiveSubscriberPreferences(
+        config.db,
+        subscriber.id,
+        emailCiphertext,
+        language,
+        timezone,
+        nextLocalDeliveryAt(nowDate, timezone),
+        now,
+      );
       return jsonResponse(copy.active, 200);
     }
 
@@ -192,7 +211,7 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
     const tokenPayload = confirmationToken
       ? await subscriptionCrypto.readActionToken(confirmationToken, "confirm")
       : null;
-    if (!tokenPayload || tokenPayload.subscriberId !== subscriber.id || tokenPayload.language !== language) {
+    if (!tokenPayload || tokenPayload.subscriberId !== subscriber.id || tokenPayload.language !== language || subscriber.timezone !== timezone) {
       confirmationToken = await subscriptionCrypto.createActionToken(
         subscriber.id,
         "confirm",
@@ -204,6 +223,7 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
         subscriber.id,
         emailCiphertext,
         language,
+        timezone,
         confirmationToken,
         now,
       );
@@ -281,12 +301,14 @@ export async function handleConfirm(request: Request, env: HaikulyRuntimeEnv): P
       subscriber.language,
       null,
     );
+    const confirmationNow = new Date();
     const activated = await activateSubscriber(
       config.db,
       subscriber.id,
       token,
       unsubscribeToken,
-      new Date().toISOString(),
+      nextLocalDeliveryAt(confirmationNow, subscriber.timezone),
+      confirmationNow.toISOString(),
     );
     return htmlResponse(
       subscriptionResultHtml(language, activated ? "confirmed" : "invalid", config.publicBaseUrl),

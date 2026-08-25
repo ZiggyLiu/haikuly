@@ -41,7 +41,7 @@ npm run typecheck
 4. Store the key in Cloudflare with `npx wrangler secret put RESEND_API_KEY`.
 5. Confirm that `DEEPSEEK_API_KEY` and `TOKEN_ENCRYPTION_KEY` are also present with `npx wrangler secret list`.
 
-The visible sender is `Haiku-ly <daily@haikuly.fyi>`. Replies go to `zhiguoinusa@gmail.com`. The daily Cron Trigger runs at `08:00 UTC`. The free-plan safeguards limit the daily issue to 90 recipients and limit confirmation messages to 10 per day.
+The visible sender is `Haiku-ly <daily@haikuly.fyi>`. Replies go to `zhiguoinusa@gmail.com`. A Cron Trigger runs every 15 minutes and sends each due subscriber a haiku at approximately `08:00` in their saved IANA timezone. The browser supplies an editable timezone; Cloudflare's request timezone is the fallback, and Haiku-ly does not store the subscribing IP address or precise location. The safeguards limit each dispatch to 90 recipients and confirmation messages to 10 per day.
 
 ## Direct Cloudflare deployment
 

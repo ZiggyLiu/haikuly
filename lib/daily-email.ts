@@ -1,11 +1,19 @@
 import { generateModernHaiku } from "../app/api/modern-haiku/route";
 import type { Haiku, Language } from "../app/haiku";
-import { sendResendBatch, ResendError } from "./resend";
+import { sendResendEmail, ResendError } from "./resend";
 import { requireSubscriptionConfig, type SecretBindings } from "./runtime-config";
 import { buildDailyEmail } from "./subscription-email";
 import { createSubscriptionCrypto } from "./subscription-crypto";
-import { listActiveSubscribers } from "./subscriber-store";
+import {
+  advanceSubscriberSchedule,
+  claimDailyDelivery,
+  completeDailyDelivery,
+  dailyDeliveryStatus,
+  failDailyDelivery,
+  listDueSubscribers,
+} from "./subscriber-store";
 import { dailyCardUrl, dailyImageDownloadUrl, ensureDailyImage } from "./daily-image";
+import { localDateAt, nextLocalDeliveryAt } from "./timezone";
 
 type DailyEmailEnv = Env & SecretBindings;
 
@@ -14,6 +22,7 @@ type DailyPoemRow = {
 };
 
 const FEEDBACK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const DELIVERY_LEASE_MS = 10 * 60 * 1000;
 
 function parseHaiku(value: string): Haiku | null {
   try {
@@ -89,14 +98,14 @@ async function completeRun(
 export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): Promise<void> {
   const config = requireSubscriptionConfig(env);
   if (!env.DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY is unavailable.");
-  const sendDate = new Date(scheduledTime).toISOString().slice(0, 10);
-  const runKey = `daily-haiku/${sendDate}/v1`;
+  const scheduledAt = new Date(scheduledTime).toISOString();
+  const runKey = `daily-haiku-dispatch/${scheduledTime}/v2`;
   const createdAt = new Date().toISOString();
   const existingRun = await config.db.prepare(
     "SELECT status FROM daily_email_runs WHERE run_key = ? LIMIT 1",
   ).bind(runKey).first<{ status: string }>();
   if (existingRun?.status === "sent" || existingRun?.status === "skipped" || existingRun?.status === "sending" || existingRun?.status === "preparing") {
-    console.log(JSON.stringify({ event: "daily_email_skipped", sendDate, reason: "run_exists" }));
+    console.log(JSON.stringify({ event: "daily_email_skipped", scheduledAt, reason: "run_exists" }));
     return;
   }
   if (existingRun?.status === "failed") {
@@ -108,84 +117,139 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
       "INSERT OR IGNORE INTO daily_email_runs (run_key, status, recipient_count, created_at) VALUES (?, 'preparing', 0, ?)",
     ).bind(runKey, createdAt).run();
     if ((claim.meta.changes ?? 0) !== 1) {
-      console.log(JSON.stringify({ event: "daily_email_skipped", sendDate, reason: "run_exists" }));
+      console.log(JSON.stringify({ event: "daily_email_skipped", scheduledAt, reason: "run_exists" }));
       return;
     }
   }
 
   let recipientCount = 0;
   try {
-    const subscribers = await listActiveSubscribers(config.db, config.maxDailyRecipients);
+    const subscribers = await listDueSubscribers(config.db, scheduledAt, config.maxDailyRecipients);
     if (subscribers.length === 0) {
       await completeRun(config.db, runKey, "skipped", 0, null);
-      console.log(JSON.stringify({ event: "daily_email_skipped", sendDate, reason: "no_subscribers" }));
+      console.log(JSON.stringify({ event: "daily_email_skipped", scheduledAt, reason: "no_due_subscribers" }));
       return;
     }
 
     const subscriptionCrypto = await createSubscriptionCrypto(config.tokenEncryptionKey);
-    const deliverable = [];
+    const poems = new Map<string, Haiku>();
+    const imageUrls = new Map<string, { imageUrl: string; saveUrl: string; viewUrl: string }>();
+    let failureCount = 0;
+
+    await completeRun(config.db, runKey, "sending", subscribers.length, null);
     for (const subscriber of subscribers) {
-      if (!subscriber.unsubscribe_token) continue;
-      const email = await subscriptionCrypto.decryptEmail(subscriber.email_ciphertext);
-      if (!email) {
-        console.error(JSON.stringify({
-          event: "subscriber_email_decryption_failed",
-          subscriberId: subscriber.id,
-        }));
+      if (!subscriber.unsubscribe_token || !subscriber.next_send_at) continue;
+      const sendDate = localDateAt(subscriber.next_send_at, subscriber.timezone);
+      const attemptedAt = new Date().toISOString();
+      const staleBefore = new Date(Date.now() - DELIVERY_LEASE_MS).toISOString();
+      const deliveryClaim = await claimDailyDelivery(
+        config.db,
+        subscriber.id,
+        sendDate,
+        attemptedAt,
+        staleBefore,
+      );
+      if (!deliveryClaim) {
+        if (await dailyDeliveryStatus(config.db, subscriber.id, sendDate) === "sent") {
+          const advancedAt = new Date().toISOString();
+          await advanceSubscriberSchedule(
+            config.db,
+            subscriber.id,
+            subscriber.next_send_at,
+            nextLocalDeliveryAt(scheduledAt, subscriber.timezone),
+            advancedAt,
+          );
+        }
         continue;
       }
-      deliverable.push({ ...subscriber, email, unsubscribe_token: subscriber.unsubscribe_token });
-    }
-    if (deliverable.length === 0) {
-      await completeRun(config.db, runKey, "skipped", 0, "no_deliverable_subscribers");
-      return;
+
+      try {
+        const email = await subscriptionCrypto.decryptEmail(subscriber.email_ciphertext);
+        if (!email) throw new Error("subscriber_email_decryption_failed");
+        const contentKey = `${sendDate}/${subscriber.language}`;
+        let poem = poems.get(contentKey);
+        if (!poem) {
+          poem = await getOrCreateDailyPoem(
+            config.db,
+            sendDate,
+            subscriber.language,
+            env.DEEPSEEK_API_KEY,
+          );
+          poems.set(contentKey, poem);
+        }
+
+        let imageLinks = imageUrls.get(contentKey);
+        if (!imageLinks) {
+          const imageUrl = await ensureDailyImage(env, sendDate, subscriber.language);
+          imageLinks = {
+            imageUrl,
+            saveUrl: dailyImageDownloadUrl(config.publicBaseUrl, sendDate, subscriber.language),
+            viewUrl: dailyCardUrl(config.publicBaseUrl, sendDate, subscriber.language),
+          };
+          imageUrls.set(contentKey, imageLinks);
+        }
+
+        const feedbackToken = await subscriptionCrypto.createActionToken(
+          subscriber.id,
+          "feedback",
+          subscriber.language,
+          Date.now() + FEEDBACK_TTL_MS,
+          sendDate,
+        );
+        const message = buildDailyEmail(
+          email,
+          subscriber.language,
+          poem,
+          subscriber.unsubscribe_token,
+          feedbackToken,
+          {
+            from: config.emailFrom,
+            replyTo: config.emailReplyTo,
+            baseUrl: config.publicBaseUrl,
+          },
+          imageLinks,
+        );
+        await sendResendEmail(
+          config.resendApiKey,
+          message,
+          `daily/${subscriber.id}/${sendDate}/v2`,
+        );
+        const completedAt = new Date().toISOString();
+        await completeDailyDelivery(
+          config.db,
+          subscriber.id,
+          sendDate,
+          attemptedAt,
+          subscriber.next_send_at,
+          completedAt,
+          nextLocalDeliveryAt(completedAt, subscriber.timezone),
+        );
+        recipientCount += 1;
+      } catch (error) {
+        failureCount += 1;
+        const errorCode = error instanceof ResendError
+          ? error.code
+          : error instanceof Error
+            ? error.message.slice(0, 100)
+            : "unknown_error";
+        await failDailyDelivery(config.db, subscriber.id, sendDate, attemptedAt, errorCode);
+        console.error(JSON.stringify({
+          event: "daily_email_delivery_failed",
+          subscriberId: subscriber.id,
+          sendDate,
+          errorCode,
+        }));
+      }
     }
 
-    const poems = new Map<Language, Haiku>();
-    for (const language of ["en", "zh", "ja"] as const) {
-      if (!deliverable.some((subscriber) => subscriber.language === language)) continue;
-      poems.set(language, await getOrCreateDailyPoem(config.db, sendDate, language, env.DEEPSEEK_API_KEY));
-    }
-
-    const imageUrls = new Map<Language, { imageUrl: string; saveUrl: string; viewUrl: string }>();
-    for (const [language] of poems) {
-      const imageUrl = await ensureDailyImage(env, sendDate, language);
-      imageUrls.set(language, {
-        imageUrl,
-        saveUrl: dailyImageDownloadUrl(config.publicBaseUrl, sendDate, language),
-        viewUrl: dailyCardUrl(config.publicBaseUrl, sendDate, language),
-      });
-    }
-
-    const messages = await Promise.all(deliverable.map(async (subscriber) => {
-      const poem = poems.get(subscriber.language);
-      if (!poem) throw new Error("daily_poem_missing");
-      const feedbackToken = await subscriptionCrypto.createActionToken(
-        subscriber.id,
-        "feedback",
-        subscriber.language,
-        Date.now() + FEEDBACK_TTL_MS,
-        sendDate,
-      );
-      return buildDailyEmail(
-        subscriber.email,
-        subscriber.language,
-        poem,
-        subscriber.unsubscribe_token,
-        feedbackToken,
-        {
-          from: config.emailFrom,
-          replyTo: config.emailReplyTo,
-          baseUrl: config.publicBaseUrl,
-        },
-        imageUrls.get(subscriber.language),
-      );
-    }));
-    recipientCount = messages.length;
-    await completeRun(config.db, runKey, "sending", recipientCount, null);
-    await sendResendBatch(config.resendApiKey, messages, runKey);
-    await completeRun(config.db, runKey, "sent", recipientCount, null);
-    console.log(JSON.stringify({ event: "daily_email_sent", sendDate, recipientCount }));
+    await completeRun(
+      config.db,
+      runKey,
+      failureCount > 0 ? "failed" : recipientCount > 0 ? "sent" : "skipped",
+      recipientCount,
+      failureCount > 0 ? `${failureCount}_delivery_failures` : null,
+    );
+    console.log(JSON.stringify({ event: "daily_email_dispatch_completed", scheduledAt, recipientCount, failureCount }));
   } catch (error) {
     const errorCode = error instanceof ResendError
       ? error.code
@@ -193,7 +257,7 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
         ? error.message.slice(0, 100)
         : "unknown_error";
     await completeRun(config.db, runKey, "failed", recipientCount, errorCode);
-    console.error(JSON.stringify({ event: "daily_email_failed", sendDate, recipientCount, errorCode }));
+    console.error(JSON.stringify({ event: "daily_email_failed", scheduledAt, recipientCount, errorCode }));
     throw error;
   }
 }

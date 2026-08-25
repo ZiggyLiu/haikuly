@@ -5,6 +5,8 @@ export const subscribers = sqliteTable("subscription_members", {
   emailCiphertext: text("email_ciphertext").notNull(),
   emailHash: text("email_hash").notNull(),
   language: text("language", { enum: ["en", "zh", "ja"] }).notNull(),
+  timezone: text("timezone").notNull().default("UTC"),
+  nextSendAt: text("next_send_at"),
   status: text("status", { enum: ["pending", "active", "unsubscribed"] }).notNull().default("pending"),
   confirmationToken: text("confirmation_token"),
   unsubscribeToken: text("unsubscribe_token"),
@@ -16,6 +18,7 @@ export const subscribers = sqliteTable("subscription_members", {
 }, (table) => [
   uniqueIndex("subscription_members_email_hash_unique").on(table.emailHash),
   index("subscription_members_status_created_idx").on(table.status, table.createdAt),
+  index("subscription_members_status_next_send_idx").on(table.status, table.nextSendAt),
 ]);
 
 export const dailyPoems = sqliteTable("daily_poems", {
@@ -35,6 +38,18 @@ export const dailyEmailRuns = sqliteTable("daily_email_runs", {
   createdAt: text("created_at").notNull(),
   completedAt: text("completed_at"),
 });
+
+export const dailyEmailDeliveries = sqliteTable("daily_email_deliveries", {
+  subscriberId: text("subscriber_id").notNull(),
+  localDate: text("local_date").notNull(),
+  status: text("status", { enum: ["preparing", "sent", "failed"] }).notNull(),
+  errorCode: text("error_code"),
+  attemptedAt: text("attempted_at").notNull(),
+  completedAt: text("completed_at"),
+}, (table) => [
+  primaryKey({ columns: [table.subscriberId, table.localDate] }),
+  index("daily_email_deliveries_status_attempted_idx").on(table.status, table.attemptedAt),
+]);
 
 export const dailyPoemAssets = sqliteTable("daily_poem_assets", {
   sendDate: text("send_date").notNull(),

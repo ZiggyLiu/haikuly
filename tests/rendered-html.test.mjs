@@ -72,6 +72,8 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /id="generate-haiku"/);
   assert.match(html, /id="daily-subscription-form"/);
   assert.match(html, /id="subscription-email"/);
+  assert.match(html, /id="subscription-timezone"/);
+  assert.match(html, /Delivery timezone/);
   assert.match(html, /Send confirmation/);
   assert.match(html, /Your email is encrypted/);
 
@@ -350,9 +352,11 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
   assert.match(styles, /\.subscription-section/);
+  assert.match(styles, /\.subscription-timezone-field/);
   assert.match(styles, /\.subscription-honeypot/);
   assert.match(page, /fetch\("\/api\/subscribe"/);
   assert.match(page, /language: submittedLanguage/);
+  assert.match(page, /timezone: subscriptionTimezone/);
   assert.match(page, /subscriptionTitle: "每日一首，寄到邮箱"/);
   assert.match(page, /subscriptionTitle: "毎日一篇をメールで"/);
   assert.match(mobileRuntime, /function subscribeDaily\(form\)/);

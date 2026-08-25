@@ -7,6 +7,8 @@ export type SubscriberRow = {
   email_ciphertext: string;
   email_hash: string;
   language: Language;
+  timezone: string;
+  next_send_at: string | null;
   status: SubscriberStatus;
   confirmation_token: string | null;
   unsubscribe_token: string | null;
@@ -19,7 +21,7 @@ export type SubscriberRow = {
 
 export async function findSubscriberByEmailHash(db: D1Database, emailHash: string) {
   return db.prepare(
-    "SELECT id, email_ciphertext, email_hash, language, status, confirmation_token, unsubscribe_token, " +
+    "SELECT id, email_ciphertext, email_hash, language, timezone, next_send_at, status, confirmation_token, unsubscribe_token, " +
     "confirmation_sent_at, confirmed_at, unsubscribed_at, created_at, updated_at " +
     "FROM subscription_members WHERE email_hash = ? LIMIT 1",
   ).bind(emailHash).first<SubscriberRow>();
@@ -27,7 +29,7 @@ export async function findSubscriberByEmailHash(db: D1Database, emailHash: strin
 
 export async function findSubscriberById(db: D1Database, id: string) {
   return db.prepare(
-    "SELECT id, email_ciphertext, email_hash, language, status, confirmation_token, unsubscribe_token, " +
+    "SELECT id, email_ciphertext, email_hash, language, timezone, next_send_at, status, confirmation_token, unsubscribe_token, " +
     "confirmation_sent_at, confirmed_at, unsubscribed_at, created_at, updated_at " +
     "FROM subscription_members WHERE id = ? LIMIT 1",
   ).bind(id).first<SubscriberRow>();
@@ -35,33 +37,37 @@ export async function findSubscriberById(db: D1Database, id: string) {
 
 export async function insertSubscriber(
   db: D1Database,
-  row: Pick<SubscriberRow, "id" | "email_ciphertext" | "email_hash" | "language" | "confirmation_token" | "created_at" | "updated_at">,
+  row: Pick<SubscriberRow, "id" | "email_ciphertext" | "email_hash" | "language" | "timezone" | "confirmation_token" | "created_at" | "updated_at">,
 ) {
   await db.prepare(
     "INSERT OR IGNORE INTO subscription_members " +
-    "(id, email_ciphertext, email_hash, language, status, confirmation_token, created_at, updated_at) " +
-    "VALUES (?, ?, ?, ?, 'pending', ?, ?, ?)",
+    "(id, email_ciphertext, email_hash, language, timezone, status, confirmation_token, created_at, updated_at) " +
+    "VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)",
   ).bind(
     row.id,
     row.email_ciphertext,
     row.email_hash,
     row.language,
+    row.timezone,
     row.confirmation_token,
     row.created_at,
     row.updated_at,
   ).run();
 }
 
-export async function updateActiveSubscriberLanguage(
+export async function updateActiveSubscriberPreferences(
   db: D1Database,
   id: string,
   emailCiphertext: string,
   language: Language,
+  timezone: string,
+  nextSendAt: string,
   updatedAt: string,
 ) {
   await db.prepare(
-    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, updated_at = ? WHERE id = ? AND status = 'active'",
-  ).bind(emailCiphertext, language, updatedAt, id).run();
+    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, next_send_at = ?, updated_at = ? " +
+    "WHERE id = ? AND status = 'active'",
+  ).bind(emailCiphertext, language, timezone, nextSendAt, updatedAt, id).run();
 }
 
 export async function preparePendingSubscriber(
@@ -69,14 +75,15 @@ export async function preparePendingSubscriber(
   id: string,
   emailCiphertext: string,
   language: Language,
+  timezone: string,
   confirmationToken: string,
   updatedAt: string,
 ) {
   await db.prepare(
-    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, status = 'pending', confirmation_token = ?, " +
+    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, next_send_at = NULL, status = 'pending', confirmation_token = ?, " +
     "unsubscribe_token = NULL, confirmation_sent_at = NULL, confirmed_at = NULL, unsubscribed_at = NULL, updated_at = ? " +
     "WHERE id = ?",
-  ).bind(emailCiphertext, language, confirmationToken, updatedAt, id).run();
+  ).bind(emailCiphertext, language, timezone, confirmationToken, updatedAt, id).run();
 }
 
 export async function claimConfirmationSend(
@@ -123,13 +130,14 @@ export async function activateSubscriber(
   id: string,
   confirmationToken: string,
   unsubscribeToken: string,
+  nextSendAt: string,
   now: string,
 ) {
   return db.prepare(
     "UPDATE subscription_members SET status = 'active', confirmation_token = NULL, unsubscribe_token = ?, " +
-    "confirmed_at = ?, unsubscribed_at = NULL, updated_at = ? " +
+    "next_send_at = ?, confirmed_at = ?, unsubscribed_at = NULL, updated_at = ? " +
     "WHERE id = ? AND status = 'pending' AND confirmation_token = ? RETURNING id",
-  ).bind(unsubscribeToken, now, now, id, confirmationToken).first<{ id: string }>();
+  ).bind(unsubscribeToken, nextSendAt, now, now, id, confirmationToken).first<{ id: string }>();
 }
 
 export async function unsubscribeSubscriber(
@@ -139,15 +147,91 @@ export async function unsubscribeSubscriber(
   now: string,
 ) {
   return db.prepare(
-    "UPDATE subscription_members SET status = 'unsubscribed', unsubscribed_at = ?, updated_at = ? " +
+    "UPDATE subscription_members SET status = 'unsubscribed', next_send_at = NULL, unsubscribed_at = ?, updated_at = ? " +
     "WHERE id = ? AND unsubscribe_token = ? AND status IN ('active', 'unsubscribed') RETURNING id, language",
   ).bind(now, now, id, unsubscribeToken).first<{ id: string; language: Language }>();
 }
 
-export async function listActiveSubscribers(db: D1Database, limit: number) {
+export type DueSubscriberRow = Pick<
+  SubscriberRow,
+  "id" | "email_ciphertext" | "language" | "timezone" | "next_send_at" | "unsubscribe_token"
+>;
+
+export async function listDueSubscribers(db: D1Database, dueAt: string, limit: number) {
   const result = await db.prepare(
-    "SELECT id, email_ciphertext, language, unsubscribe_token FROM subscription_members " +
-    "WHERE status = 'active' AND unsubscribe_token IS NOT NULL ORDER BY created_at ASC LIMIT ?",
-  ).bind(limit).all<Pick<SubscriberRow, "id" | "email_ciphertext" | "language" | "unsubscribe_token">>();
+    "SELECT id, email_ciphertext, language, timezone, next_send_at, unsubscribe_token FROM subscription_members " +
+    "WHERE status = 'active' AND unsubscribe_token IS NOT NULL AND next_send_at IS NOT NULL AND next_send_at <= ? " +
+    "ORDER BY next_send_at ASC LIMIT ?",
+  ).bind(dueAt, limit).all<DueSubscriberRow>();
   return result.results;
+}
+
+export async function claimDailyDelivery(
+  db: D1Database,
+  subscriberId: string,
+  localDate: string,
+  attemptedAt: string,
+  staleBefore: string,
+) {
+  return db.prepare(
+    "INSERT INTO daily_email_deliveries (subscriber_id, local_date, status, attempted_at) VALUES (?, ?, 'preparing', ?) " +
+    "ON CONFLICT(subscriber_id, local_date) DO UPDATE SET status = 'preparing', error_code = NULL, attempted_at = excluded.attempted_at, completed_at = NULL " +
+    "WHERE daily_email_deliveries.status = 'failed' OR " +
+    "(daily_email_deliveries.status = 'preparing' AND daily_email_deliveries.attempted_at < ?) " +
+    "RETURNING subscriber_id",
+  ).bind(subscriberId, localDate, attemptedAt, staleBefore).first<{ subscriber_id: string }>();
+}
+
+export async function completeDailyDelivery(
+  db: D1Database,
+  subscriberId: string,
+  localDate: string,
+  attemptedAt: string,
+  expectedNextSendAt: string,
+  completedAt: string,
+  nextSendAt: string,
+) {
+  await db.batch([
+    db.prepare(
+      "UPDATE daily_email_deliveries SET status = 'sent', error_code = NULL, completed_at = ? " +
+      "WHERE subscriber_id = ? AND local_date = ? AND status = 'preparing' AND attempted_at = ?",
+    ).bind(completedAt, subscriberId, localDate, attemptedAt),
+    db.prepare(
+      "UPDATE subscription_members SET next_send_at = ?, updated_at = ? " +
+      "WHERE id = ? AND status = 'active' AND next_send_at = ?",
+    ).bind(nextSendAt, completedAt, subscriberId, expectedNextSendAt),
+  ]);
+}
+
+export async function dailyDeliveryStatus(db: D1Database, subscriberId: string, localDate: string) {
+  const row = await db.prepare(
+    "SELECT status FROM daily_email_deliveries WHERE subscriber_id = ? AND local_date = ? LIMIT 1",
+  ).bind(subscriberId, localDate).first<{ status: "preparing" | "sent" | "failed" }>();
+  return row?.status ?? null;
+}
+
+export async function advanceSubscriberSchedule(
+  db: D1Database,
+  subscriberId: string,
+  expectedNextSendAt: string,
+  nextSendAt: string,
+  updatedAt: string,
+) {
+  await db.prepare(
+    "UPDATE subscription_members SET next_send_at = ?, updated_at = ? " +
+    "WHERE id = ? AND status = 'active' AND next_send_at = ?",
+  ).bind(nextSendAt, updatedAt, subscriberId, expectedNextSendAt).run();
+}
+
+export async function failDailyDelivery(
+  db: D1Database,
+  subscriberId: string,
+  localDate: string,
+  attemptedAt: string,
+  errorCode: string,
+) {
+  await db.prepare(
+    "UPDATE daily_email_deliveries SET status = 'failed', error_code = ?, completed_at = ? " +
+    "WHERE subscriber_id = ? AND local_date = ? AND status = 'preparing' AND attempted_at = ?",
+  ).bind(errorCode, new Date().toISOString(), subscriberId, localDate, attemptedAt).run();
 }
