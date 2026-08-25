@@ -389,6 +389,30 @@ h1[lang="ja"] #hero-title {
   );
 }
 
+.daily-render-root {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #f4f0e6;
+}
+
+.daily-poem-paper {
+  width: 820px;
+  height: 360px;
+  min-height: 360px;
+  box-sizing: border-box;
+  box-shadow: 0 25px 70px rgba(62, 72, 60, 0.12);
+}
+
+.daily-render-status {
+  color: var(--ink-soft);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+
 .paper-number {
   position: absolute;
   top: 28px;

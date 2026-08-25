@@ -118,6 +118,36 @@ test("daily feedback CTA uses localized Chinese copy and a dedicated opaque toke
   assert.match(message.text, /反馈这首俳句: https:\/\/haikuly\.fyi\/feedback\?token=feedback-token-zh&lang=zh/);
 });
 
+test("daily email includes the hosted card image and localized save links", () => {
+  const message = buildDailyEmail(
+    "reader@example.com",
+    "zh",
+    {
+      lines: ["地铁刚到站", "耳机里换了一首歌", "雨还没停"],
+      seed: 2,
+      createdAt: "2026-08-23T08:00:00.000Z",
+      illustration: { motif: "transit", accent: "umbrella", tone: "blue-gray", placement: "left" },
+    },
+    "unsubscribe-token-zh",
+    "feedback-token-zh",
+    {
+      from: "Haiku-ly <daily@haikuly.fyi>",
+      replyTo: "zhiguoinusa@gmail.com",
+      baseUrl: "https://haikuly.fyi",
+    },
+    {
+      imageUrl: "https://haikuly.fyi/daily-images/2026-08-23/zh.png",
+      saveUrl: "https://haikuly.fyi/daily-images/2026-08-23/zh.png?download=1",
+      viewUrl: "https://haikuly.fyi/daily-card?date=2026-08-23&language=zh",
+    },
+  );
+
+  assert.match(message.html, /daily-images\/2026-08-23\/zh\.png/);
+  assert.match(message.html, /保存这张图片/);
+  assert.match(message.html, /daily-card\?date=2026-08-23&amp;language=zh/);
+  assert.match(message.text, /download=1/);
+});
+
 test("feedback API validates a dedicated token and records its daily message identifier", async () => {
   const subscriptionCrypto = await createSubscriptionCrypto(secret);
   const token = await subscriptionCrypto.createActionToken(

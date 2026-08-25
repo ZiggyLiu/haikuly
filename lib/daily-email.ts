@@ -5,6 +5,7 @@ import { requireSubscriptionConfig, type SecretBindings } from "./runtime-config
 import { buildDailyEmail } from "./subscription-email";
 import { createSubscriptionCrypto } from "./subscription-crypto";
 import { listActiveSubscribers } from "./subscriber-store";
+import { dailyCardUrl, dailyImageDownloadUrl, ensureDailyImage } from "./daily-image";
 
 type DailyEmailEnv = Env & SecretBindings;
 
@@ -91,12 +92,25 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
   const sendDate = new Date(scheduledTime).toISOString().slice(0, 10);
   const runKey = `daily-haiku/${sendDate}/v1`;
   const createdAt = new Date().toISOString();
-  const claim = await config.db.prepare(
-    "INSERT OR IGNORE INTO daily_email_runs (run_key, status, recipient_count, created_at) VALUES (?, 'preparing', 0, ?)",
-  ).bind(runKey, createdAt).run();
-  if ((claim.meta.changes ?? 0) !== 1) {
+  const existingRun = await config.db.prepare(
+    "SELECT status FROM daily_email_runs WHERE run_key = ? LIMIT 1",
+  ).bind(runKey).first<{ status: string }>();
+  if (existingRun?.status === "sent" || existingRun?.status === "skipped" || existingRun?.status === "sending" || existingRun?.status === "preparing") {
     console.log(JSON.stringify({ event: "daily_email_skipped", sendDate, reason: "run_exists" }));
     return;
+  }
+  if (existingRun?.status === "failed") {
+    await config.db.prepare(
+      "UPDATE daily_email_runs SET status = 'preparing', recipient_count = 0, error_code = NULL, completed_at = NULL, created_at = ? WHERE run_key = ?",
+    ).bind(createdAt, runKey).run();
+  } else {
+    const claim = await config.db.prepare(
+      "INSERT OR IGNORE INTO daily_email_runs (run_key, status, recipient_count, created_at) VALUES (?, 'preparing', 0, ?)",
+    ).bind(runKey, createdAt).run();
+    if ((claim.meta.changes ?? 0) !== 1) {
+      console.log(JSON.stringify({ event: "daily_email_skipped", sendDate, reason: "run_exists" }));
+      return;
+    }
   }
 
   let recipientCount = 0;
@@ -133,6 +147,16 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
       poems.set(language, await getOrCreateDailyPoem(config.db, sendDate, language, env.DEEPSEEK_API_KEY));
     }
 
+    const imageUrls = new Map<Language, { imageUrl: string; saveUrl: string; viewUrl: string }>();
+    for (const [language] of poems) {
+      const imageUrl = await ensureDailyImage(env, sendDate, language);
+      imageUrls.set(language, {
+        imageUrl,
+        saveUrl: dailyImageDownloadUrl(config.publicBaseUrl, sendDate, language),
+        viewUrl: dailyCardUrl(config.publicBaseUrl, sendDate, language),
+      });
+    }
+
     const messages = await Promise.all(deliverable.map(async (subscriber) => {
       const poem = poems.get(subscriber.language);
       if (!poem) throw new Error("daily_poem_missing");
@@ -154,6 +178,7 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
           replyTo: config.emailReplyTo,
           baseUrl: config.publicBaseUrl,
         },
+        imageUrls.get(subscriber.language),
       );
     }));
     recipientCount = messages.length;

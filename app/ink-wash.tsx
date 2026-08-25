@@ -6,6 +6,7 @@ import type { IllustrationRecipe } from "./haiku";
 type InkWashProps = {
   recipe: IllustrationRecipe;
   seed: number;
+  onPainted?: () => void;
 };
 
 type Palette = {
@@ -487,7 +488,7 @@ function drawAccent(
   }
 }
 
-export default function InkWashIllustration({ recipe, seed }: InkWashProps) {
+export default function InkWashIllustration({ recipe, seed, onPainted }: InkWashProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -510,6 +511,7 @@ export default function InkWashIllustration({ recipe, seed }: InkWashProps) {
       const random = seededRandom(seed);
       drawMotif(context, bounds.width, bounds.height, recipe, palette, random);
       drawAccent(context, bounds.width, bounds.height, recipe, palette, random);
+      onPainted?.();
     };
 
     let frameId = 0;
@@ -526,7 +528,7 @@ export default function InkWashIllustration({ recipe, seed }: InkWashProps) {
       window.removeEventListener("resize", schedulePaint);
       window.removeEventListener("orientationchange", schedulePaint);
     };
-  }, [recipe, seed]);
+  }, [onPainted, recipe, seed]);
 
   return (
     <canvas

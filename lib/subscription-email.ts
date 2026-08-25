@@ -7,6 +7,12 @@ type EmailSettings = {
   baseUrl: string;
 };
 
+export type DailyEmailAssets = {
+  imageUrl: string;
+  saveUrl: string;
+  viewUrl: string;
+};
+
 const COPY: Record<Language, {
   confirmSubject: string;
   confirmTitle: string;
@@ -18,6 +24,8 @@ const COPY: Record<Language, {
   dailyIntro: string;
   feedback: string;
   unsubscribe: string;
+  saveImage: string;
+  viewOnWebsite: string;
   reason: string;
 }> = {
   en: {
@@ -31,6 +39,8 @@ const COPY: Record<Language, {
     dailyIntro: "Pause for three lines.",
     feedback: "Give feedback",
     unsubscribe: "Unsubscribe",
+    saveImage: "Save the card",
+    viewOnWebsite: "Open on Haiku-ly",
     reason: "You receive this message because you confirmed a daily Haiku-ly subscription.",
   },
   zh: {
@@ -44,6 +54,8 @@ const COPY: Record<Language, {
     dailyIntro: "为三行诗停一停。",
     feedback: "反馈这首俳句",
     unsubscribe: "取消订阅",
+    saveImage: "保存这张图片",
+    viewOnWebsite: "在 Haiku-ly 打开",
     reason: "你收到此邮件，是因为你已确认订阅 Haiku-ly 每日俳句。",
   },
   ja: {
@@ -57,6 +69,8 @@ const COPY: Record<Language, {
     dailyIntro: "三行のために、少し立ち止まる。",
     feedback: "この俳句にフィードバック",
     unsubscribe: "購読を解除",
+    saveImage: "画像を保存",
+    viewOnWebsite: "Haiku-ly で開く",
     reason: "Haiku-ly の毎日俳句を確認して購読したため、このメールをお送りしています。",
   },
 };
@@ -122,16 +136,22 @@ export function buildDailyEmail(
   unsubscribeToken: string,
   feedbackToken: string,
   settings: EmailSettings,
+  assets?: DailyEmailAssets,
 ): ResendEmail {
   const copy = COPY[language];
   const unsubscribeUrl = `${normalizedBaseUrl(settings.baseUrl)}/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
   const safeUnsubscribeUrl = escapeHtml(unsubscribeUrl);
   const feedbackUrl = `${normalizedBaseUrl(settings.baseUrl)}/feedback?token=${encodeURIComponent(feedbackToken)}&lang=${language}`;
   const safeFeedbackUrl = escapeHtml(feedbackUrl);
+  const imageBlock = assets ? `
+      <p style="margin:0 0 22px"><a href="${escapeHtml(assets.viewUrl)}" style="display:block"><img src="${escapeHtml(assets.imageUrl)}" alt="Haiku-ly daily poem" width="536" style="display:block;width:100%;max-width:536px;height:auto;border:1px solid #d7d0c0" /></a></p>
+      <p style="margin:0 0 24px;font-size:12px"><a href="${escapeHtml(assets.saveUrl)}" style="color:#365347;margin-right:18px">${copy.saveImage}</a><a href="${escapeHtml(assets.viewUrl)}" style="color:#365347">${copy.viewOnWebsite}</a></p>
+  ` : "";
   const lines = haiku.lines.map(escapeHtml);
   const html = pageShell(language, `
       <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:28px;font-weight:400">${copy.dailyTitle}</h1>
       <p style="margin:0 0 34px;color:#6d7b74;font-size:14px">${copy.dailyIntro}</p>
+      ${imageBlock}
       <div style="margin:0 0 38px;font-family:Georgia,serif;font-size:25px;line-height:1.75">
         <div>${lines[0]}</div>
         <div>${lines[1]}</div>
@@ -148,7 +168,7 @@ export function buildDailyEmail(
     reply_to: settings.replyTo,
     subject: copy.dailySubject,
     html,
-    text: `${copy.dailyTitle}\n\n${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.feedback}: ${feedbackUrl}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
+    text: `${copy.dailyTitle}\n\n${assets ? `${copy.saveImage}: ${assets.saveUrl}\n${copy.viewOnWebsite}: ${assets.viewUrl}\n\n` : ""}${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.feedback}: ${feedbackUrl}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
     headers: {
       "List-Unsubscribe": `<${unsubscribeUrl}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

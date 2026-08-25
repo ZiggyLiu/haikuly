@@ -24,6 +24,16 @@
   "images": {
     "binding": "IMAGES"
   },
+  "browser": {
+    "binding": "BROWSER",
+    "remote": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "DAILY_IMAGES",
+      "bucket_name": "haikuly-daily-images"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

@@ -36,6 +36,20 @@ export const dailyEmailRuns = sqliteTable("daily_email_runs", {
   completedAt: text("completed_at"),
 });
 
+export const dailyPoemAssets = sqliteTable("daily_poem_assets", {
+  sendDate: text("send_date").notNull(),
+  language: text("language", { enum: ["en", "zh", "ja"] }).notNull(),
+  rendererVersion: text("renderer_version").notNull(),
+  objectKey: text("object_key").notNull(),
+  status: text("status", { enum: ["generating", "ready", "failed"] }).notNull(),
+  sha256: text("sha256"),
+  errorCode: text("error_code"),
+  createdAt: text("created_at").notNull(),
+  completedAt: text("completed_at"),
+}, (table) => [
+  primaryKey({ columns: [table.sendDate, table.language, table.rendererVersion] }),
+]);
+
 export const emailQuotas = sqliteTable("email_quotas", {
   quotaDate: text("quota_date").primaryKey(),
   confirmationCount: integer("confirmation_count").notNull().default(0),
