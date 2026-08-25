@@ -12,6 +12,8 @@ type DailyPoemRow = {
   poem_json: string;
 };
 
+const FEEDBACK_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 function parseHaiku(value: string): Haiku | null {
   try {
     const parsed: unknown = JSON.parse(value);
@@ -131,21 +133,29 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
       poems.set(language, await getOrCreateDailyPoem(config.db, sendDate, language, env.DEEPSEEK_API_KEY));
     }
 
-    const messages = deliverable.map((subscriber) => {
+    const messages = await Promise.all(deliverable.map(async (subscriber) => {
       const poem = poems.get(subscriber.language);
       if (!poem) throw new Error("daily_poem_missing");
+      const feedbackToken = await subscriptionCrypto.createActionToken(
+        subscriber.id,
+        "feedback",
+        subscriber.language,
+        Date.now() + FEEDBACK_TTL_MS,
+        sendDate,
+      );
       return buildDailyEmail(
         subscriber.email,
         subscriber.language,
         poem,
         subscriber.unsubscribe_token,
+        feedbackToken,
         {
           from: config.emailFrom,
           replyTo: config.emailReplyTo,
           baseUrl: config.publicBaseUrl,
         },
       );
-    });
+    }));
     recipientCount = messages.length;
     await completeRun(config.db, runKey, "sending", recipientCount, null);
     await sendResendBatch(config.resendApiKey, messages, runKey);

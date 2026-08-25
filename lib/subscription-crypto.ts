@@ -6,7 +6,7 @@ const KEY_BYTES = 32;
 const IV_BYTES = 12;
 const TOKEN_VERSION = 1;
 
-export type ActionPurpose = "confirm" | "unsubscribe";
+export type ActionPurpose = "confirm" | "unsubscribe" | "feedback";
 
 export type ActionTokenPayload = {
   version: 1;
@@ -14,6 +14,7 @@ export type ActionTokenPayload = {
   purpose: ActionPurpose;
   language: Language;
   expiresAt: number | null;
+  messageId?: string;
 };
 
 function decodeBase64(value: string): Uint8Array {
@@ -96,9 +97,12 @@ function isActionTokenPayload(value: unknown): value is ActionTokenPayload {
   return candidate.version === TOKEN_VERSION &&
     typeof candidate.subscriberId === "string" &&
     candidate.subscriberId.length > 0 && candidate.subscriberId.length <= 64 &&
-    (candidate.purpose === "confirm" || candidate.purpose === "unsubscribe") &&
+    (candidate.purpose === "confirm" || candidate.purpose === "unsubscribe" || candidate.purpose === "feedback") &&
     isLanguage(candidate.language) &&
-    (candidate.expiresAt === null || (typeof candidate.expiresAt === "number" && Number.isFinite(candidate.expiresAt)));
+    (candidate.expiresAt === null || (typeof candidate.expiresAt === "number" && Number.isFinite(candidate.expiresAt))) &&
+    (candidate.messageId === undefined ||
+      (typeof candidate.messageId === "string" && /^\d{4}-\d{2}-\d{2}$/.test(candidate.messageId))) &&
+    (candidate.purpose !== "feedback" || typeof candidate.messageId === "string");
 }
 
 export function normalizeEmail(value: string): string {
@@ -155,13 +159,18 @@ export async function createSubscriptionCrypto(secret: string) {
       purpose: ActionPurpose,
       language: Language,
       expiresAt: number | null,
+      messageId?: string,
     ): Promise<string> {
+      if (purpose === "feedback" && (!messageId || !/^\d{4}-\d{2}-\d{2}$/.test(messageId))) {
+        throw new Error("Feedback tokens require a YYYY-MM-DD message identifier.");
+      }
       const payload: ActionTokenPayload = {
         version: TOKEN_VERSION,
         subscriberId,
         purpose,
         language,
         expiresAt,
+        ...(messageId ? { messageId } : {}),
       };
       return encryptString(JSON.stringify(payload), actionKey, "haikuly-action-v1");
     },

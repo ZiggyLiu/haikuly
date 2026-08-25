@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 
 const COPY = {
@@ -44,10 +44,21 @@ const COPY = {
 
 type Language = keyof typeof COPY;
 
+function subscribeToLocationChange(callback: () => void) {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+}
+
+function locationSearch() {
+  return window.location.search;
+}
+
 export default function FeedbackPage() {
-  const params = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
-  const language = (params?.get("lang") === "zh" || params?.get("lang") === "ja" ? params.get("lang") : "en") as Language;
-  const token = params?.get("token") ?? "";
+  const search = useSyncExternalStore(subscribeToLocationChange, locationSearch, () => "");
+  const params = new URLSearchParams(search);
+  const requestedLanguage = params.get("lang");
+  const language: Language = requestedLanguage === "zh" || requestedLanguage === "ja" ? requestedLanguage : "en";
+  const token = params.get("token") ?? "";
   const copy = COPY[language];
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -69,7 +80,7 @@ export default function FeedbackPage() {
         body: JSON.stringify({ token, rating, comment }),
       });
       const body = await response.json() as { message?: string; error?: string };
-      setStatus(response.ok ? body.message ?? copy.success : body.error ?? copy.invalid);
+      setStatus(response.ok ? body.message ?? copy.success : response.status === 404 ? copy.invalid : body.error ?? copy.invalid);
       if (response.ok) {
         setRating(0);
         setComment("");

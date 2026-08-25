@@ -7,6 +7,7 @@ import {
   normalizeEmail,
 } from "../lib/subscription-crypto.ts";
 import { ResendError, sendResendBatch, sendResendEmail } from "../lib/resend.ts";
+import { handleFeedback } from "../lib/feedback-handlers.ts";
 
 const secret = Buffer.alloc(32, 17).toString("base64");
 
@@ -38,6 +39,18 @@ test("subscription crypto encrypts addresses and authenticates action tokens", a
   assert.equal(await subscriptionCrypto.readActionToken(tampered, "confirm"), null);
   const expired = await subscriptionCrypto.createActionToken("subscriber-1", "confirm", "en", Date.now() - 1);
   assert.equal(await subscriptionCrypto.readActionToken(expired, "confirm"), null);
+
+  const feedback = await subscriptionCrypto.createActionToken(
+    "subscriber-1",
+    "feedback",
+    "zh",
+    Date.now() + 60_000,
+    "2026-08-23",
+  );
+  const feedbackPayload = await subscriptionCrypto.readActionToken(feedback, "feedback");
+  assert.equal(feedbackPayload?.subscriberId, "subscriber-1");
+  assert.equal(feedbackPayload?.messageId, "2026-08-23");
+  assert.equal(await subscriptionCrypto.readActionToken(feedback, "unsubscribe"), null);
 });
 
 test("email validation normalizes only the domain and rejects malformed addresses", () => {
@@ -59,6 +72,7 @@ test("daily email contains plain text, escaped HTML, and one-click unsubscribe h
       illustration: { motif: "doorway", accent: "none", tone: "sage", placement: "right" },
     },
     "unsubscribe-token",
+    "feedback-token",
     {
       from: "Haiku-ly <daily@haikuly.fyi>",
       replyTo: "zhiguoinusa@gmail.com",
@@ -72,8 +86,78 @@ test("daily email contains plain text, escaped HTML, and one-click unsubscribe h
   assert.match(message.html, /&lt;quiet&gt;/);
   assert.doesNotMatch(message.html, /<quiet>/);
   assert.match(message.text, /Wind & paper/);
+  assert.match(message.html, />Give feedback<\/a>/);
+  assert.match(message.html, /\/feedback\?token=feedback-token&amp;lang=en/);
+  assert.doesNotMatch(message.html, /feedback\?token=unsubscribe-token/);
   assert.equal(message.headers?.["List-Unsubscribe-Post"], "List-Unsubscribe=One-Click");
   assert.match(message.headers?.["List-Unsubscribe"] ?? "", /^<https:\/\/haikuly\.fyi\/api\/unsubscribe\?token=/);
+});
+
+test("daily feedback CTA uses localized Chinese copy and a dedicated opaque token", () => {
+  const message = buildDailyEmail(
+    "reader@example.com",
+    "zh",
+    {
+      lines: ["地铁刚到站", "耳机里换了一首歌", "雨还没停"],
+      seed: 2,
+      createdAt: "2026-08-23T08:00:00.000Z",
+      illustration: { motif: "transit", accent: "umbrella", tone: "blue-gray", placement: "left" },
+    },
+    "unsubscribe-token-zh",
+    "feedback-token-zh",
+    {
+      from: "Haiku-ly <daily@haikuly.fyi>",
+      replyTo: "zhiguoinusa@gmail.com",
+      baseUrl: "https://haikuly.fyi",
+    },
+  );
+
+  assert.match(message.html, />反馈这首俳句<\/a>/);
+  assert.match(message.html, /\/feedback\?token=feedback-token-zh&amp;lang=zh/);
+  assert.doesNotMatch(message.html, /reader(?:%40|@)example\.com/);
+  assert.match(message.text, /反馈这首俳句: https:\/\/haikuly\.fyi\/feedback\?token=feedback-token-zh&lang=zh/);
+});
+
+test("feedback API validates a dedicated token and records its daily message identifier", async () => {
+  const subscriptionCrypto = await createSubscriptionCrypto(secret);
+  const token = await subscriptionCrypto.createActionToken(
+    "subscriber-1",
+    "feedback",
+    "zh",
+    Date.now() + 60_000,
+    "2026-08-23",
+  );
+  const writes = [];
+  const db = {
+    prepare(sql) {
+      return {
+        bind(...values) {
+          return {
+            async first() {
+              return sql.startsWith("SELECT id, language") ? { id: "subscriber-1", language: "zh" } : null;
+            },
+            async run() {
+              writes.push({ sql, values });
+              return { success: true };
+            },
+          };
+        },
+      };
+    },
+  };
+  const request = new Request("https://haikuly.fyi/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://haikuly.fyi" },
+    body: JSON.stringify({ token, rating: 5, comment: "很喜欢" }),
+  });
+
+  const response = await handleFeedback(request, { DB: db, TOKEN_ENCRYPTION_KEY: secret });
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).message, "感谢你的反馈。");
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].values[1], "subscriber-1");
+  assert.equal(writes[0].values[2], "2026-08-23");
+  assert.equal(writes[0].values[3], 5);
 });
 
 test("confirmation email uses the localized copy and confirmation URL", () => {
