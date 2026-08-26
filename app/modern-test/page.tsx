@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
 import {
   countPoeticUnits,
   haikuDateLabel,
@@ -13,6 +13,31 @@ import {
 import InkWashIllustration from "../ink-wash";
 
 type HaikuForm = "traditional" | "modern";
+type ChineseFont = "hannotate" | "pingfang" | "fangsong" | "harmonyos";
+
+const CHINESE_FONT_STORAGE_KEY = "haikuly-chinese-font";
+const CHINESE_FONT_OPTIONS: Record<ChineseFont, { label: string; family: string }> = {
+  hannotate: {
+    label: "Hannotate",
+    family: '"Hannotate SC", "Hannotate", "手札", cursive',
+  },
+  pingfang: {
+    label: "PingFang SC",
+    family: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+  },
+  fangsong: {
+    label: "Fangsong",
+    family: '"Fangsong", "STFangsong", "仿宋", serif',
+  },
+  harmonyos: {
+    label: "HarmonyOS Sans SC",
+    family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif',
+  },
+};
+
+function isChineseFont(value: string | null): value is ChineseFont {
+  return value !== null && Object.prototype.hasOwnProperty.call(CHINESE_FONT_OPTIONS, value);
+}
 
 const UI_COPY: Record<Language, {
   languageLabel: string;
@@ -66,6 +91,9 @@ const UI_COPY: Record<Language, {
   subscriptionSending: string;
   subscriptionPrivacy: string;
   subscriptionError: string;
+  advancedSettings: string;
+  chineseFontLabel: string;
+  chineseFontHelp: string;
 }> = {
   en: {
     languageLabel: "Poem language",
@@ -119,6 +147,9 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "Sending…",
     subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
     subscriptionError: "The subscription could not be started. Please try again.",
+    advancedSettings: "Advanced settings",
+    chineseFontLabel: "Chinese poem font",
+    chineseFontHelp: "Saved on this device. The actual result depends on fonts installed on the device.",
   },
   zh: {
     languageLabel: "诗歌语言",
@@ -172,6 +203,9 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "正在发送…",
     subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
     subscriptionError: "暂时无法开始订阅，请重试。",
+    advancedSettings: "高级设置",
+    chineseFontLabel: "中文诗歌字体",
+    chineseFontHelp: "选择会保存在此设备上。实际效果取决于设备已安装的字体。",
   },
   ja: {
     languageLabel: "詩の言語",
@@ -225,6 +259,9 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "送信中…",
     subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
     subscriptionError: "購読を開始できませんでした。もう一度お試しください。",
+    advancedSettings: "詳細設定",
+    chineseFontLabel: "中国語の詩のフォント",
+    chineseFontHelp: "この端末に保存されます。実際の表示は端末にインストールされたフォントによって異なります。",
   },
 };
 
@@ -307,6 +344,9 @@ export default function ModernShortHaikuTest() {
   const [mode, setMode] = useState<Mode>("random");
   const [language, setLanguage] = useState<Language>("en");
   const [haikuForm, setHaikuForm] = useState<HaikuForm>("modern");
+  const [chineseFont, setChineseFont] = useState<ChineseFont>("hannotate");
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [fontPreferenceHydrated, setFontPreferenceHydrated] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [displayed, setDisplayed] = useState<DisplayedHaiku | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -365,6 +405,29 @@ export default function ModernShortHaikuTest() {
     document.title = UI_COPY[language].pageTitle;
     document.documentElement.lang = languageTag(language);
   }, [language]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const storedFont = window.localStorage.getItem(CHINESE_FONT_STORAGE_KEY);
+        if (isChineseFont(storedFont)) setChineseFont(storedFont);
+      } catch {
+        // The Hannotate default remains available when storage is unavailable.
+      } finally {
+        setFontPreferenceHydrated(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!fontPreferenceHydrated) return;
+    try {
+      window.localStorage.setItem(CHINESE_FONT_STORAGE_KEY, chineseFont);
+    } catch {
+      // The preference still applies for the current session when storage is unavailable.
+    }
+  }, [chineseFont, fontPreferenceHydrated]);
 
   function closeLineMenu() {
     setOpenMenuLine(null);
@@ -706,6 +769,11 @@ export default function ModernShortHaikuTest() {
     setSaved(false);
   }
 
+  function changeChineseFont(nextFont: ChineseFont) {
+    setChineseFont(nextFont);
+    setSaved(false);
+  }
+
   async function subscribe(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubscribing) return;
@@ -743,7 +811,12 @@ export default function ModernShortHaikuTest() {
   }
 
   return (
-    <main className="page-shell" id="modern-short-haiku-app" data-version="26">
+    <main
+      className="page-shell"
+      id="modern-short-haiku-app"
+      data-version="26"
+      style={{ "--chinese-poem-font": CHINESE_FONT_OPTIONS[chineseFont].family } as CSSProperties}
+    >
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -752,7 +825,7 @@ export default function ModernShortHaikuTest() {
           <span className="brand-mark" aria-hidden="true">間</span>
           <span>Haiku-ly</span>
         </a>
-        <span className="header-note">A haiku studio</span>
+        <a className="header-note header-tool-link" href="/font-tester">Chinese font tester ↗</a>
       </header>
 
       <section className="hero" id="modern-top">
@@ -770,6 +843,48 @@ export default function ModernShortHaikuTest() {
             <button type="button" className={language === "ja" ? "active" : ""} aria-pressed={language === "ja"} onClick={() => changeLanguage("ja")} lang="ja" data-language="ja">日本語</button>
           </div>
           <span className="language-rule">{formCopy.languageRule}</span>
+        </div>
+
+        <div className={`advanced-settings${isAdvancedOpen ? " open" : ""}`}>
+          <button
+            type="button"
+            id="advanced-settings-toggle"
+            className="advanced-settings-toggle"
+            data-advanced-settings-toggle="true"
+            aria-expanded={isAdvancedOpen}
+            aria-controls="advanced-settings-panel"
+            onClick={() => setIsAdvancedOpen((open) => !open)}
+          >
+            <span aria-hidden="true">⚙</span>
+            <span id="advanced-settings-label">{copy.advancedSettings}</span>
+            <span className="advanced-settings-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div
+            id="advanced-settings-panel"
+            className="advanced-settings-panel"
+            hidden={!isAdvancedOpen}
+          >
+            <div className="advanced-settings-panel-heading">
+              <span id="chinese-font-label">{copy.chineseFontLabel}</span>
+              <span id="chinese-font-current">{CHINESE_FONT_OPTIONS[chineseFont].label}</span>
+            </div>
+            <div className="chinese-font-switch" role="group" aria-label={copy.chineseFontLabel}>
+              {(Object.entries(CHINESE_FONT_OPTIONS) as [ChineseFont, { label: string; family: string }][]).map(([fontId, font]) => (
+                <button
+                  key={fontId}
+                  type="button"
+                  className={chineseFont === fontId ? "active" : ""}
+                  aria-pressed={chineseFont === fontId}
+                  onClick={() => changeChineseFont(fontId)}
+                  data-chinese-font={fontId}
+                  style={{ fontFamily: font.family }}
+                >
+                  {font.label}
+                </button>
+              ))}
+            </div>
+            <p id="chinese-font-help">{copy.chineseFontHelp}</p>
+          </div>
         </div>
 
         <div className="haiku-form-switch" role="group" aria-label={copy.formGroup}>

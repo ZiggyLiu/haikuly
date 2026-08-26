@@ -342,7 +342,14 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
   assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-poem-en\)/);
   assert.match(styles, /@font-face[\s\S]*font-family:\s*"DouyinSans"[\s\S]*DouyinSansBold\.ttf/);
-  assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*"DouyinSans"/);
+  assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*var\(--chinese-poem-font/);
+  assert.match(page, /id="advanced-settings-toggle"/);
+  assert.match(page, /hannotate:\s*\{/);
+  assert.match(page, /pingfang:\s*\{/);
+  assert.match(page, /fangsong:\s*\{/);
+  assert.match(page, /harmonyos:\s*\{/);
+  assert.match(page, /CHINESE_FONT_STORAGE_KEY/);
+  assert.match(mobileRuntime, /CHINESE_FONT_STORAGE_KEY/);
   assert.match(styles, /\.poem-lines\[lang="ja"\] \.poem-line p[\s\S]*font-family:\s*var\(--font-poem-ja\)/);
   assert.match(layout, /Cormorant_Garamond/);
   assert.doesNotMatch(layout, /Liu_Jian_Mao_Cao/);

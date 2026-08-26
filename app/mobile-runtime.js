@@ -17,7 +17,8 @@
       editLineAriaStart: "Edit line", editLineAriaEnd: "",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
-      heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~"
+      heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~", advancedSettings: "Advanced settings",
+      chineseFontLabel: "Chinese poem font", chineseFontHelp: "Saved on this device."
     },
     zh: {
       languageLabel: "诗歌语言", languageRule: "5 · 7 · 5 字", languageGroup: "诗歌语言", modeGroup: "生成方式",
@@ -33,7 +34,8 @@
       editLineAriaStart: "编辑第", editLineAriaEnd: "行",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
-      heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~"
+      heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~", advancedSettings: "高级设置",
+      chineseFontLabel: "中文诗歌字体", chineseFontHelp: "选择会保存在此设备上。"
     },
     ja: {
       languageLabel: "俳句の言語", languageRule: "5 · 7 · 5 音", languageGroup: "俳句の言語", modeGroup: "作句方法",
@@ -51,7 +53,8 @@
       editLineAriaStart: "", editLineAriaEnd: "行目を編集",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
-      heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~"
+      heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~", advancedSettings: "詳細設定",
+      chineseFontLabel: "中国語の詩のフォント", chineseFontHelp: "この端末に保存されます。"
     }
   };
 
@@ -73,6 +76,7 @@
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
       intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
+      advancedSettings: "Advanced settings", chineseFontLabel: "Chinese poem font", chineseFontHelp: "Saved on this device. The actual result depends on fonts installed on the device.",
       paperRule: "Three lines · modern haiku",
       subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
       subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
@@ -98,6 +102,7 @@
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
       intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
+      advancedSettings: "高级设置", chineseFontLabel: "中文诗歌字体", chineseFontHelp: "选择会保存在此设备上。实际效果取决于设备已安装的字体。",
       paperRule: "三行 · 现代短俳",
       subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
       subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
@@ -125,6 +130,7 @@
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
       intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
+      advancedSettings: "詳細設定", chineseFontLabel: "中国語の詩のフォント", chineseFontHelp: "この端末に保存されます。実際の表示は端末にインストールされたフォントによって異なります。",
       paperRule: "三行 · 現代短俳",
       subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
       subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
@@ -160,10 +166,28 @@
     }
   };
 
+  var CHINESE_FONT_STORAGE_KEY = "haikuly-chinese-font";
+  var CHINESE_FONTS = {
+    hannotate: { label: "Hannotate", family: '"Hannotate SC", "Hannotate", "手札", cursive' },
+    pingfang: { label: "PingFang SC", family: '"PingFang SC", "Hiragino Sans GB", sans-serif' },
+    fangsong: { label: "Fangsong", family: '"Fangsong", "STFangsong", "仿宋", serif' },
+    harmonyos: { label: "HarmonyOS Sans SC", family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif' }
+  };
+
+  function storedChineseFont() {
+    try {
+      var value = window.localStorage.getItem(CHINESE_FONT_STORAGE_KEY);
+      return value && CHINESE_FONTS[value] ? value : "hannotate";
+    } catch {
+      return "hannotate";
+    }
+  }
+
   var state = {
     language: "en", mode: "random", keyword: "", error: "", haiku: null,
     haikuLanguage: "en", haikuForm: "modern", generating: false,
-    editing: false, displayLines: null, recentLines: { en: [], zh: [], ja: [] }
+    editing: false, displayLines: null, recentLines: { en: [], zh: [], ja: [] },
+    chineseFont: storedChineseFont(), advancedOpen: false
   };
 
   function publishState() {
@@ -177,7 +201,9 @@
       haikuForm: state.haikuForm,
       generating: state.generating,
       editing: state.editing,
-      displayLines: state.displayLines
+      displayLines: state.displayLines,
+      chineseFont: state.chineseFont,
+      advancedOpen: state.advancedOpen
     };
   }
 
@@ -256,6 +282,9 @@
     var languageGroup = document.querySelector(".language-switch");
     var formGroup = document.querySelector(".haiku-form-switch");
     var modeGroup = document.querySelector(".mode-switch");
+    var advancedToggle = byId("advanced-settings-toggle");
+    var advancedPanel = byId("advanced-settings-panel");
+    var appRoot = byId("modern-short-haiku-app");
     var studio = document.querySelector(".studio");
     if (studio) studio.setAttribute("aria-label", current.pageTitle);
     var home = byId("brand-home");
@@ -269,6 +298,26 @@
       setText(formGroup.querySelector('[data-haiku-form="modern"]'), V23_FORM_COPY[state.language].modern);
     }
     if (modeGroup) modeGroup.setAttribute("aria-label", current.modeGroup);
+    if (advancedToggle && isModernApp()) {
+      advancedToggle.setAttribute("aria-expanded", state.advancedOpen ? "true" : "false");
+      setText(byId("advanced-settings-label"), current.advancedSettings);
+    }
+    if (advancedPanel && isModernApp()) advancedPanel.hidden = !state.advancedOpen;
+    if (appRoot && isModernApp() && CHINESE_FONTS[state.chineseFont]) {
+      appRoot.style.setProperty("--chinese-poem-font", CHINESE_FONTS[state.chineseFont].family);
+    }
+    var chineseFontLabel = byId("chinese-font-label");
+    var chineseFontCurrent = byId("chinese-font-current");
+    var chineseFontHelp = byId("chinese-font-help");
+    if (chineseFontLabel) setText(chineseFontLabel, current.chineseFontLabel);
+    if (chineseFontCurrent && CHINESE_FONTS[state.chineseFont]) setText(chineseFontCurrent, CHINESE_FONTS[state.chineseFont].label);
+    if (chineseFontHelp) setText(chineseFontHelp, current.chineseFontHelp);
+    var chineseFontButtons = document.querySelectorAll("[data-chinese-font]");
+    for (index = 0; index < chineseFontButtons.length; index += 1) {
+      var chineseFontActive = chineseFontButtons[index].getAttribute("data-chinese-font") === state.chineseFont;
+      chineseFontButtons[index].className = chineseFontActive ? "active" : "";
+      chineseFontButtons[index].setAttribute("aria-pressed", chineseFontActive ? "true" : "false");
+    }
     setButtonCopy(document.querySelector('[data-mode="random"]'), "✦", current.randomMode);
     setButtonCopy(document.querySelector('[data-mode="keyword"]'), "⌁", current.keywordMode);
 
@@ -1188,6 +1237,23 @@
       return;
     }
     if (lineMenu && !lineMenu.contains(event.target)) closeLineMenu();
+    var advancedToggleButton = closestWithAttribute(event.target, "data-advanced-settings-toggle");
+    if (advancedToggleButton) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      state.advancedOpen = !state.advancedOpen;
+      updateControls(); return;
+    }
+    var chineseFontButton = closestWithAttribute(event.target, "data-chinese-font");
+    if (chineseFontButton) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      var nextChineseFont = chineseFontButton.getAttribute("data-chinese-font");
+      if (nextChineseFont && CHINESE_FONTS[nextChineseFont]) {
+        state.chineseFont = nextChineseFont;
+        try { window.localStorage.setItem(CHINESE_FONT_STORAGE_KEY, nextChineseFont); } catch {}
+        updateControls();
+      }
+      return;
+    }
     var languageButton = closestWithAttribute(event.target, "data-language");
     if (languageButton) {
       event.preventDefault(); event.stopImmediatePropagation();
@@ -1272,5 +1338,5 @@
       detectedTimezoneInput.value = "UTC";
     }
   }
-  publishState();
+  updateControls();
 }());
