@@ -250,7 +250,7 @@ test("server-renders the finished Stillpoint experience", async () => {
 });
 
 test("includes both generator modes and removes starter assets", async () => {
-  const [rootPage, page, haiku, layout, packageJson, styles, inkWash, mobileRuntime, bootstrap] = await Promise.all([
+  const [rootPage, page, haiku, layout, packageJson, styles, inkWash, mobileRuntime, bootstrap, poemStyle] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/modern-test/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/haiku.ts", import.meta.url), "utf8"),
@@ -260,6 +260,7 @@ test("includes both generator modes and removes starter assets", async () => {
     readFile(new URL("../app/ink-wash.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mobile-runtime.js", import.meta.url), "utf8"),
     readFile(new URL("../app/rsc-bootstrap.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/poem-style.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(rootPage, /export \{ default \} from "\.\/modern-test\/page";/);
@@ -340,17 +341,33 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.doesNotMatch(styles, /\.sun-seal::after[\s\S]{0,300}background:\s*var\(--rust\)/);
   assert.match(styles, /\.sun-seal-label[\s\S]*font-family:\s*var\(--font-geist-sans\), Arial, sans-serif/);
   assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
-  assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--font-poem-en\)/);
+  assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
   assert.match(styles, /@font-face[\s\S]*font-family:\s*"DouyinSans"[\s\S]*DouyinSansBold\.ttf/);
-  assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*var\(--chinese-poem-font/);
-  assert.match(page, /id="advanced-settings-toggle"/);
-  assert.match(page, /hannotate:\s*\{/);
-  assert.match(page, /pingfang:\s*\{/);
-  assert.match(page, /fangsong:\s*\{/);
-  assert.match(page, /harmonyos:\s*\{/);
-  assert.match(page, /CHINESE_FONT_STORAGE_KEY/);
-  assert.match(mobileRuntime, /CHINESE_FONT_STORAGE_KEY/);
-  assert.match(styles, /\.poem-lines\[lang="ja"\] \.poem-line p[\s\S]*font-family:\s*var\(--font-poem-ja\)/);
+  assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
+  assert.match(styles, /\.poem-lines\[lang="ja"\] \.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
+  assert.match(page, /id="haiku-edit-panel"/);
+  assert.match(page, /data-poem-style="fontSize"/);
+  assert.match(page, /data-poem-style="lineHeight"/);
+  assert.match(page, /data-poem-style="illustrationOpacity"/);
+  assert.doesNotMatch(page, /href="\/font-tester"/);
+  assert.match(poemStyle, /POEM_STYLE_STORAGE_KEY/);
+  assert.match(poemStyle, /id: "hannotate"/);
+  assert.match(poemStyle, /id: "fangsong"/);
+  assert.match(poemStyle, /id: "harmonyos"/);
+  assert.match(poemStyle, /id: "pingfang"/);
+  assert.match(poemStyle, /id: "cormorant"/);
+  assert.match(poemStyle, /id: "dancing"/);
+  assert.match(poemStyle, /id: "shippori"/);
+  assert.match(poemStyle, /id: "hiragino-sans"/);
+  const chineseFonts = poemStyle.match(/zh:\s*\[([\s\S]*?)\],\s*ja:/)?.[1] ?? "";
+  const englishFonts = poemStyle.match(/en:\s*\[([\s\S]*?)\],\s*zh:/)?.[1] ?? "";
+  const japaneseFonts = poemStyle.match(/ja:\s*\[([\s\S]*?)\],\s*};/)?.[1] ?? "";
+  assert.equal((chineseFonts.match(/id:\s*"/g) ?? []).length, 4);
+  assert.equal((englishFonts.match(/id:\s*"/g) ?? []).length, 5);
+  assert.equal((japaneseFonts.match(/id:\s*"/g) ?? []).length, 5);
+  await assert.rejects(access(new URL("../app/font-tester/page.tsx", import.meta.url)));
+  assert.match(mobileRuntime, /POEM_STYLE_STORAGE_KEY/);
+  assert.match(mobileRuntime, /data-poem-font/);
   assert.match(layout, /Cormorant_Garamond/);
   assert.doesNotMatch(layout, /Liu_Jian_Mao_Cao/);
   assert.match(layout, /Shippori_Mincho/);

@@ -246,119 +246,6 @@ h1[lang="ja"] #hero-title {
   font-weight: 600;
 }
 
-.advanced-settings {
-  width: min(600px, 100%);
-  margin: 0 auto 14px;
-  position: relative;
-  z-index: 3;
-  isolation: isolate;
-  pointer-events: auto;
-}
-
-.advanced-settings-toggle {
-  width: 100%;
-  min-height: 38px;
-  padding: 8px 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: rgba(247, 244, 236, 0.52);
-  color: var(--ink-soft);
-  cursor: pointer;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.advanced-settings-toggle:hover,
-.advanced-settings-toggle:focus-visible,
-.advanced-settings.open .advanced-settings-toggle {
-  border-color: rgba(54, 83, 71, 0.38);
-  background: rgba(247, 244, 236, 0.9);
-  color: var(--moss);
-}
-
-.advanced-settings-toggle > span:first-child {
-  font-size: 13px;
-}
-
-.advanced-settings-chevron {
-  margin-left: 2px;
-  font-size: 13px;
-  transition: transform 160ms ease;
-}
-
-.advanced-settings.open .advanced-settings-chevron {
-  transform: rotate(180deg);
-}
-
-.advanced-settings-panel {
-  margin-top: 7px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  background: rgba(247, 244, 236, 0.88);
-  box-shadow: 0 12px 28px rgba(62, 72, 60, 0.08);
-  animation: rise 180ms ease-out both;
-}
-
-.advanced-settings-panel[hidden] {
-  display: none;
-}
-
-.advanced-settings-panel-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ink-soft);
-  font-size: 11px;
-}
-
-.advanced-settings-panel-heading span:last-child {
-  color: var(--moss);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-}
-
-.chinese-font-switch {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.chinese-font-switch button {
-  min-height: 42px;
-  padding: 8px 6px;
-  border: 1px solid rgba(54, 83, 71, 0.15);
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.38);
-  color: var(--ink);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1.2;
-  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
-}
-
-.chinese-font-switch button:hover,
-.chinese-font-switch button:focus-visible,
-.chinese-font-switch button.active {
-  border-color: var(--moss);
-  background: rgba(54, 83, 71, 0.12);
-  color: var(--moss);
-}
-
-.advanced-settings-panel > p {
-  margin: 12px 0 0;
-  color: var(--ink-soft);
-  font-size: 10px;
-  line-height: 1.5;
-}
-
 .haiku-form-switch {
   width: fit-content;
   margin: 0 auto 14px;
@@ -480,7 +367,7 @@ h1[lang="ja"] #hero-title {
   z-index: 0;
   display: block;
   pointer-events: none !important;
-  opacity: 0.82;
+  opacity: var(--illustration-opacity, 0.82);
 }
 
 .poem-paper.has-illustration::after {
@@ -615,28 +502,25 @@ h1[lang="ja"] #hero-title {
 
 .poem-line p {
   margin: 14px 0;
-  font-family: var(--font-poem-en), "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  font-size: 30px;
-  font-size: clamp(24px, 3.2vw, 34px);
+  font-family: var(--poem-font, var(--font-poem-en), "Cormorant Garamond", Georgia, "Times New Roman", serif);
+  font-size: var(--poem-font-size, 32px);
   font-weight: 400;
   letter-spacing: -0.025em;
-  line-height: 1.35;
+  line-height: var(--poem-line-height, 1.35);
   white-space: nowrap;
   animation: reveal 500ms ease both;
 }
 
 /* Generated poems use a language-specific typeface. */
 .poem-lines[lang="zh-CN"] .poem-line p {
-  font-family: var(--chinese-poem-font, "Hannotate SC", "Hannotate", "手札", cursive);
-  font-size: 19.2px;
-  font-size: clamp(19px, 2.56vw, 27px);
+  font-family: var(--poem-font, "Hannotate SC", "Hannotate", "手札", cursive);
+  font-size: var(--poem-font-size, 24px);
   letter-spacing: 0.02em;
 }
 
 .poem-lines[lang="ja"] .poem-line p {
-  font-family: var(--font-poem-ja), "Shippori Mincho", "Yu Mincho", "Hiragino Mincho ProN", serif;
-  font-size: 19.2px;
-  font-size: clamp(19px, 2.56vw, 27px);
+  font-family: var(--poem-font, var(--font-poem-ja), "Shippori Mincho", "Yu Mincho", "Hiragino Mincho ProN", serif);
+  font-size: var(--poem-font-size, 24px);
   letter-spacing: 0.01em;
 }
 
@@ -646,14 +530,12 @@ h1[lang="ja"] #hero-title {
 }
 
 .poem-lines.lines-tight .poem-line p {
-  font-size: 24px;
-  font-size: clamp(20px, 2.6vw, 28px);
+  font-size: min(var(--poem-font-size, 32px), 28px);
   letter-spacing: -0.035em;
 }
 
 .poem-lines.lines-extra-tight .poem-line p {
-  font-size: 20px;
-  font-size: clamp(17px, 2.2vw, 24px);
+  font-size: min(var(--poem-font-size, 32px), 24px);
   letter-spacing: -0.045em;
 }
 
@@ -724,6 +606,130 @@ h1[lang="ja"] #hero-title {
 
 .poem-line-editing .poem-line-count.mismatch {
   color: var(--rust);
+}
+
+.poem-paper.is-editing {
+  justify-content: flex-start;
+  padding-top: 62px;
+}
+
+.poem-style-editor {
+  width: min(650px, 100%);
+  margin: 4px auto 18px;
+  padding: 16px;
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(54, 83, 71, 0.16);
+  border-radius: 6px;
+  background: rgba(248, 245, 237, 0.88);
+  box-shadow: 0 10px 30px rgba(62, 72, 60, 0.08);
+  animation: rise 180ms ease-out both;
+}
+
+.poem-style-editor[hidden] {
+  display: none;
+}
+
+.poem-style-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.poem-style-heading strong,
+.poem-font-fieldset legend {
+  color: var(--ink-soft);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.poem-style-heading button {
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--moss);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.poem-font-fieldset {
+  min-width: 0;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.poem-font-fieldset legend {
+  margin-bottom: 8px;
+}
+
+.poem-font-switch {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.poem-font-switch button {
+  min-height: 42px;
+  padding: 7px 6px;
+  border: 1px solid rgba(54, 83, 71, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.38);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.poem-font-switch button:hover,
+.poem-font-switch button:focus-visible,
+.poem-font-switch button.active {
+  border-color: var(--moss);
+  background: rgba(54, 83, 71, 0.12);
+  color: var(--moss);
+}
+
+.poem-style-slider-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.poem-style-slider-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.poem-style-slider-grid label > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.poem-style-slider-grid output {
+  color: var(--moss);
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.poem-style-slider-grid input[type="range"] {
+  width: 100%;
+  accent-color: var(--moss);
+}
+
+.poem-style-help {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.5;
 }
 
 .line-menu {
@@ -1068,7 +1074,6 @@ footer p {
   .language-control > .language-switch { margin: 8px 10px 0 0; }
   .language-rule { margin-top: 8px; }
   .language-switch button { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
-  .chinese-font-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .haiku-form-switch { width: 100%; }
   .haiku-form-switch button { min-width: 0; min-height: 44px; flex: 1; }
   .poem-paper { min-height: 340px; padding: 70px 14px 22px; }
@@ -1093,11 +1098,13 @@ footer p {
   .human-edited-badge { top: 48px; left: 20px; }
   .poem-lines { width: 100%; margin: 20px auto; }
   .poem-line { display: block; }
-  .poem-line p { margin: 14px 0; font-size: 22px; font-size: clamp(20px, 6vw, 25px); }
-  .poem-lines.lines-tight .poem-line p { font-size: 18px; font-size: clamp(16px, 4.7vw, 20px); }
-  .poem-lines.lines-extra-tight .poem-line p { font-size: 15px; font-size: clamp(14px, 4vw, 17px); }
-  .poem-lines[lang="zh-CN"] .poem-line p,
-  .poem-lines[lang="ja"] .poem-line p { font-size: 16px; font-size: clamp(16px, 4.8vw, 20px); }
+  .poem-line p { margin: 14px 0; font-size: clamp(16px, calc(var(--poem-font-size, 32px) * 0.78), 34px); }
+  .poem-lines.lines-tight .poem-line p { font-size: clamp(14px, calc(var(--poem-font-size, 32px) * 0.68), 28px); }
+  .poem-lines.lines-extra-tight .poem-line p { font-size: clamp(13px, calc(var(--poem-font-size, 32px) * 0.58), 24px); }
+  .poem-paper.is-editing { padding-top: 68px; }
+  .poem-style-editor { padding: 14px; }
+  .poem-font-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .poem-style-slider-grid { grid-template-columns: 1fr; gap: 11px; }
   .paper-footer { gap: 10px; }
   .paper-footer > span { flex: 1 1 auto; }
   .footer-actions { flex: 0 1 auto; gap: 2px 9px; }
@@ -1123,498 +1130,4 @@ footer p {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
-}
-
-/* Chinese font tester ---------------------------------------------------- */
-.header-tool-link {
-  color: var(--ink-soft);
-  text-decoration: none;
-  transition: color 160ms ease;
-}
-
-.header-tool-link:hover,
-.header-tool-link:focus-visible {
-  color: var(--moss);
-}
-
-.font-tester-shell {
-  padding-bottom: 38px;
-}
-
-.font-tester-header .header-note {
-  display: block;
-}
-
-.font-tester-hero {
-  width: min(680px, 100%);
-  margin: 64px auto 42px;
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-
-.font-tester-hero h1 {
-  margin: 0;
-  color: var(--ink);
-  font-family: "Songti SC", "STSong", "SimSun", serif;
-  font-size: clamp(34px, 5vw, 54px);
-  letter-spacing: 0.03em;
-  line-height: 1.25;
-}
-
-.font-tester-hero > p:last-child {
-  width: min(520px, 100%);
-  margin: 16px auto 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.font-tester-layout,
-.font-tester-candidates {
-  width: min(1180px, 100%);
-  margin-right: auto;
-  margin-left: auto;
-  position: relative;
-  z-index: 1;
-}
-
-.font-tester-layout {
-  display: grid;
-  grid-template-columns: minmax(255px, 0.72fr) minmax(440px, 1.28fr);
-  gap: clamp(28px, 5vw, 72px);
-  align-items: start;
-}
-
-.font-tester-controls {
-  padding: 24px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.font-tester-control-heading,
-.font-tester-section-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.font-tester-kicker {
-  margin: 0 0 8px;
-  color: var(--rust);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.font-tester-control-heading h2,
-.font-tester-section-heading h2 {
-  margin: 0;
-  font-family: "Songti SC", "STSong", "SimSun", serif;
-  font-size: 24px;
-  font-weight: 400;
-  line-height: 1.25;
-}
-
-.font-tester-current,
-.font-tester-section-heading > span {
-  color: var(--ink-soft);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  line-height: 1.5;
-  text-align: right;
-}
-
-.font-tester-fieldset {
-  min-width: 0;
-  margin: 30px 0 0;
-  padding: 0;
-  border: 0;
-}
-
-.font-tester-fieldset legend {
-  margin-bottom: 10px;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.font-tester-sample-switch {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.font-tester-sample-switch button {
-  padding: 8px 11px;
-  border: 1px solid var(--line);
-  border-radius: 100px;
-  background: rgba(247, 244, 236, 0.66);
-  color: var(--ink-soft);
-  cursor: pointer;
-  font-size: 12px;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
-}
-
-.font-tester-sample-switch button.active,
-.font-tester-sample-switch button:hover,
-.font-tester-sample-switch button:focus-visible {
-  border-color: var(--moss);
-  background: var(--moss);
-  color: var(--paper);
-}
-
-.font-tester-custom-field {
-  margin-top: 22px;
-  display: grid;
-  gap: 9px;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.font-tester-custom-field small {
-  margin-left: 5px;
-  color: #78837d;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
-}
-
-.font-tester-custom-input {
-  display: flex;
-  border: 1px solid rgba(54, 83, 71, 0.28);
-  background: rgba(255, 255, 255, 0.46);
-}
-
-.font-tester-custom-input:focus-within {
-  border-color: var(--moss);
-  box-shadow: 0 0 0 2px rgba(54, 83, 71, 0.08);
-}
-
-.font-tester-custom-input input {
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 9px 11px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 13px;
-}
-
-.font-tester-custom-input input::placeholder {
-  color: #8c958f;
-}
-
-.font-tester-custom-input button {
-  width: 38px;
-  flex: 0 0 38px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-soft);
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-}
-
-.font-tester-custom-input button:hover,
-.font-tester-custom-input button:focus-visible {
-  color: var(--rust);
-}
-
-.font-tester-slider-grid {
-  margin-top: 28px;
-  display: grid;
-  gap: 18px;
-}
-
-.font-tester-slider-grid label {
-  display: grid;
-  gap: 8px;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.font-tester-slider-grid label span {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.font-tester-slider-grid output {
-  color: var(--moss);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-}
-
-.font-tester-slider-grid input {
-  width: 100%;
-  accent-color: var(--moss);
-  cursor: pointer;
-}
-
-.font-tester-tip {
-  margin: 28px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid rgba(54, 83, 71, 0.1);
-  color: var(--ink-soft);
-  font-size: 11px;
-  line-height: 1.65;
-}
-
-.font-tester-preview-column {
-  min-width: 0;
-}
-
-.font-tester-preview-label,
-.font-tester-preview-note {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ink-soft);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  line-height: 1.5;
-  text-transform: uppercase;
-}
-
-.font-tester-preview-label {
-  margin: 0 0 10px;
-}
-
-.font-tester-preview-label span:last-child {
-  color: var(--rust);
-  text-align: right;
-}
-
-.font-tester-card {
-  min-height: 390px;
-  padding: 80px 58px 26px;
-  overflow: hidden;
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border: 1px solid rgba(54, 83, 71, 0.13);
-  background:
-    linear-gradient(rgba(255,255,255,0.15), rgba(255,255,255,0.15)),
-    repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(54,83,71,0.025) 30px),
-    #f8f5ed;
-  box-shadow: 0 25px 70px rgba(62, 72, 60, 0.12);
-}
-
-.font-tester-card .ink-wash-canvas {
-  opacity: var(--tester-wash-opacity, 0.82);
-}
-
-.font-tester-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(248,245,237,0.52) 0%, rgba(248,245,237,0.29) 44%, rgba(248,245,237,0.04) 82%, transparent 100%);
-}
-
-.font-tester-date {
-  position: absolute;
-  top: 28px;
-  left: 30px;
-  z-index: 2;
-  color: #5f6c64;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-}
-
-.font-tester-seal {
-  width: 54px;
-  height: 54px;
-  position: absolute;
-  top: 24px;
-  right: 28px;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(201, 111, 76, 0.16);
-  border-radius: 50%;
-  color: rgba(201, 111, 76, 0.54);
-  font-family: "Songti SC", serif;
-  font-size: 23px;
-}
-
-.font-tester-preview-lines {
-  width: min(620px, 100%);
-  margin: 0 auto 28px;
-  position: relative;
-  z-index: 2;
-  color: var(--ink);
-  letter-spacing: 0.045em;
-  text-shadow: 0 1px 0 rgba(248, 245, 237, 0.9), 0 0 12px rgba(248, 245, 237, 0.72);
-  white-space: nowrap;
-}
-
-.font-tester-preview-lines p {
-  margin: 12px 0;
-}
-
-.font-tester-card-footer {
-  padding-top: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  position: relative;
-  z-index: 2;
-  color: #536159;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-}
-
-.font-tester-preview-note {
-  justify-content: flex-start;
-  margin: 12px 0 0;
-  color: var(--ink-soft);
-  font-size: 9px;
-  letter-spacing: 0.02em;
-  text-transform: none;
-}
-
-.font-tester-candidates {
-  margin-top: 74px;
-}
-
-.font-tester-section-heading {
-  align-items: baseline;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
-}
-
-.font-tester-grid {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.font-tester-sample {
-  min-width: 0;
-  min-height: 186px;
-  padding: 17px 17px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  background: rgba(247, 244, 236, 0.62);
-  color: var(--ink);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
-}
-
-.font-tester-sample:hover,
-.font-tester-sample:focus-visible,
-.font-tester-sample.active {
-  border-color: rgba(54, 83, 71, 0.55);
-  background: rgba(247, 244, 236, 0.92);
-  box-shadow: 0 10px 24px rgba(62, 72, 60, 0.08);
-  transform: translateY(-2px);
-}
-
-.font-tester-sample.active {
-  border-width: 2px;
-  padding: 16px 16px 13px;
-}
-
-.font-tester-sample-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.font-tester-sample-meta strong {
-  font-family: var(--font-geist-sans), sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.font-tester-sample-meta small {
-  color: var(--ink-soft);
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-.font-tester-sample-lines {
-  min-height: 108px;
-  margin-top: 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  color: var(--ink);
-  letter-spacing: 0.04em;
-}
-
-.font-tester-sample-lines span {
-  display: block;
-  white-space: nowrap;
-}
-
-.font-tester-sample-mark {
-  margin-top: auto;
-  color: var(--moss);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-align: right;
-  text-transform: uppercase;
-}
-
-.font-tester-footer {
-  margin-top: 74px;
-}
-
-.font-tester-footer a {
-  color: var(--ink-soft);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 10px;
-  text-decoration: none;
-}
-
-@media (max-width: 900px) {
-  .font-tester-layout { grid-template-columns: 1fr; }
-  .font-tester-controls { padding-bottom: 0; border-bottom: 0; }
-  .font-tester-preview-column { margin-top: 6px; }
-  .font-tester-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 560px) {
-  .font-tester-shell { padding-bottom: 24px; }
-  .font-tester-header .header-note { font-size: 9px; letter-spacing: 0.04em; }
-  .font-tester-hero { margin: 46px auto 34px; }
-  .font-tester-hero h1 { font-size: clamp(31px, 9vw, 42px); }
-  .font-tester-hero > p:last-child { font-size: 13px; }
-  .font-tester-control-heading { display: block; }
-  .font-tester-current { display: block; margin-top: 12px; text-align: left; }
-  .font-tester-card { min-height: 370px; padding: 74px 20px 22px; }
-  .font-tester-preview-lines { font-size: 22px !important; line-height: 1.55 !important; letter-spacing: 0.02em; }
-  .font-tester-preview-lines p { margin: 10px 0; }
-  .font-tester-date { left: 20px; }
-  .font-tester-seal { right: 20px; }
-  .font-tester-preview-label { align-items: flex-start; flex-direction: column; gap: 2px; }
-  .font-tester-preview-label span:last-child { text-align: left; }
-  .font-tester-grid { grid-template-columns: 1fr; }
-  .font-tester-sample { min-height: 170px; }
-  .font-tester-candidates,
-  .font-tester-footer { margin-top: 52px; }
-  .font-tester-section-heading { display: block; }
-  .font-tester-section-heading > span { display: block; margin-top: 10px; text-align: left; }
-  .font-tester-footer { align-items: flex-start; }
 }

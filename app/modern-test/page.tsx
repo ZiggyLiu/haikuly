@@ -11,33 +11,16 @@ import {
   type Mode,
 } from "../haiku";
 import InkWashIllustration from "../ink-wash";
+import {
+  DEFAULT_POEM_STYLES,
+  POEM_FONT_OPTIONS,
+  POEM_STYLE_STORAGE_KEY,
+  poemFont,
+  readPoemStyles,
+  type PoemStyle,
+} from "../poem-style";
 
 type HaikuForm = "traditional" | "modern";
-type ChineseFont = "hannotate" | "pingfang" | "fangsong" | "harmonyos";
-
-const CHINESE_FONT_STORAGE_KEY = "haikuly-chinese-font";
-const CHINESE_FONT_OPTIONS: Record<ChineseFont, { label: string; family: string }> = {
-  hannotate: {
-    label: "Hannotate",
-    family: '"Hannotate SC", "Hannotate", "手札", cursive',
-  },
-  pingfang: {
-    label: "PingFang SC",
-    family: '"PingFang SC", "Hiragino Sans GB", sans-serif',
-  },
-  fangsong: {
-    label: "Fangsong",
-    family: '"Fangsong", "STFangsong", "仿宋", serif',
-  },
-  harmonyos: {
-    label: "HarmonyOS Sans SC",
-    family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif',
-  },
-};
-
-function isChineseFont(value: string | null): value is ChineseFont {
-  return value !== null && Object.prototype.hasOwnProperty.call(CHINESE_FONT_OPTIONS, value);
-}
 
 const UI_COPY: Record<Language, {
   languageLabel: string;
@@ -91,9 +74,13 @@ const UI_COPY: Record<Language, {
   subscriptionSending: string;
   subscriptionPrivacy: string;
   subscriptionError: string;
-  advancedSettings: string;
-  chineseFontLabel: string;
-  chineseFontHelp: string;
+  styleHeading: string;
+  fontLabel: string;
+  fontSizeLabel: string;
+  lineSpacingLabel: string;
+  artIntensityLabel: string;
+  styleHelp: string;
+  resetStyle: string;
 }> = {
   en: {
     languageLabel: "Poem language",
@@ -147,9 +134,13 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "Sending…",
     subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
     subscriptionError: "The subscription could not be started. Please try again.",
-    advancedSettings: "Advanced settings",
-    chineseFontLabel: "Chinese poem font",
-    chineseFontHelp: "Saved on this device. The actual result depends on fonts installed on the device.",
+    styleHeading: "Poem style",
+    fontLabel: "Typeface",
+    fontSizeLabel: "Text size",
+    lineSpacingLabel: "Line spacing",
+    artIntensityLabel: "Painting intensity",
+    styleHelp: "Style choices are saved on this device. A typeface can use its closest fallback when it is not installed.",
+    resetStyle: "Reset style",
   },
   zh: {
     languageLabel: "诗歌语言",
@@ -203,9 +194,13 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "正在发送…",
     subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
     subscriptionError: "暂时无法开始订阅，请重试。",
-    advancedSettings: "高级设置",
-    chineseFontLabel: "中文诗歌字体",
-    chineseFontHelp: "选择会保存在此设备上。实际效果取决于设备已安装的字体。",
+    styleHeading: "俳句样式",
+    fontLabel: "字体",
+    fontSizeLabel: "字号",
+    lineSpacingLabel: "行距",
+    artIntensityLabel: "水墨浓度",
+    styleHelp: "样式会保存在此设备上。若设备未安装所选字体，将自动使用最接近的字体。",
+    resetStyle: "重置样式",
   },
   ja: {
     languageLabel: "詩の言語",
@@ -259,9 +254,13 @@ const UI_COPY: Record<Language, {
     subscriptionSending: "送信中…",
     subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
     subscriptionError: "購読を開始できませんでした。もう一度お試しください。",
-    advancedSettings: "詳細設定",
-    chineseFontLabel: "中国語の詩のフォント",
-    chineseFontHelp: "この端末に保存されます。実際の表示は端末にインストールされたフォントによって異なります。",
+    styleHeading: "俳句のスタイル",
+    fontLabel: "書体",
+    fontSizeLabel: "文字サイズ",
+    lineSpacingLabel: "行間",
+    artIntensityLabel: "水墨の濃さ",
+    styleHelp: "スタイルはこの端末に保存されます。書体がない場合は近い書体で表示します。",
+    resetStyle: "スタイルをリセット",
   },
 };
 
@@ -344,9 +343,8 @@ export default function ModernShortHaikuTest() {
   const [mode, setMode] = useState<Mode>("random");
   const [language, setLanguage] = useState<Language>("en");
   const [haikuForm, setHaikuForm] = useState<HaikuForm>("modern");
-  const [chineseFont, setChineseFont] = useState<ChineseFont>("hannotate");
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [fontPreferenceHydrated, setFontPreferenceHydrated] = useState(false);
+  const [poemStyles, setPoemStyles] = useState<Record<Language, PoemStyle>>(() => readPoemStyles(DEFAULT_POEM_STYLES));
+  const [poemStyleHydrated, setPoemStyleHydrated] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [displayed, setDisplayed] = useState<DisplayedHaiku | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -370,6 +368,8 @@ export default function ModernShortHaikuTest() {
   const lines = displayLines ?? haiku?.lines ?? null;
   const displayedForm = displayed?.form ?? haikuForm;
   const displayedLanguage = displayed?.language ?? language;
+  const poemStyle = poemStyles[displayedLanguage];
+  const selectedPoemFont = poemFont(displayedLanguage, poemStyle.fontId);
   const isEdited = haiku !== null && lines !== null &&
     lines.some((line, index) => line !== haiku.lines[index]);
   const expectedCounts = [5, 7, 5];
@@ -409,25 +409,25 @@ export default function ModernShortHaikuTest() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
-        const storedFont = window.localStorage.getItem(CHINESE_FONT_STORAGE_KEY);
-        if (isChineseFont(storedFont)) setChineseFont(storedFont);
+        const storedStyles = window.localStorage.getItem(POEM_STYLE_STORAGE_KEY);
+        if (storedStyles) setPoemStyles(readPoemStyles(JSON.parse(storedStyles)));
       } catch {
-        // The Hannotate default remains available when storage is unavailable.
+        // Default styles remain available when storage is blocked or invalid.
       } finally {
-        setFontPreferenceHydrated(true);
+        setPoemStyleHydrated(true);
       }
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (!fontPreferenceHydrated) return;
+    if (!poemStyleHydrated) return;
     try {
-      window.localStorage.setItem(CHINESE_FONT_STORAGE_KEY, chineseFont);
+      window.localStorage.setItem(POEM_STYLE_STORAGE_KEY, JSON.stringify(poemStyles));
     } catch {
-      // The preference still applies for the current session when storage is unavailable.
+      // Style changes still apply for this session when storage is unavailable.
     }
-  }, [chineseFont, fontPreferenceHydrated]);
+  }, [poemStyles, poemStyleHydrated]);
 
   function closeLineMenu() {
     setOpenMenuLine(null);
@@ -622,7 +622,8 @@ export default function ModernShortHaikuTest() {
       const illustration = paper.querySelector<HTMLCanvasElement>(".ink-wash-canvas");
       if (illustration && illustration.width > 0 && illustration.height > 0) {
         context.save();
-        context.globalAlpha = 0.82;
+        const illustrationOpacity = Number.parseFloat(window.getComputedStyle(illustration).opacity);
+        context.globalAlpha = Number.isFinite(illustrationOpacity) ? illustrationOpacity : 0.82;
         context.drawImage(illustration, 0, 0, width, height);
         context.restore();
       }
@@ -769,8 +770,19 @@ export default function ModernShortHaikuTest() {
     setSaved(false);
   }
 
-  function changeChineseFont(nextFont: ChineseFont) {
-    setChineseFont(nextFont);
+  function updatePoemStyle(nextStyle: Partial<PoemStyle>) {
+    setPoemStyles((current) => ({
+      ...current,
+      [displayedLanguage]: { ...current[displayedLanguage], ...nextStyle },
+    }));
+    setSaved(false);
+  }
+
+  function resetPoemStyle() {
+    setPoemStyles((current) => ({
+      ...current,
+      [displayedLanguage]: { ...DEFAULT_POEM_STYLES[displayedLanguage] },
+    }));
     setSaved(false);
   }
 
@@ -811,12 +823,7 @@ export default function ModernShortHaikuTest() {
   }
 
   return (
-    <main
-      className="page-shell"
-      id="modern-short-haiku-app"
-      data-version="26"
-      style={{ "--chinese-poem-font": CHINESE_FONT_OPTIONS[chineseFont].family } as CSSProperties}
-    >
+    <main className="page-shell" id="modern-short-haiku-app" data-version="26">
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -825,7 +832,7 @@ export default function ModernShortHaikuTest() {
           <span className="brand-mark" aria-hidden="true">間</span>
           <span>Haiku-ly</span>
         </a>
-        <a className="header-note header-tool-link" href="/font-tester">Chinese font tester ↗</a>
+        <span className="header-note">A haiku studio</span>
       </header>
 
       <section className="hero" id="modern-top">
@@ -843,48 +850,6 @@ export default function ModernShortHaikuTest() {
             <button type="button" className={language === "ja" ? "active" : ""} aria-pressed={language === "ja"} onClick={() => changeLanguage("ja")} lang="ja" data-language="ja">日本語</button>
           </div>
           <span className="language-rule">{formCopy.languageRule}</span>
-        </div>
-
-        <div className={`advanced-settings${isAdvancedOpen ? " open" : ""}`}>
-          <button
-            type="button"
-            id="advanced-settings-toggle"
-            className="advanced-settings-toggle"
-            data-advanced-settings-toggle="true"
-            aria-expanded={isAdvancedOpen}
-            aria-controls="advanced-settings-panel"
-            onClick={() => setIsAdvancedOpen((open) => !open)}
-          >
-            <span aria-hidden="true">⚙</span>
-            <span id="advanced-settings-label">{copy.advancedSettings}</span>
-            <span className="advanced-settings-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div
-            id="advanced-settings-panel"
-            className="advanced-settings-panel"
-            hidden={!isAdvancedOpen}
-          >
-            <div className="advanced-settings-panel-heading">
-              <span id="chinese-font-label">{copy.chineseFontLabel}</span>
-              <span id="chinese-font-current">{CHINESE_FONT_OPTIONS[chineseFont].label}</span>
-            </div>
-            <div className="chinese-font-switch" role="group" aria-label={copy.chineseFontLabel}>
-              {(Object.entries(CHINESE_FONT_OPTIONS) as [ChineseFont, { label: string; family: string }][]).map(([fontId, font]) => (
-                <button
-                  key={fontId}
-                  type="button"
-                  className={chineseFont === fontId ? "active" : ""}
-                  aria-pressed={chineseFont === fontId}
-                  onClick={() => changeChineseFont(fontId)}
-                  data-chinese-font={fontId}
-                  style={{ fontFamily: font.family }}
-                >
-                  {font.label}
-                </button>
-              ))}
-            </div>
-            <p id="chinese-font-help">{copy.chineseFontHelp}</p>
-          </div>
         </div>
 
         <div className="haiku-form-switch" role="group" aria-label={copy.formGroup}>
@@ -933,7 +898,19 @@ export default function ModernShortHaikuTest() {
             </div>
           </div>
 
-          <div ref={poemPaperRef} id="poem-paper" className={`poem-paper${haiku ? " has-illustration" : ""}`} aria-live="polite" aria-atomic="true">
+          <div
+            ref={poemPaperRef}
+            id="poem-paper"
+            className={`poem-paper${haiku ? " has-illustration" : ""}${isEditing ? " is-editing" : ""}`}
+            aria-live="polite"
+            aria-atomic="true"
+            style={{
+              "--poem-font": selectedPoemFont.family,
+              "--poem-font-size": `${poemStyle.fontSize}px`,
+              "--poem-line-height": poemStyle.lineHeight,
+              "--illustration-opacity": poemStyle.illustrationOpacity,
+            } as CSSProperties}
+          >
             {haiku && <InkWashIllustration recipe={haiku.illustration} seed={haiku.seed} />}
             {haiku ? (
               <time className="paper-number paper-date" id="paper-date" dateTime={haiku.createdAt}>{haikuDateLabel(haiku.createdAt, displayed?.language ?? language)}</time>
@@ -993,16 +970,90 @@ export default function ModernShortHaikuTest() {
             ) : (
               <div className="poem-lines poem-empty" id="poem-lines"><p id="empty-poem">{copy.emptyPoem}</p></div>
             )}
+            <section className="poem-style-editor" id="haiku-edit-panel" hidden={!isEditing} aria-label={copy.styleHeading}>
+              <div className="poem-style-heading">
+                <strong id="poem-style-heading">{copy.styleHeading}</strong>
+                <button type="button" id="reset-poem-style" onClick={resetPoemStyle}>{copy.resetStyle}</button>
+              </div>
+              <fieldset className="poem-font-fieldset">
+                <legend id="poem-font-label">{copy.fontLabel}</legend>
+                <div className="poem-font-switch" role="group" aria-labelledby="poem-font-label">
+                  {POEM_FONT_OPTIONS[displayedLanguage].map((font) => (
+                    <button
+                      key={font.id}
+                      type="button"
+                      className={poemStyle.fontId === font.id ? "active" : ""}
+                      aria-pressed={poemStyle.fontId === font.id}
+                      onClick={() => updatePoemStyle({ fontId: font.id })}
+                      data-poem-font={font.id}
+                      style={{ fontFamily: font.family }}
+                    >
+                      {font.label}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="poem-style-slider-grid">
+                <label>
+                  <span><span id="poem-font-size-label">{copy.fontSizeLabel}</span> <output id="poem-font-size-output">{poemStyle.fontSize}px</output></span>
+                  <input
+                    type="range"
+                    min="16"
+                    max="44"
+                    step="1"
+                    value={poemStyle.fontSize}
+                    data-poem-style="fontSize"
+                    aria-labelledby="poem-font-size-label"
+                    onChange={(event) => updatePoemStyle({ fontSize: Number(event.target.value) })}
+                  />
+                </label>
+                <label>
+                  <span><span id="poem-line-height-label">{copy.lineSpacingLabel}</span> <output id="poem-line-height-output">{poemStyle.lineHeight.toFixed(2)}</output></span>
+                  <input
+                    type="range"
+                    min="1.1"
+                    max="2"
+                    step="0.05"
+                    value={poemStyle.lineHeight}
+                    data-poem-style="lineHeight"
+                    aria-labelledby="poem-line-height-label"
+                    onChange={(event) => updatePoemStyle({ lineHeight: Number(event.target.value) })}
+                  />
+                </label>
+                <label>
+                  <span><span id="poem-art-opacity-label">{copy.artIntensityLabel}</span> <output id="poem-art-opacity-output">{Math.round(poemStyle.illustrationOpacity * 100)}%</output></span>
+                  <input
+                    type="range"
+                    min="0.35"
+                    max="1"
+                    step="0.01"
+                    value={poemStyle.illustrationOpacity}
+                    data-poem-style="illustrationOpacity"
+                    aria-labelledby="poem-art-opacity-label"
+                    onChange={(event) => updatePoemStyle({ illustrationOpacity: Number(event.target.value) })}
+                  />
+                </label>
+              </div>
+              <p className="poem-style-help" id="poem-style-help">{copy.styleHelp}</p>
+            </section>
             <div className="paper-footer">
               <span id="paper-rule">{formCopy.paperRule}</span>
               <div className="footer-actions">
                 {isEditing && (
                   <button type="button" id="revert-haiku" onClick={revertEdit} disabled={!isEdited}>{copy.revert}</button>
                 )}
-                <button type="button" id="edit-haiku" onClick={toggleEdit} aria-pressed={isEditing} disabled={!haiku || isGenerating}>
+                <button
+                  type="button"
+                  id="edit-haiku"
+                  onClick={toggleEdit}
+                  aria-pressed={isEditing}
+                  aria-expanded={isEditing}
+                  aria-controls="haiku-edit-panel"
+                  disabled={!haiku || isGenerating}
+                >
                   {isEditing ? copy.done : copy.edit}
                 </button>
-                <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku}>{saved ? copy.saved : copy.save}</button>
+                <button type="button" id="save-haiku" onClick={saveHaiku} aria-label={copy.saveAria} disabled={!haiku || isEditing}>{saved ? copy.saved : copy.save}</button>
               </div>
             </div>
           </div>

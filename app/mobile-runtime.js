@@ -17,8 +17,7 @@
       editLineAriaStart: "Edit line", editLineAriaEnd: "",
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
-      heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~", advancedSettings: "Advanced settings",
-      chineseFontLabel: "Chinese poem font", chineseFontHelp: "Saved on this device."
+      heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~"
     },
     zh: {
       languageLabel: "诗歌语言", languageRule: "5 · 7 · 5 字", languageGroup: "诗歌语言", modeGroup: "生成方式",
@@ -34,8 +33,7 @@
       editLineAriaStart: "编辑第", editLineAriaEnd: "行",
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
-      heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~", advancedSettings: "高级设置",
-      chineseFontLabel: "中文诗歌字体", chineseFontHelp: "选择会保存在此设备上。"
+      heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~"
     },
     ja: {
       languageLabel: "俳句の言語", languageRule: "5 · 7 · 5 音", languageGroup: "俳句の言語", modeGroup: "作句方法",
@@ -53,8 +51,7 @@
       editLineAriaStart: "", editLineAriaEnd: "行目を編集",
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
-      heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~", advancedSettings: "詳細設定",
-      chineseFontLabel: "中国語の詩のフォント", chineseFontHelp: "この端末に保存されます。"
+      heroTitle: "春のささやき、", heroTitleAccent: "Haiku-ly~"
     }
   };
 
@@ -76,7 +73,9 @@
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
       intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
-      advancedSettings: "Advanced settings", chineseFontLabel: "Chinese poem font", chineseFontHelp: "Saved on this device. The actual result depends on fonts installed on the device.",
+      styleHeading: "Poem style", fontLabel: "Typeface", fontSizeLabel: "Text size",
+      lineSpacingLabel: "Line spacing", artIntensityLabel: "Painting intensity",
+      styleHelp: "Style choices are saved on this device. A typeface can use its closest fallback when it is not installed.", resetStyle: "Reset style",
       paperRule: "Three lines · modern haiku",
       subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
       subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
@@ -102,7 +101,9 @@
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
       intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
-      advancedSettings: "高级设置", chineseFontLabel: "中文诗歌字体", chineseFontHelp: "选择会保存在此设备上。实际效果取决于设备已安装的字体。",
+      styleHeading: "俳句样式", fontLabel: "字体", fontSizeLabel: "字号",
+      lineSpacingLabel: "行距", artIntensityLabel: "水墨浓度",
+      styleHelp: "样式会保存在此设备上。若设备未安装所选字体，将自动使用最接近的字体。", resetStyle: "重置样式",
       paperRule: "三行 · 现代短俳",
       subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
       subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
@@ -130,7 +131,9 @@
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
       intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
-      advancedSettings: "詳細設定", chineseFontLabel: "中国語の詩のフォント", chineseFontHelp: "この端末に保存されます。実際の表示は端末にインストールされたフォントによって異なります。",
+      styleHeading: "俳句のスタイル", fontLabel: "書体", fontSizeLabel: "文字サイズ",
+      lineSpacingLabel: "行間", artIntensityLabel: "水墨の濃さ",
+      styleHelp: "スタイルはこの端末に保存されます。書体がない場合は近い書体で表示します。", resetStyle: "スタイルをリセット",
       paperRule: "三行 · 現代短俳",
       subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
       subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
@@ -166,28 +169,77 @@
     }
   };
 
-  var CHINESE_FONT_STORAGE_KEY = "haikuly-chinese-font";
-  var CHINESE_FONTS = {
-    hannotate: { label: "Hannotate", family: '"Hannotate SC", "Hannotate", "手札", cursive' },
-    pingfang: { label: "PingFang SC", family: '"PingFang SC", "Hiragino Sans GB", sans-serif' },
-    fangsong: { label: "Fangsong", family: '"Fangsong", "STFangsong", "仿宋", serif' },
-    harmonyos: { label: "HarmonyOS Sans SC", family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif' }
+  var POEM_STYLE_STORAGE_KEY = "haikuly-poem-styles-v1";
+  var POEM_FONTS = {
+    en: [
+      { id: "cormorant", label: "Cormorant", family: 'var(--font-poem-en), "Cormorant Garamond", Georgia, serif' },
+      { id: "georgia", label: "Georgia", family: 'Georgia, "Times New Roman", serif' },
+      { id: "lato", label: "Lato", family: 'var(--font-lato), Lato, Arial, sans-serif' },
+      { id: "dancing", label: "Dancing Script", family: 'var(--font-dancing-script), "Dancing Script", cursive' },
+      { id: "geist", label: "Geist", family: 'var(--font-geist-sans), Arial, sans-serif' }
+    ],
+    zh: [
+      { id: "hannotate", label: "Hannotate", family: '"Hannotate SC", Hannotate, "手札", cursive' },
+      { id: "fangsong", label: "Fangsong", family: 'Fangsong, STFangsong, "仿宋", serif' },
+      { id: "harmonyos", label: "HarmonyOS Sans SC", family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif' },
+      { id: "pingfang", label: "PingFang SC", family: '"PingFang SC", "Hiragino Sans GB", sans-serif' }
+    ],
+    ja: [
+      { id: "shippori", label: "Shippori Mincho", family: 'var(--font-poem-ja), "Shippori Mincho", "Yu Mincho", serif' },
+      { id: "yu-mincho", label: "Yu Mincho", family: '"Yu Mincho", YuMincho, "Hiragino Mincho ProN", serif' },
+      { id: "hiragino-mincho", label: "Hiragino Mincho", family: '"Hiragino Mincho ProN", "Hiragino Mincho Pro", serif' },
+      { id: "hiragino-sans", label: "Hiragino Sans", family: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif' },
+      { id: "yu-gothic", label: "Yu Gothic", family: '"Yu Gothic", YuGothic, "Hiragino Kaku Gothic ProN", sans-serif' }
+    ]
+  };
+  var DEFAULT_POEM_STYLES = {
+    en: { fontId: "cormorant", fontSize: 32, lineHeight: 1.35, illustrationOpacity: 0.82 },
+    zh: { fontId: "hannotate", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
+    ja: { fontId: "shippori", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 }
   };
 
-  function storedChineseFont() {
-    try {
-      var value = window.localStorage.getItem(CHINESE_FONT_STORAGE_KEY);
-      return value && CHINESE_FONTS[value] ? value : "hannotate";
-    } catch {
-      return "hannotate";
+  function clamp(value, minimum, maximum) { return Math.min(maximum, Math.max(minimum, value)); }
+  function fontFor(language, fontId) {
+    var fonts = POEM_FONTS[language] || POEM_FONTS.en;
+    for (var index = 0; index < fonts.length; index += 1) {
+      if (fonts[index].id === fontId) return fonts[index];
     }
+    return fonts[0];
+  }
+  function normalizedPoemStyles(value) {
+    var source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    var result = {};
+    ["en", "zh", "ja"].forEach(function (language) {
+      var defaults = DEFAULT_POEM_STYLES[language];
+      var candidate = source[language] && typeof source[language] === "object" ? source[language] : {};
+      var font = fontFor(language, candidate.fontId);
+      result[language] = {
+        fontId: font.id,
+        fontSize: typeof candidate.fontSize === "number" && isFinite(candidate.fontSize) ? clamp(candidate.fontSize, 16, 44) : defaults.fontSize,
+        lineHeight: typeof candidate.lineHeight === "number" && isFinite(candidate.lineHeight) ? clamp(candidate.lineHeight, 1.1, 2) : defaults.lineHeight,
+        illustrationOpacity: typeof candidate.illustrationOpacity === "number" && isFinite(candidate.illustrationOpacity)
+          ? clamp(candidate.illustrationOpacity, 0.35, 1) : defaults.illustrationOpacity
+      };
+    });
+    return result;
+  }
+  function storedPoemStyles() {
+    try {
+      var value = window.localStorage.getItem(POEM_STYLE_STORAGE_KEY);
+      return normalizedPoemStyles(value ? JSON.parse(value) : null);
+    } catch {
+      return normalizedPoemStyles(null);
+    }
+  }
+  function savePoemStyles() {
+    try { window.localStorage.setItem(POEM_STYLE_STORAGE_KEY, JSON.stringify(state.poemStyles)); } catch {}
   }
 
   var state = {
     language: "en", mode: "random", keyword: "", error: "", haiku: null,
     haikuLanguage: "en", haikuForm: "modern", generating: false,
     editing: false, displayLines: null, recentLines: { en: [], zh: [], ja: [] },
-    chineseFont: storedChineseFont(), advancedOpen: false
+    poemStyles: storedPoemStyles()
   };
 
   function publishState() {
@@ -202,8 +254,7 @@
       generating: state.generating,
       editing: state.editing,
       displayLines: state.displayLines,
-      chineseFont: state.chineseFont,
-      advancedOpen: state.advancedOpen
+      poemStyles: state.poemStyles
     };
   }
 
@@ -239,6 +290,64 @@
     symbol.setAttribute("aria-hidden", "true");
     symbol.textContent = "↗";
     button.appendChild(symbol);
+  }
+
+  function styleLanguage() {
+    return state.haiku ? (state.haikuLanguage || state.language) : state.language;
+  }
+
+  function renderPoemStyleControls(current) {
+    if (!isModernApp()) return;
+    var language = styleLanguage();
+    var style = state.poemStyles[language];
+    var font = fontFor(language, style.fontId);
+    var paper = byId("poem-paper");
+    if (paper) {
+      paper.style.setProperty("--poem-font", font.family);
+      paper.style.setProperty("--poem-font-size", String(style.fontSize) + "px");
+      paper.style.setProperty("--poem-line-height", String(style.lineHeight));
+      paper.style.setProperty("--illustration-opacity", String(style.illustrationOpacity));
+      paper.classList.toggle("is-editing", state.editing);
+    }
+    var panel = byId("haiku-edit-panel");
+    if (panel) panel.hidden = !state.editing;
+    setText(byId("poem-style-heading"), current.styleHeading);
+    setText(byId("poem-font-label"), current.fontLabel);
+    setText(byId("poem-font-size-label"), current.fontSizeLabel);
+    setText(byId("poem-line-height-label"), current.lineSpacingLabel);
+    setText(byId("poem-art-opacity-label"), current.artIntensityLabel);
+    setText(byId("poem-style-help"), current.styleHelp);
+    setText(byId("reset-poem-style"), current.resetStyle);
+
+    var fontSwitch = document.querySelector(".poem-font-switch");
+    if (fontSwitch && fontSwitch.getAttribute("data-language") !== language) {
+      while (fontSwitch.firstChild) fontSwitch.removeChild(fontSwitch.firstChild);
+      var fonts = POEM_FONTS[language];
+      for (var index = 0; index < fonts.length; index += 1) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("data-poem-font", fonts[index].id);
+        button.style.fontFamily = fonts[index].family;
+        button.textContent = fonts[index].label;
+        fontSwitch.appendChild(button);
+      }
+      fontSwitch.setAttribute("data-language", language);
+    }
+    var fontButtons = document.querySelectorAll("[data-poem-font]");
+    for (var fontIndex = 0; fontIndex < fontButtons.length; fontIndex += 1) {
+      var active = fontButtons[fontIndex].getAttribute("data-poem-font") === style.fontId;
+      fontButtons[fontIndex].className = active ? "active" : "";
+      fontButtons[fontIndex].setAttribute("aria-pressed", active ? "true" : "false");
+    }
+    var fontSizeInput = document.querySelector('[data-poem-style="fontSize"]');
+    var lineHeightInput = document.querySelector('[data-poem-style="lineHeight"]');
+    var artOpacityInput = document.querySelector('[data-poem-style="illustrationOpacity"]');
+    if (fontSizeInput) fontSizeInput.value = String(style.fontSize);
+    if (lineHeightInput) lineHeightInput.value = String(style.lineHeight);
+    if (artOpacityInput) artOpacityInput.value = String(style.illustrationOpacity);
+    setText(byId("poem-font-size-output"), String(style.fontSize) + "px");
+    setText(byId("poem-line-height-output"), Number(style.lineHeight).toFixed(2));
+    setText(byId("poem-art-opacity-output"), String(Math.round(style.illustrationOpacity * 100)) + "%");
   }
 
   function updateControls() {
@@ -282,9 +391,6 @@
     var languageGroup = document.querySelector(".language-switch");
     var formGroup = document.querySelector(".haiku-form-switch");
     var modeGroup = document.querySelector(".mode-switch");
-    var advancedToggle = byId("advanced-settings-toggle");
-    var advancedPanel = byId("advanced-settings-panel");
-    var appRoot = byId("modern-short-haiku-app");
     var studio = document.querySelector(".studio");
     if (studio) studio.setAttribute("aria-label", current.pageTitle);
     var home = byId("brand-home");
@@ -298,26 +404,7 @@
       setText(formGroup.querySelector('[data-haiku-form="modern"]'), V23_FORM_COPY[state.language].modern);
     }
     if (modeGroup) modeGroup.setAttribute("aria-label", current.modeGroup);
-    if (advancedToggle && isModernApp()) {
-      advancedToggle.setAttribute("aria-expanded", state.advancedOpen ? "true" : "false");
-      setText(byId("advanced-settings-label"), current.advancedSettings);
-    }
-    if (advancedPanel && isModernApp()) advancedPanel.hidden = !state.advancedOpen;
-    if (appRoot && isModernApp() && CHINESE_FONTS[state.chineseFont]) {
-      appRoot.style.setProperty("--chinese-poem-font", CHINESE_FONTS[state.chineseFont].family);
-    }
-    var chineseFontLabel = byId("chinese-font-label");
-    var chineseFontCurrent = byId("chinese-font-current");
-    var chineseFontHelp = byId("chinese-font-help");
-    if (chineseFontLabel) setText(chineseFontLabel, current.chineseFontLabel);
-    if (chineseFontCurrent && CHINESE_FONTS[state.chineseFont]) setText(chineseFontCurrent, CHINESE_FONTS[state.chineseFont].label);
-    if (chineseFontHelp) setText(chineseFontHelp, current.chineseFontHelp);
-    var chineseFontButtons = document.querySelectorAll("[data-chinese-font]");
-    for (index = 0; index < chineseFontButtons.length; index += 1) {
-      var chineseFontActive = chineseFontButtons[index].getAttribute("data-chinese-font") === state.chineseFont;
-      chineseFontButtons[index].className = chineseFontActive ? "active" : "";
-      chineseFontButtons[index].setAttribute("aria-pressed", chineseFontActive ? "true" : "false");
-    }
+    renderPoemStyleControls(current);
     setButtonCopy(document.querySelector('[data-mode="random"]'), "✦", current.randomMode);
     setButtonCopy(document.querySelector('[data-mode="keyword"]'), "⌁", current.keywordMode);
 
@@ -345,11 +432,13 @@
     if (save) {
       save.setAttribute("aria-label", current.saveAria);
       setText(save, current.save);
+      save.disabled = !state.haiku || state.editing;
     }
     var editButton = byId("edit-haiku");
     if (editButton) {
       editButton.disabled = !state.haiku || state.generating;
       editButton.setAttribute("aria-pressed", state.editing ? "true" : "false");
+      editButton.setAttribute("aria-expanded", state.editing ? "true" : "false");
       setText(editButton, state.editing ? current.done : current.edit);
     }
     var revertButton = byId("revert-haiku");
@@ -1016,7 +1105,8 @@
       context.fillRect(0, 0, width, height);
       var art = paper.querySelector(".ink-wash-canvas");
       if (art && art.width > 0) {
-        context.globalAlpha = 0.82;
+        var artOpacity = parseFloat(window.getComputedStyle(art).opacity);
+        context.globalAlpha = isFinite(artOpacity) ? artOpacity : 0.82;
         context.drawImage(art, 0, 0, width, height);
         context.globalAlpha = 1;
       }
@@ -1237,19 +1327,15 @@
       return;
     }
     if (lineMenu && !lineMenu.contains(event.target)) closeLineMenu();
-    var advancedToggleButton = closestWithAttribute(event.target, "data-advanced-settings-toggle");
-    if (advancedToggleButton) {
+    var poemFontButton = closestWithAttribute(event.target, "data-poem-font");
+    if (poemFontButton) {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
-      state.advancedOpen = !state.advancedOpen;
-      updateControls(); return;
-    }
-    var chineseFontButton = closestWithAttribute(event.target, "data-chinese-font");
-    if (chineseFontButton) {
-      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
-      var nextChineseFont = chineseFontButton.getAttribute("data-chinese-font");
-      if (nextChineseFont && CHINESE_FONTS[nextChineseFont]) {
-        state.chineseFont = nextChineseFont;
-        try { window.localStorage.setItem(CHINESE_FONT_STORAGE_KEY, nextChineseFont); } catch {}
+      var nextFont = poemFontButton.getAttribute("data-poem-font");
+      var fontLanguage = styleLanguage();
+      var resolvedFont = fontFor(fontLanguage, nextFont);
+      if (nextFont && resolvedFont.id === nextFont) {
+        state.poemStyles[fontLanguage].fontId = nextFont;
+        savePoemStyles();
         updateControls();
       }
       return;
@@ -1284,6 +1370,12 @@
     if (idButton && idButton.id === "revert-haiku") {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); revertEdit(); return;
     }
+    if (idButton && idButton.id === "reset-poem-style") {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      var resetLanguage = styleLanguage();
+      state.poemStyles[resetLanguage] = normalizedPoemStyles(null)[resetLanguage];
+      savePoemStyles(); updateControls(); return;
+    }
     if (idButton && idButton.id === "save-haiku") {
       event.preventDefault(); event.stopImmediatePropagation(); activateFallback(); saveHaiku();
     }
@@ -1310,6 +1402,18 @@
         updateLineCounts();
         updateHumanBadge();
         updateControls();
+      }
+      return;
+    }
+    if (target && target.hasAttribute && target.hasAttribute("data-poem-style")) {
+      var styleProperty = target.getAttribute("data-poem-style");
+      var styleValue = Number(target.value);
+      var currentStyleLanguage = styleLanguage();
+      if ((styleProperty === "fontSize" || styleProperty === "lineHeight" || styleProperty === "illustrationOpacity") && isFinite(styleValue)) {
+        state.poemStyles[currentStyleLanguage][styleProperty] = styleValue;
+        state.poemStyles = normalizedPoemStyles(state.poemStyles);
+        savePoemStyles();
+        renderPoemStyleControls(copy());
       }
       return;
     }
