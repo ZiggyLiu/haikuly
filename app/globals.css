@@ -8,6 +8,38 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Haikuly WenKai";
+  src: url("/fonts/chinese/LXGWWenKaiLite-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Haikuly Source Han Serif";
+  src: url("/fonts/chinese/SourceHanSerifCN-VF.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Haikuly Source Han Sans";
+  src: url("/fonts/chinese/SourceHanSansCN-VF.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Haikuly Smiley Sans";
+  src: url("/fonts/chinese/SmileySans-Oblique.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --ink: #26352f;
   --ink-soft: #4f5d55;
@@ -513,7 +545,7 @@ h1[lang="ja"] #hero-title {
 
 /* Generated poems use a language-specific typeface. */
 .poem-lines[lang="zh-CN"] .poem-line p {
-  font-family: var(--poem-font, "Hannotate SC", "Hannotate", "手札", cursive);
+  font-family: var(--poem-font, "Haikuly WenKai", serif);
   font-size: var(--poem-font-size, 24px);
   letter-spacing: 0.02em;
 }

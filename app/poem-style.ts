@@ -15,6 +15,13 @@ export type PoemStyle = {
 
 export const POEM_STYLE_STORAGE_KEY = "haikuly-poem-styles-v1";
 
+const LEGACY_CHINESE_FONT_IDS: Record<string, string> = {
+  hannotate: "wenkai",
+  fangsong: "source-han-serif",
+  harmonyos: "source-han-sans",
+  pingfang: "source-han-sans",
+};
+
 export const POEM_FONT_OPTIONS: Record<Language, readonly PoemFontOption[]> = {
   en: [
     { id: "cormorant", label: "Cormorant", family: 'var(--font-poem-en), "Cormorant Garamond", Georgia, serif' },
@@ -24,10 +31,10 @@ export const POEM_FONT_OPTIONS: Record<Language, readonly PoemFontOption[]> = {
     { id: "geist", label: "Geist", family: 'var(--font-geist-sans), Arial, sans-serif' },
   ],
   zh: [
-    { id: "hannotate", label: "Hannotate", family: '"Hannotate SC", Hannotate, "手札", cursive' },
-    { id: "fangsong", label: "Fangsong", family: 'Fangsong, STFangsong, "仿宋", serif' },
-    { id: "harmonyos", label: "HarmonyOS Sans SC", family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif' },
-    { id: "pingfang", label: "PingFang SC", family: '"PingFang SC", "Hiragino Sans GB", sans-serif' },
+    { id: "wenkai", label: "LXGW WenKai", family: '"Haikuly WenKai", "LXGW WenKai", serif' },
+    { id: "source-han-serif", label: "Source Han Serif", family: '"Haikuly Source Han Serif", "Source Han Serif SC", serif' },
+    { id: "source-han-sans", label: "Source Han Sans", family: '"Haikuly Source Han Sans", "Source Han Sans SC", sans-serif' },
+    { id: "smiley-sans", label: "Smiley Sans", family: '"Haikuly Smiley Sans", "Smiley Sans", sans-serif' },
   ],
   ja: [
     { id: "shippori", label: "Shippori Mincho", family: 'var(--font-poem-ja), "Shippori Mincho", "Yu Mincho", serif' },
@@ -40,7 +47,7 @@ export const POEM_FONT_OPTIONS: Record<Language, readonly PoemFontOption[]> = {
 
 export const DEFAULT_POEM_STYLES: Record<Language, PoemStyle> = {
   en: { fontId: "cormorant", fontSize: 32, lineHeight: 1.35, illustrationOpacity: 0.82 },
-  zh: { fontId: "hannotate", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
+  zh: { fontId: "wenkai", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
   ja: { fontId: "shippori", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
 };
 
@@ -64,8 +71,10 @@ export function readPoemStyles(value: unknown): Record<Language, PoemStyle> {
   return (Object.keys(DEFAULT_POEM_STYLES) as Language[]).reduce((styles, language) => {
     const defaults = DEFAULT_POEM_STYLES[language];
     const candidate = source[language] ?? {};
-    const fontId = typeof candidate.fontId === "string" && POEM_FONT_OPTIONS[language].some((font) => font.id === candidate.fontId)
-      ? candidate.fontId
+    const requestedFontId = typeof candidate.fontId === "string" ? candidate.fontId : defaults.fontId;
+    const migratedFontId = language === "zh" ? LEGACY_CHINESE_FONT_IDS[requestedFontId] ?? requestedFontId : requestedFontId;
+    const fontId = POEM_FONT_OPTIONS[language].some((font) => font.id === migratedFontId)
+      ? migratedFontId
       : defaults.fontId;
     styles[language] = {
       fontId,

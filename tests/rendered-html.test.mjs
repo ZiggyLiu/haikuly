@@ -343,6 +343,10 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(styles, /\.sun-seal-label[\s\S]*color:\s*rgba\(95, 105, 99, 0\.32\)/);
   assert.match(styles, /\.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
   assert.match(styles, /@font-face[\s\S]*font-family:\s*"DouyinSans"[\s\S]*DouyinSansBold\.ttf/);
+  assert.match(styles, /font-family:\s*"Haikuly WenKai"[\s\S]*LXGWWenKaiLite-Regular\.ttf/);
+  assert.match(styles, /font-family:\s*"Haikuly Source Han Serif"[\s\S]*SourceHanSerifCN-VF\.woff2/);
+  assert.match(styles, /font-family:\s*"Haikuly Source Han Sans"[\s\S]*SourceHanSansCN-VF\.woff2/);
+  assert.match(styles, /font-family:\s*"Haikuly Smiley Sans"[\s\S]*SmileySans-Oblique\.woff2/);
   assert.match(styles, /\.poem-lines\[lang="zh-CN"\] \.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
   assert.match(styles, /\.poem-lines\[lang="ja"\] \.poem-line p[\s\S]*font-family:\s*var\(--poem-font/);
   assert.match(page, /id="haiku-edit-panel"/);
@@ -351,10 +355,15 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(page, /data-poem-style="illustrationOpacity"/);
   assert.doesNotMatch(page, /href="\/font-tester"/);
   assert.match(poemStyle, /POEM_STYLE_STORAGE_KEY/);
-  assert.match(poemStyle, /id: "hannotate"/);
-  assert.match(poemStyle, /id: "fangsong"/);
-  assert.match(poemStyle, /id: "harmonyos"/);
-  assert.match(poemStyle, /id: "pingfang"/);
+  assert.match(poemStyle, /id: "wenkai"/);
+  assert.match(poemStyle, /id: "source-han-serif"/);
+  assert.match(poemStyle, /id: "source-han-sans"/);
+  assert.match(poemStyle, /id: "smiley-sans"/);
+  assert.match(poemStyle, /LEGACY_CHINESE_FONT_IDS/);
+  assert.match(poemStyle, /hannotate: "wenkai"/);
+  assert.match(poemStyle, /fangsong: "source-han-serif"/);
+  assert.match(poemStyle, /harmonyos: "source-han-sans"/);
+  assert.match(poemStyle, /pingfang: "source-han-sans"/);
   assert.match(poemStyle, /id: "cormorant"/);
   assert.match(poemStyle, /id: "dancing"/);
   assert.match(poemStyle, /id: "shippori"/);
@@ -371,7 +380,9 @@ test("includes both generator modes and removes starter assets", async () => {
   assert.match(layout, /Cormorant_Garamond/);
   assert.doesNotMatch(layout, /Liu_Jian_Mao_Cao/);
   assert.match(layout, /Shippori_Mincho/);
+  assert.match(page, /document\.fonts\.load/);
   assert.match(page, /document\.fonts\.ready/);
+  assert.match(mobileRuntime, /document\.fonts\.load/);
   assert.match(mobileRuntime, /document\.fonts\.ready/);
   assert.match(styles, /\.poem-paper\.has-illustration \.poem-line p \{[\s\S]*?font-weight:\s*400/);
   assert.match(styles, /\.footer-contact/);
@@ -420,6 +431,13 @@ test("includes both generator modes and removes starter assets", async () => {
   await access(new URL("public/og.png", projectRoot));
   await access(new URL("public/fonts/DouyinSansBold.ttf", projectRoot));
   await access(new URL("public/fonts/OFL.txt", projectRoot));
+  await access(new URL("public/fonts/chinese/LXGWWenKaiLite-Regular.ttf", projectRoot));
+  await access(new URL("public/fonts/chinese/SourceHanSerifCN-VF.woff2", projectRoot));
+  await access(new URL("public/fonts/chinese/SourceHanSansCN-VF.woff2", projectRoot));
+  await access(new URL("public/fonts/chinese/SmileySans-Oblique.woff2", projectRoot));
+  await access(new URL("public/fonts/licenses/LXGW-WenKai-Lite-OFL.txt", projectRoot));
+  await access(new URL("public/fonts/licenses/Source-Han-OFL.txt", projectRoot));
+  await access(new URL("public/fonts/licenses/Smiley-Sans-OFL.txt", projectRoot));
   await access(new URL(".env.example", projectRoot));
 });
 

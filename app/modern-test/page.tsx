@@ -139,7 +139,7 @@ const UI_COPY: Record<Language, {
     fontSizeLabel: "Text size",
     lineSpacingLabel: "Line spacing",
     artIntensityLabel: "Painting intensity",
-    styleHelp: "Style choices are saved on this device. A typeface can use its closest fallback when it is not installed.",
+    styleHelp: "Style choices are saved on this device. Chinese typefaces are included with Haikuly for consistent display across devices.",
     resetStyle: "Reset style",
   },
   zh: {
@@ -199,7 +199,7 @@ const UI_COPY: Record<Language, {
     fontSizeLabel: "字号",
     lineSpacingLabel: "行距",
     artIntensityLabel: "水墨浓度",
-    styleHelp: "样式会保存在此设备上。若设备未安装所选字体，将自动使用最接近的字体。",
+    styleHelp: "样式会保存在此设备上。中文字体已随 Haikuly 提供，可在不同设备上保持一致。",
     resetStyle: "重置样式",
   },
   ja: {
@@ -259,7 +259,7 @@ const UI_COPY: Record<Language, {
     fontSizeLabel: "文字サイズ",
     lineSpacingLabel: "行間",
     artIntensityLabel: "水墨の濃さ",
-    styleHelp: "スタイルはこの端末に保存されます。書体がない場合は近い書体で表示します。",
+    styleHelp: "スタイルはこの端末に保存されます。中国語書体は Haikuly に同梱され、端末間で一貫して表示されます。",
     resetStyle: "スタイルをリセット",
   },
 };
@@ -314,6 +314,17 @@ function setCanvasFont(context: CanvasRenderingContext2D, style: CSSStyleDeclara
   context.fillStyle = style.color;
   context.textAlign = "left";
   context.textBaseline = "top";
+}
+
+async function waitForPaperFonts(paper: HTMLElement) {
+  if (!("fonts" in document)) return;
+  const poemLine = paper.querySelector<HTMLElement>(".poem-line p");
+  if (poemLine) {
+    const style = window.getComputedStyle(poemLine);
+    const font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    await document.fonts.load(font, poemLine.textContent ?? "");
+  }
+  await document.fonts.ready;
 }
 
 function elementPosition(element: Element, paperBounds: DOMRect) {
@@ -594,7 +605,7 @@ export default function ModernShortHaikuTest() {
     if (!haiku || !paper) return;
 
     try {
-      if ("fonts" in document) await document.fonts.ready;
+      await waitForPaperFonts(paper);
       const paperBounds = paper.getBoundingClientRect();
       const width = Math.round(paperBounds.width);
       const height = Math.round(paperBounds.height);
@@ -986,7 +997,6 @@ export default function ModernShortHaikuTest() {
                       aria-pressed={poemStyle.fontId === font.id}
                       onClick={() => updatePoemStyle({ fontId: font.id })}
                       data-poem-font={font.id}
-                      style={{ fontFamily: font.family }}
                     >
                       {font.label}
                     </button>

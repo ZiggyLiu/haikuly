@@ -75,7 +75,7 @@
       intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
       styleHeading: "Poem style", fontLabel: "Typeface", fontSizeLabel: "Text size",
       lineSpacingLabel: "Line spacing", artIntensityLabel: "Painting intensity",
-      styleHelp: "Style choices are saved on this device. A typeface can use its closest fallback when it is not installed.", resetStyle: "Reset style",
+      styleHelp: "Style choices are saved on this device. Chinese typefaces are included with Haikuly for consistent display across devices.", resetStyle: "Reset style",
       paperRule: "Three lines · modern haiku",
       subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
       subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
@@ -103,7 +103,7 @@
       intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
       styleHeading: "俳句样式", fontLabel: "字体", fontSizeLabel: "字号",
       lineSpacingLabel: "行距", artIntensityLabel: "水墨浓度",
-      styleHelp: "样式会保存在此设备上。若设备未安装所选字体，将自动使用最接近的字体。", resetStyle: "重置样式",
+      styleHelp: "样式会保存在此设备上。中文字体已随 Haikuly 提供，可在不同设备上保持一致。", resetStyle: "重置样式",
       paperRule: "三行 · 现代短俳",
       subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
       subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
@@ -133,7 +133,7 @@
       intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
       styleHeading: "俳句のスタイル", fontLabel: "書体", fontSizeLabel: "文字サイズ",
       lineSpacingLabel: "行間", artIntensityLabel: "水墨の濃さ",
-      styleHelp: "スタイルはこの端末に保存されます。書体がない場合は近い書体で表示します。", resetStyle: "スタイルをリセット",
+      styleHelp: "スタイルはこの端末に保存されます。中国語書体は Haikuly に同梱され、端末間で一貫して表示されます。", resetStyle: "スタイルをリセット",
       paperRule: "三行 · 現代短俳",
       subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
       subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
@@ -170,6 +170,12 @@
   };
 
   var POEM_STYLE_STORAGE_KEY = "haikuly-poem-styles-v1";
+  var LEGACY_CHINESE_FONT_IDS = {
+    hannotate: "wenkai",
+    fangsong: "source-han-serif",
+    harmonyos: "source-han-sans",
+    pingfang: "source-han-sans"
+  };
   var POEM_FONTS = {
     en: [
       { id: "cormorant", label: "Cormorant", family: 'var(--font-poem-en), "Cormorant Garamond", Georgia, serif' },
@@ -179,10 +185,10 @@
       { id: "geist", label: "Geist", family: 'var(--font-geist-sans), Arial, sans-serif' }
     ],
     zh: [
-      { id: "hannotate", label: "Hannotate", family: '"Hannotate SC", Hannotate, "手札", cursive' },
-      { id: "fangsong", label: "Fangsong", family: 'Fangsong, STFangsong, "仿宋", serif' },
-      { id: "harmonyos", label: "HarmonyOS Sans SC", family: '"HarmonyOS Sans SC", "HarmonyOS Sans", sans-serif' },
-      { id: "pingfang", label: "PingFang SC", family: '"PingFang SC", "Hiragino Sans GB", sans-serif' }
+      { id: "wenkai", label: "LXGW WenKai", family: '"Haikuly WenKai", "LXGW WenKai", serif' },
+      { id: "source-han-serif", label: "Source Han Serif", family: '"Haikuly Source Han Serif", "Source Han Serif SC", serif' },
+      { id: "source-han-sans", label: "Source Han Sans", family: '"Haikuly Source Han Sans", "Source Han Sans SC", sans-serif' },
+      { id: "smiley-sans", label: "Smiley Sans", family: '"Haikuly Smiley Sans", "Smiley Sans", sans-serif' }
     ],
     ja: [
       { id: "shippori", label: "Shippori Mincho", family: 'var(--font-poem-ja), "Shippori Mincho", "Yu Mincho", serif' },
@@ -194,12 +200,13 @@
   };
   var DEFAULT_POEM_STYLES = {
     en: { fontId: "cormorant", fontSize: 32, lineHeight: 1.35, illustrationOpacity: 0.82 },
-    zh: { fontId: "hannotate", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
+    zh: { fontId: "wenkai", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 },
     ja: { fontId: "shippori", fontSize: 24, lineHeight: 1.5, illustrationOpacity: 0.82 }
   };
 
   function clamp(value, minimum, maximum) { return Math.min(maximum, Math.max(minimum, value)); }
   function fontFor(language, fontId) {
+    if (language === "zh" && LEGACY_CHINESE_FONT_IDS[fontId]) fontId = LEGACY_CHINESE_FONT_IDS[fontId];
     var fonts = POEM_FONTS[language] || POEM_FONTS.en;
     for (var index = 0; index < fonts.length; index += 1) {
       if (fonts[index].id === fontId) return fonts[index];
@@ -327,7 +334,6 @@
         var button = document.createElement("button");
         button.type = "button";
         button.setAttribute("data-poem-font", fonts[index].id);
-        button.style.fontFamily = fonts[index].family;
         button.textContent = fonts[index].label;
         fontSwitch.appendChild(button);
       }
@@ -1085,12 +1091,23 @@
     return { dataUrl: dataUrl, file: new File([bytes], name, { type: "image/png", lastModified: Date.now() }) };
   }
 
+  async function waitForPaperFonts(paper) {
+    if (!document.fonts) return;
+    var poemLine = paper.querySelector(".poem-line p");
+    if (poemLine && document.fonts.load) {
+      var style = window.getComputedStyle(poemLine);
+      var font = style.fontStyle + " " + style.fontWeight + " " + style.fontSize + " " + style.fontFamily;
+      await document.fonts.load(font, poemLine.textContent || "");
+    }
+    if (document.fonts.ready) await document.fonts.ready;
+  }
+
   async function saveHaiku() {
     closeLineMenu();
     var paper = byId("poem-paper");
     if (!state.haiku || !paper) return;
     try {
-      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await waitForPaperFonts(paper);
       var bounds = paper.getBoundingClientRect();
       var width = Math.round(bounds.width);
       var height = Math.round(bounds.height);
