@@ -5,8 +5,9 @@ import { runDailyEmail } from "../lib/daily-email";
 import type { SecretBindings } from "../lib/runtime-config";
 import { handleConfirm, handleSubscribe, handleUnsubscribe } from "../lib/subscription-handlers";
 import { handleFeedback } from "../lib/feedback-handlers";
-import { serveDailyImage } from "../lib/daily-image";
+import { serveDailyImage, serveHappeningImage } from "../lib/daily-image";
 import { isIllustrationRecipe, type Language } from "../app/haiku";
+import { collectActiveTrendRegions, handleHappeningHaiku } from "../lib/trends";
 
 function removeBulkFontPreloads(response: Response): Response {
   const link = response.headers.get("Link");
@@ -31,16 +32,25 @@ function validDailyDate(value: string | null): value is string {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/u.test(value));
 }
 
+function validIssueId(value: string | null): value is string {
+  return Boolean(value && /^[0-9a-f-]{36}$/u.test(value));
+}
+
 async function handleDailyPoem(request: Request, env: Env & SecretBindings): Promise<Response> {
   const url = new URL(request.url);
   const date = url.searchParams.get("date");
+  const issue = url.searchParams.get("issue");
   const language = url.searchParams.get("language");
-  if (request.method !== "GET" || !validDailyDate(date) || !["en", "zh", "ja"].includes(language ?? "")) {
+  if (request.method !== "GET" || (!validDailyDate(date) && !validIssueId(issue)) || !["en", "zh", "ja"].includes(language ?? "")) {
     return Response.json({ error: "invalid_daily_poem_request" }, { status: 400 });
   }
-  const row = await env.DB.prepare(
-    "SELECT poem_json FROM daily_poems WHERE send_date = ? AND language = ? LIMIT 1",
-  ).bind(date, language).first<{ poem_json: string }>();
+  const row = issue
+    ? await env.DB.prepare(
+      "SELECT poem_json FROM happening_issues WHERE id = ? AND language = ? LIMIT 1",
+    ).bind(issue, language).first<{ poem_json: string }>()
+    : await env.DB.prepare(
+      "SELECT poem_json FROM daily_poems WHERE send_date = ? AND language = ? LIMIT 1",
+    ).bind(date, language).first<{ poem_json: string }>();
   if (!row) return Response.json({ error: "daily_poem_not_found" }, { status: 404 });
   try {
     const poem = JSON.parse(row.poem_json) as { lines?: unknown; seed?: unknown; createdAt?: unknown; illustration?: unknown };
@@ -48,7 +58,7 @@ async function handleDailyPoem(request: Request, env: Env & SecretBindings): Pro
       typeof poem.seed !== "number" || typeof poem.createdAt !== "string" || !isIllustrationRecipe(poem.illustration)) {
       return Response.json({ error: "daily_poem_invalid" }, { status: 500 });
     }
-    return Response.json({ date, language: language as Language, poem }, {
+    return Response.json({ ...(issue ? { issue } : { date }), language: language as Language, poem }, {
       headers: { "Cache-Control": "public, max-age=300" },
     });
   } catch {
@@ -111,8 +121,10 @@ const worker = {
     if (pathname === "/api/confirm") return handleConfirm(request, env);
     if (pathname === "/api/unsubscribe") return handleUnsubscribe(request, env);
     if (pathname === "/api/feedback") return handleFeedback(request, env);
+    if (pathname === "/api/happening-haiku") return handleHappeningHaiku(request, env);
     if (pathname === "/api/daily-poem") return handleDailyPoem(request, env);
     if (pathname.startsWith("/daily-images/")) return serveDailyImage(request, env);
+    if (pathname.startsWith("/happening-images/")) return serveHappeningImage(request, env);
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
@@ -132,6 +144,14 @@ const worker = {
   },
 
   async scheduled(controller: ScheduledController, env: Env & SecretBindings): Promise<void> {
+    try {
+      await collectActiveTrendRegions(env, controller.scheduledTime);
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: "trend_collection_run_failed",
+        code: error instanceof Error ? error.message : "unknown",
+      }));
+    }
     await runDailyEmail(env, controller.scheduledTime);
   },
 } satisfies ExportedHandler<Env & SecretBindings>;

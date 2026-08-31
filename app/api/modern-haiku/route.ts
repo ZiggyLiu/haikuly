@@ -274,7 +274,9 @@ function generationRequest(
         content: JSON.stringify({
           task: mode === "keyword"
             ? "Write a modern three-line haiku meaningfully based on the supplied keyword or phrase."
-            : "Choose a fresh, specific moment from contemporary daily life.",
+            : mode === "happening"
+              ? "Write a modern three-line haiku inspired by the supplied current topic. Evoke its mood or imagery rather than summarizing news. Do not invent facts, repeat allegations, use hashtags, or make tragedy playful."
+              : "Choose a fresh, specific moment from contemporary daily life.",
           mode,
           tone,
           language,

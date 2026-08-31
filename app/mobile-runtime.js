@@ -4,7 +4,7 @@
   var COPY = {
     en: {
       languageLabel: "Poem language", languageRule: "5 · 7 · 5 syllables", languageGroup: "Poem language",
-      modeGroup: "Generation mode", randomMode: "By chance", keywordMode: "From a word",
+      modeGroup: "Generation mode", randomMode: "By chance", keywordMode: "From a word", happeningMode: "Happening now",
       keywordPrompt: "What is on your mind?", keywordPlaceholder: "moonlight, first snow, home…",
       keywordError: "Enter a word or short phrase first.",
       emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
@@ -63,7 +63,8 @@
       keywordError: "Enter a word or short phrase first.",
       emptyPoem: "Your next small moment will appear here.", save: "Save Haiku",
       saved: "Saved", saveAria: "Save haiku as a picture", saveError: "The haiku image could not be saved. Please try again.",
-      generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generating: "Writing, reviewing, and painting…",
+      generateRandom: "Write a modern haiku", generateKeyword: "Write my modern haiku", generateHappening: "Write what is happening", generating: "Writing, reviewing, and painting…",
+      trendInspiredBy: "Inspired by what is happening near you", trendWindow: "rolling 24 hours",
       generationError: "DeepSeek could not write a modern short haiku. Please try again.", unreachableError: "DeepSeek could not be reached. Please try again.",
       haikulyThis: "Haikuly this!", copyLine: "Copy", copiedLine: "Copied",
       copyLineError: "Could not copy this line. Please try again.", lineMenuLabel: "Line actions",
@@ -72,26 +73,28 @@
       pageTitle: "Spring Whispers, Haiku-ly~",
       homeAria: "Haiku-ly home", emailAria: "Email Haiku-ly at zhiguoinusa@gmail.com",
       eyebrow: "Make room for a small moment", heroTitle: "Spring Whispers,", heroTitleAccent: "Haiku-ly~",
-      intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
+      intro: "Find a modern three-line poem by chance, begin with a word, or catch a local moment unfolding now.",
       styleHeading: "Poem style", fontLabel: "Typeface", fontSizeLabel: "Text size",
       lineSpacingLabel: "Line spacing", artIntensityLabel: "Painting intensity",
       styleHelp: "Style choices are saved on this device. Chinese typefaces are included with Haikuly for consistent display across devices.", resetStyle: "Reset style",
       paperRule: "Three lines · modern haiku",
-      subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Receive one quiet, three-line poem each day.",
+      subscriptionTitle: "A haiku in your inbox", subscriptionIntro: "Choose a quiet daily poem or one inspired by what is happening near you.",
       subscriptionEmailLabel: "Email address", subscriptionPlaceholder: "you@example.com",
       subscriptionTimezoneLabel: "Delivery timezone",
       subscriptionTimezoneHelp: "Your haiku arrives around 8:00 AM in this timezone. Submit the same email again to change it later.",
+      subscriptionModeLabel: "Daily poem", subscriptionQuiet: "Quiet daily", subscriptionHappening: "Happening now",
       subscriptionButton: "Send confirmation", subscriptionSending: "Sending…",
-      subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+      subscriptionPrivacy: "Your country is detected automatically for local trends. We store only the country and timezone, never your IP address or precise location. Your email is encrypted and you can unsubscribe in one click.",
       subscriptionError: "The subscription could not be started. Please try again."
     },
     zh: {
       languageLabel: "诗歌语言", languageRule: "三行 · 当代中文", languageGroup: "诗歌语言", modeGroup: "生成方式",
-      randomMode: "随机生成", keywordMode: "关键词生成", keywordPrompt: "此刻你在想什么？",
+      randomMode: "随机生成", keywordMode: "关键词生成", happeningMode: "正在发生", keywordPrompt: "此刻你在想什么？",
       keywordPlaceholder: "下班，雨夜，已读不回…", keywordError: "请先输入一个词或短语。",
       emptyPoem: "下一刻诗意将在此浮现。",
       save: "保存俳句", saved: "已保存", saveAria: "将俳句保存为图片", saveError: "无法保存短俳图片，请重试。",
-      generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generating: "正在创作、审校与绘制…",
+      generateRandom: "写一首现代短俳", generateKeyword: "写我的现代短俳", generateHappening: "写此刻正在发生", generating: "正在创作、审校与绘制…",
+      trendInspiredBy: "灵感来自你身边正在发生的事", trendWindow: "过去24小时",
       generationError: "DeepSeek 暂时无法创作现代短俳，请重试。", unreachableError: "暂时无法连接 DeepSeek，请重试。",
       haikulyThis: "以此句再作一首", copyLine: "复制", copiedLine: "已复制",
       copyLineError: "无法复制这一句，请重试。", lineMenuLabel: "这一句的操作",
@@ -100,27 +103,29 @@
       pageTitle: "春风十里，Haiku-ly~",
       homeAria: "返回 Haiku-ly 首页", emailAria: "发送邮件至 zhiguoinusa@gmail.com 联系 Haiku-ly",
       eyebrow: "给一个小小的瞬间留点位置", heroTitle: "春风十里，", heroTitleAccent: "Haiku-ly~",
-      intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
+      intro: "随机发现一首现代短俳，从心头的一个词开始，或捕捉身边此刻正在发生的事。",
       styleHeading: "俳句样式", fontLabel: "字体", fontSizeLabel: "字号",
       lineSpacingLabel: "行距", artIntensityLabel: "水墨浓度",
       styleHelp: "样式会保存在此设备上。中文字体已随 Haikuly 提供，可在不同设备上保持一致。", resetStyle: "重置样式",
       paperRule: "三行 · 现代短俳",
-      subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "每天收到一首安静的三行短俳。",
+      subscriptionTitle: "每日一首，寄到邮箱", subscriptionIntro: "选择安静日常，或每天收到一首由身边热点启发的短俳。",
       subscriptionEmailLabel: "邮箱地址", subscriptionPlaceholder: "you@example.com",
       subscriptionTimezoneLabel: "投递时区",
       subscriptionTimezoneHelp: "俳句将在此时区每天上午 8 点左右送达。之后可用同一邮箱再次提交来更改。",
+      subscriptionModeLabel: "每日俳句", subscriptionQuiet: "安静日常", subscriptionHappening: "正在发生",
       subscriptionButton: "发送确认邮件", subscriptionSending: "正在发送…",
-      subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+      subscriptionPrivacy: "系统会自动识别国家或地区来提供本地热点。我们只保存国家代码和时区，不保存 IP 地址或精确位置。邮箱将加密保存，并可一键取消订阅。",
       subscriptionError: "暂时无法开始订阅，请重试。"
     },
     ja: {
       languageLabel: "詩の言語", languageRule: "三行 · 現代語", languageGroup: "詩の言語", modeGroup: "作句方法",
-      randomMode: "おまかせ", keywordMode: "言葉から", keywordPrompt: "今、心にあるものは？",
+      randomMode: "おまかせ", keywordMode: "言葉から", happeningMode: "今起きていること", keywordPrompt: "今、心にあるものは？",
       keywordPlaceholder: "終電、通知、雨の夜…", keywordError: "言葉または短いフレーズを入力してください。",
       emptyPoem: "次の小さな瞬間がここに現れます。",
       save: "俳句を保存", saved: "保存しました", saveAria: "俳句を画像として保存",
       saveError: "短俳の画像を保存できませんでした。もう一度お試しください。", generateRandom: "現代短俳を詠む",
-      generateKeyword: "私の現代短俳を詠む", generating: "作句・推敲・描画中…",
+      generateKeyword: "私の現代短俳を詠む", generateHappening: "今を詠む", generating: "作句・推敲・描画中…",
+      trendInspiredBy: "身近で今起きていることから着想", trendWindow: "過去24時間",
       generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
       unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
       haikulyThis: "この句で詠む", copyLine: "コピー", copiedLine: "コピーしました",
@@ -130,17 +135,18 @@
       pageTitle: "春のささやき、Haiku-ly~",
       homeAria: "Haiku-ly ホームへ戻る", emailAria: "zhiguoinusa@gmail.com にメールで Haiku-ly へ連絡",
       eyebrow: "小さな瞬間のために余白を", heroTitle: "今この時を、", heroTitleAccent: "Haiku-ly~",
-      intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
+      intro: "おまかせ、一つの言葉、または身近で今起きていることから、現代の三行詩を見つけましょう。",
       styleHeading: "俳句のスタイル", fontLabel: "書体", fontSizeLabel: "文字サイズ",
       lineSpacingLabel: "行間", artIntensityLabel: "水墨の濃さ",
       styleHelp: "スタイルはこの端末に保存されます。中国語書体は Haikuly に同梱され、端末間で一貫して表示されます。", resetStyle: "スタイルをリセット",
       paperRule: "三行 · 現代短俳",
-      subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
+      subscriptionTitle: "毎日一篇をメールで", subscriptionIntro: "静かな日常か、身近な今から着想した一篇を選べます。",
       subscriptionEmailLabel: "メールアドレス", subscriptionPlaceholder: "you@example.com",
       subscriptionTimezoneLabel: "配信タイムゾーン",
       subscriptionTimezoneHelp: "このタイムゾーンの午前8時ごろに届きます。後から同じメールアドレスで変更できます。",
+      subscriptionModeLabel: "毎日の俳句", subscriptionQuiet: "静かな日常", subscriptionHappening: "今起きていること",
       subscriptionButton: "確認メールを送る", subscriptionSending: "送信中…",
-      subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
+      subscriptionPrivacy: "地域の話題のため国や地域を自動判定します。保存するのは国コードとタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
       subscriptionError: "購読を開始できませんでした。もう一度お試しください。"
     }
   };
@@ -246,7 +252,7 @@
     language: "en", mode: "random", keyword: "", error: "", haiku: null,
     haikuLanguage: "en", haikuForm: "modern", generating: false,
     editing: false, displayLines: null, recentLines: { en: [], zh: [], ja: [] },
-    poemStyles: storedPoemStyles()
+    poemStyles: storedPoemStyles(), subscriptionMode: "happening_now", trend: null
   };
 
   function publishState() {
@@ -261,7 +267,9 @@
       generating: state.generating,
       editing: state.editing,
       displayLines: state.displayLines,
-      poemStyles: state.poemStyles
+      poemStyles: state.poemStyles,
+      subscriptionMode: state.subscriptionMode,
+      trend: state.trend
     };
   }
 
@@ -356,6 +364,36 @@
     setText(byId("poem-art-opacity-output"), String(Math.round(style.illustrationOpacity * 100)) + "%");
   }
 
+  function renderTrendAttribution(current) {
+    if (!isModernApp()) return;
+    var existing = byId("trend-attribution");
+    if (!state.trend) {
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      return;
+    }
+    var node = existing;
+    if (!node) {
+      node = document.createElement("p");
+      node.id = "trend-attribution";
+      node.className = "trend-attribution";
+      var paper = byId("poem-paper");
+      if (paper && paper.parentNode) paper.parentNode.insertBefore(node, paper);
+    }
+    while (node.firstChild) node.removeChild(node.firstChild);
+    var label = document.createElement("span");
+    label.textContent = current.trendInspiredBy;
+    var link = document.createElement("a");
+    link.href = state.trend.sourceUrl;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = state.trend.title;
+    var detail = document.createElement("small");
+    detail.textContent = (state.trend.source === "weibo" ? "Weibo" : "Google Trends") + " · " + state.trend.regionLabel + " · " + current.trendWindow;
+    node.appendChild(label);
+    node.appendChild(link);
+    node.appendChild(detail);
+  }
+
   function updateControls() {
     var current = copy();
     var currentForm = selectedFormCopy();
@@ -413,6 +451,8 @@
     renderPoemStyleControls(current);
     setButtonCopy(document.querySelector('[data-mode="random"]'), "✦", current.randomMode);
     setButtonCopy(document.querySelector('[data-mode="keyword"]'), "⌁", current.keywordMode);
+    setButtonCopy(document.querySelector('[data-mode="happening"]'), "◉", current.happeningMode);
+    renderTrendAttribution(current);
 
     setText(byId("keyword-label"), current.keywordPrompt);
     var input = byId("keyword");
@@ -420,6 +460,9 @@
     if (isModernApp()) {
       setText(byId("subscription-title"), current.subscriptionTitle);
       setText(byId("subscription-intro"), current.subscriptionIntro);
+      setText(byId("subscription-mode-label"), current.subscriptionModeLabel);
+      setText(document.querySelector('[data-subscription-mode="random"]'), current.subscriptionQuiet);
+      setText(document.querySelector('[data-subscription-mode="happening_now"]'), current.subscriptionHappening);
       setText(byId("subscription-email-label"), current.subscriptionEmailLabel);
       setText(byId("subscription-timezone-label"), current.subscriptionTimezoneLabel);
       setText(byId("subscription-timezone-help"), current.subscriptionTimezoneHelp);
@@ -427,6 +470,12 @@
       setText(byId("subscription-submit"), current.subscriptionButton);
       var subscriptionInput = byId("subscription-email");
       if (subscriptionInput) subscriptionInput.setAttribute("placeholder", current.subscriptionPlaceholder);
+      var subscriptionButtons = document.querySelectorAll("[data-subscription-mode]");
+      for (var subscriptionIndex = 0; subscriptionIndex < subscriptionButtons.length; subscriptionIndex += 1) {
+        var subscriptionActive = subscriptionButtons[subscriptionIndex].getAttribute("data-subscription-mode") === state.subscriptionMode;
+        subscriptionButtons[subscriptionIndex].className = subscriptionActive ? "active" : "";
+        subscriptionButtons[subscriptionIndex].setAttribute("aria-pressed", subscriptionActive ? "true" : "false");
+      }
     }
 
     var keywordField = byId("keyword-field");
@@ -475,7 +524,8 @@
     var current = copy();
     var currentForm = selectedFormCopy();
     button.disabled = state.generating;
-    setActionCopy(button, state.generating ? current.generating : (state.mode === "random" ? currentForm.generateRandom : currentForm.generateKeyword));
+    var label = state.mode === "random" ? currentForm.generateRandom : (state.mode === "happening" ? current.generateHappening : currentForm.generateKeyword);
+    setActionCopy(button, state.generating ? current.generating : label);
     publishState();
   }
 
@@ -943,6 +993,7 @@
     state.haikuLanguage = state.language;
     state.displayLines = null;
     state.editing = false;
+    state.trend = null;
     var paper = byId("poem-paper");
     if (paper) {
       paper.classList.remove("has-illustration");
@@ -986,13 +1037,19 @@
     var payload = { mode: state.mode, language: state.language };
     if (state.mode === "keyword") payload.keyword = keyword;
     if (isModernApp() && state.haikuForm === "modern") payload.recentLines = state.recentLines[state.language] || [];
+    if (state.mode === "happening") {
+      try { payload.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { payload.timezone = "UTC"; }
+      payload.locale = navigator.language || state.language;
+      if (state.trend && state.trend.clusterId) payload.excludeClusterIds = [state.trend.clusterId];
+    }
     var request = isModernApp()
-      ? (state.haikuForm === "modern" ? fetchModernHaiku(payload) : fetchV23Haiku(payload))
+      ? (state.haikuForm === "modern" ? (state.mode === "happening" ? fetchHappeningHaiku(payload) : fetchModernHaiku(payload)) : fetchV23Haiku(payload))
       : fetchFormalHaiku(payload);
     request.then(function (response) {
       return response.json().then(function (result) { return { response: response, result: result }; });
     }).then(function (packet) {
       if (!packet.response.ok || !packet.result.haiku) throw new Error("generation");
+      state.trend = packet.result.trend || null;
       renderHaiku(packet.result.haiku, packet.result.language || state.language);
     }).catch(function (error) {
       setError(error && error.message === "generation" ? currentForm.generationError : current.unreachableError);
@@ -1012,6 +1069,14 @@
 
   function fetchModernHaiku(payload) {
     return fetch("/api/modern-haiku", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  function fetchHappeningHaiku(payload) {
+    return fetch("/api/happening-haiku", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -1045,6 +1110,8 @@
         email: emailInput.value,
         language: state.language,
         timezone: timezoneInput.value,
+        locale: navigator.language || state.language,
+        contentMode: state.subscriptionMode,
         website: websiteInput ? websiteInput.value : ""
       })
     }).then(function (response) {
@@ -1364,6 +1431,12 @@
       state.language = languageButton.getAttribute("data-language") || "en";
       setError(""); updateControls(); return;
     }
+    var subscriptionModeButton = closestWithAttribute(event.target, "data-subscription-mode");
+    if (subscriptionModeButton) {
+      event.preventDefault(); event.stopImmediatePropagation(); activateFallback();
+      state.subscriptionMode = subscriptionModeButton.getAttribute("data-subscription-mode") || "happening_now";
+      updateControls(); return;
+    }
     var modeButton = closestWithAttribute(event.target, "data-mode");
     var formButton = closestWithAttribute(event.target, "data-haiku-form");
     if (formButton) {
@@ -1372,12 +1445,14 @@
       var nextForm = formButton.getAttribute("data-haiku-form") || "modern";
       if (nextForm === state.haikuForm) return;
       state.haikuForm = nextForm;
+      if (nextForm === "traditional" && state.mode === "happening") state.mode = "random";
       clearRenderedHaiku(); setError(""); updateControls(); return;
     }
     if (modeButton) {
       event.preventDefault(); event.stopImmediatePropagation();
       activateFallback();
       state.mode = modeButton.getAttribute("data-mode") || "random";
+      if (state.mode === "happening") state.haikuForm = "modern";
       setError(""); updateControls(); return;
     }
     var idButton = closestWithAttribute(event.target, "id");

@@ -1,4 +1,5 @@
 import type { Language } from "../app/haiku";
+import type { SubscriptionContentMode } from "./trends";
 
 export type SubscriberStatus = "pending" | "active" | "unsubscribed";
 
@@ -8,6 +9,10 @@ export type SubscriberRow = {
   email_hash: string;
   language: Language;
   timezone: string;
+  content_mode: SubscriptionContentMode;
+  trend_region: string | null;
+  region_detected_at: string | null;
+  region_detection_method: string | null;
   next_send_at: string | null;
   status: SubscriberStatus;
   confirmation_token: string | null;
@@ -21,7 +26,7 @@ export type SubscriberRow = {
 
 export async function findSubscriberByEmailHash(db: D1Database, emailHash: string) {
   return db.prepare(
-    "SELECT id, email_ciphertext, email_hash, language, timezone, next_send_at, status, confirmation_token, unsubscribe_token, " +
+    "SELECT id, email_ciphertext, email_hash, language, timezone, content_mode, trend_region, region_detected_at, region_detection_method, next_send_at, status, confirmation_token, unsubscribe_token, " +
     "confirmation_sent_at, confirmed_at, unsubscribed_at, created_at, updated_at " +
     "FROM subscription_members WHERE email_hash = ? LIMIT 1",
   ).bind(emailHash).first<SubscriberRow>();
@@ -29,7 +34,7 @@ export async function findSubscriberByEmailHash(db: D1Database, emailHash: strin
 
 export async function findSubscriberById(db: D1Database, id: string) {
   return db.prepare(
-    "SELECT id, email_ciphertext, email_hash, language, timezone, next_send_at, status, confirmation_token, unsubscribe_token, " +
+    "SELECT id, email_ciphertext, email_hash, language, timezone, content_mode, trend_region, region_detected_at, region_detection_method, next_send_at, status, confirmation_token, unsubscribe_token, " +
     "confirmation_sent_at, confirmed_at, unsubscribed_at, created_at, updated_at " +
     "FROM subscription_members WHERE id = ? LIMIT 1",
   ).bind(id).first<SubscriberRow>();
@@ -37,18 +42,22 @@ export async function findSubscriberById(db: D1Database, id: string) {
 
 export async function insertSubscriber(
   db: D1Database,
-  row: Pick<SubscriberRow, "id" | "email_ciphertext" | "email_hash" | "language" | "timezone" | "confirmation_token" | "created_at" | "updated_at">,
+  row: Pick<SubscriberRow, "id" | "email_ciphertext" | "email_hash" | "language" | "timezone" | "content_mode" | "trend_region" | "region_detected_at" | "region_detection_method" | "confirmation_token" | "created_at" | "updated_at">,
 ) {
   await db.prepare(
     "INSERT OR IGNORE INTO subscription_members " +
-    "(id, email_ciphertext, email_hash, language, timezone, status, confirmation_token, created_at, updated_at) " +
-    "VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)",
+    "(id, email_ciphertext, email_hash, language, timezone, content_mode, trend_region, region_detected_at, region_detection_method, status, confirmation_token, created_at, updated_at) " +
+    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)",
   ).bind(
     row.id,
     row.email_ciphertext,
     row.email_hash,
     row.language,
     row.timezone,
+    row.content_mode,
+    row.trend_region,
+    row.region_detected_at,
+    row.region_detection_method,
     row.confirmation_token,
     row.created_at,
     row.updated_at,
@@ -61,13 +70,16 @@ export async function updateActiveSubscriberPreferences(
   emailCiphertext: string,
   language: Language,
   timezone: string,
+  contentMode: SubscriptionContentMode,
+  trendRegion: string,
+  regionDetectedAt: string,
   nextSendAt: string,
   updatedAt: string,
 ) {
   await db.prepare(
-    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, next_send_at = ?, updated_at = ? " +
+    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, content_mode = ?, trend_region = ?, region_detected_at = ?, region_detection_method = 'cloudflare_country', next_send_at = ?, updated_at = ? " +
     "WHERE id = ? AND status = 'active'",
-  ).bind(emailCiphertext, language, timezone, nextSendAt, updatedAt, id).run();
+  ).bind(emailCiphertext, language, timezone, contentMode, trendRegion, regionDetectedAt, nextSendAt, updatedAt, id).run();
 }
 
 export async function preparePendingSubscriber(
@@ -76,14 +88,17 @@ export async function preparePendingSubscriber(
   emailCiphertext: string,
   language: Language,
   timezone: string,
+  contentMode: SubscriptionContentMode,
+  trendRegion: string,
+  regionDetectedAt: string,
   confirmationToken: string,
   updatedAt: string,
 ) {
   await db.prepare(
-    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, next_send_at = NULL, status = 'pending', confirmation_token = ?, " +
+    "UPDATE subscription_members SET email_ciphertext = ?, language = ?, timezone = ?, content_mode = ?, trend_region = ?, region_detected_at = ?, region_detection_method = 'cloudflare_country', next_send_at = NULL, status = 'pending', confirmation_token = ?, " +
     "unsubscribe_token = NULL, confirmation_sent_at = NULL, confirmed_at = NULL, unsubscribed_at = NULL, updated_at = ? " +
     "WHERE id = ?",
-  ).bind(emailCiphertext, language, timezone, confirmationToken, updatedAt, id).run();
+  ).bind(emailCiphertext, language, timezone, contentMode, trendRegion, regionDetectedAt, confirmationToken, updatedAt, id).run();
 }
 
 export async function claimConfirmationSend(
@@ -154,12 +169,12 @@ export async function unsubscribeSubscriber(
 
 export type DueSubscriberRow = Pick<
   SubscriberRow,
-  "id" | "email_ciphertext" | "language" | "timezone" | "next_send_at" | "unsubscribe_token"
+  "id" | "email_ciphertext" | "language" | "timezone" | "content_mode" | "trend_region" | "next_send_at" | "unsubscribe_token"
 >;
 
 export async function listDueSubscribers(db: D1Database, dueAt: string, limit: number) {
   const result = await db.prepare(
-    "SELECT id, email_ciphertext, language, timezone, next_send_at, unsubscribe_token FROM subscription_members " +
+    "SELECT id, email_ciphertext, language, timezone, content_mode, trend_region, next_send_at, unsubscribe_token FROM subscription_members " +
     "WHERE status = 'active' AND unsubscribe_token IS NOT NULL AND next_send_at IS NOT NULL AND next_send_at <= ? " +
     "ORDER BY next_send_at ASC LIMIT ?",
   ).bind(dueAt, limit).all<DueSubscriberRow>();

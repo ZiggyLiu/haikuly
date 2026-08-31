@@ -21,6 +21,16 @@ import {
 } from "../poem-style";
 
 type HaikuForm = "traditional" | "modern";
+type SubscriptionMode = "random" | "happening_now";
+type DisplayedTrend = {
+  clusterId: string;
+  title: string;
+  source: "weibo" | "google_trends_rss";
+  region: string;
+  regionLabel: string;
+  sourceUrl: string;
+  windowHours: 24;
+};
 
 const UI_COPY: Record<Language, {
   languageLabel: string;
@@ -32,6 +42,7 @@ const UI_COPY: Record<Language, {
   modeGroup: string;
   randomMode: string;
   keywordMode: string;
+  happeningMode: string;
   keywordPrompt: string;
   keywordPlaceholder: string;
   keywordError: string;
@@ -42,6 +53,9 @@ const UI_COPY: Record<Language, {
   saveError: string;
   generateRandom: string;
   generateKeyword: string;
+  generateHappening: string;
+  trendInspiredBy: string;
+  trendWindow: string;
   generating: string;
   generationError: string;
   unreachableError: string;
@@ -70,6 +84,9 @@ const UI_COPY: Record<Language, {
   subscriptionPlaceholder: string;
   subscriptionTimezoneLabel: string;
   subscriptionTimezoneHelp: string;
+  subscriptionModeLabel: string;
+  subscriptionQuiet: string;
+  subscriptionHappening: string;
   subscriptionButton: string;
   subscriptionSending: string;
   subscriptionPrivacy: string;
@@ -92,6 +109,7 @@ const UI_COPY: Record<Language, {
     modeGroup: "Generation mode",
     randomMode: "By chance",
     keywordMode: "From a word",
+    happeningMode: "Happening now",
     keywordPrompt: "What is on your mind?",
     keywordPlaceholder: "late train, low battery, home…",
     keywordError: "Enter a word or short phrase first.",
@@ -102,6 +120,9 @@ const UI_COPY: Record<Language, {
     saveError: "The haiku image could not be saved. Please try again.",
     generateRandom: "Write a modern haiku",
     generateKeyword: "Write my modern haiku",
+    generateHappening: "Write what is happening",
+    trendInspiredBy: "Inspired by what is happening near you",
+    trendWindow: "rolling 24 hours",
     generating: "Writing, reviewing, and painting…",
     generationError: "DeepSeek could not write a modern short haiku. Please try again.",
     unreachableError: "DeepSeek could not be reached. Please try again.",
@@ -122,17 +143,20 @@ const UI_COPY: Record<Language, {
     eyebrow: "Make room for a small moment",
     heroTitle: "Spring Whispers,",
     heroAccent: "Haiku-ly~",
-    intro: "Find a modern three-line poem and its quiet ink-wash world by chance, or begin with a word already on your mind.",
+    intro: "Find a modern three-line poem by chance, begin with a word, or catch a local moment unfolding now.",
     paperRule: "Three lines · modern haiku",
     subscriptionTitle: "A haiku in your inbox",
-    subscriptionIntro: "Receive one quiet, three-line poem each day.",
+    subscriptionIntro: "Choose a quiet daily poem or one inspired by what is happening near you.",
     subscriptionEmailLabel: "Email address",
     subscriptionPlaceholder: "you@example.com",
     subscriptionTimezoneLabel: "Delivery timezone",
     subscriptionTimezoneHelp: "Your haiku arrives around 8:00 AM in this timezone. Submit the same email again to change it later.",
+    subscriptionModeLabel: "Daily poem",
+    subscriptionQuiet: "Quiet daily",
+    subscriptionHappening: "Happening now",
     subscriptionButton: "Send confirmation",
     subscriptionSending: "Sending…",
-    subscriptionPrivacy: "Confirmation is required. We store your timezone, not your IP address or precise location. Your email is encrypted, never sold, and you can unsubscribe in one click.",
+    subscriptionPrivacy: "Your country is detected automatically for local trends. We store only the country and timezone, never your IP address or precise location. Your email is encrypted and you can unsubscribe in one click.",
     subscriptionError: "The subscription could not be started. Please try again.",
     styleHeading: "Poem style",
     fontLabel: "Typeface",
@@ -152,6 +176,7 @@ const UI_COPY: Record<Language, {
     modeGroup: "生成方式",
     randomMode: "随机生成",
     keywordMode: "关键词生成",
+    happeningMode: "正在发生",
     keywordPrompt: "此刻你在想什么？",
     keywordPlaceholder: "下班，雨夜，已读不回…",
     keywordError: "请先输入一个词或短语。",
@@ -162,6 +187,9 @@ const UI_COPY: Record<Language, {
     saveError: "无法保存短俳图片，请重试。",
     generateRandom: "写一首现代短俳",
     generateKeyword: "写我的现代短俳",
+    generateHappening: "写此刻正在发生",
+    trendInspiredBy: "灵感来自你身边正在发生的事",
+    trendWindow: "过去24小时",
     generating: "正在创作、审校与绘制…",
     generationError: "DeepSeek 暂时无法创作现代短俳，请重试。",
     unreachableError: "暂时无法连接 DeepSeek，请重试。",
@@ -182,17 +210,20 @@ const UI_COPY: Record<Language, {
     eyebrow: "给一个小小的瞬间留点位置",
     heroTitle: "春风十里，",
     heroAccent: "Haiku-ly~",
-    intro: "随机发现一首现代短俳和它的水墨世界，或从此刻萦绕心头的一个词开始。",
+    intro: "随机发现一首现代短俳，从心头的一个词开始，或捕捉身边此刻正在发生的事。",
     paperRule: "三行 · 现代短俳",
     subscriptionTitle: "每日一首，寄到邮箱",
-    subscriptionIntro: "每天收到一首安静的三行短俳。",
+    subscriptionIntro: "选择安静日常，或每天收到一首由身边热点启发的短俳。",
     subscriptionEmailLabel: "邮箱地址",
     subscriptionPlaceholder: "you@example.com",
     subscriptionTimezoneLabel: "投递时区",
     subscriptionTimezoneHelp: "俳句将在此时区每天上午 8 点左右送达。之后可用同一邮箱再次提交来更改。",
+    subscriptionModeLabel: "每日俳句",
+    subscriptionQuiet: "安静日常",
+    subscriptionHappening: "正在发生",
     subscriptionButton: "发送确认邮件",
     subscriptionSending: "正在发送…",
-    subscriptionPrivacy: "需要邮件确认。我们只保存时区，不保存 IP 地址或精确位置。邮箱将加密保存，绝不出售，并可一键取消订阅。",
+    subscriptionPrivacy: "系统会自动识别国家或地区来提供本地热点。我们只保存国家代码和时区，不保存 IP 地址或精确位置。邮箱将加密保存，并可一键取消订阅。",
     subscriptionError: "暂时无法开始订阅，请重试。",
     styleHeading: "俳句样式",
     fontLabel: "字体",
@@ -212,6 +243,7 @@ const UI_COPY: Record<Language, {
     modeGroup: "作句方法",
     randomMode: "おまかせ",
     keywordMode: "言葉から",
+    happeningMode: "今起きていること",
     keywordPrompt: "今、心にあるものは？",
     keywordPlaceholder: "終電、通知、雨の夜…",
     keywordError: "言葉または短いフレーズを入力してください。",
@@ -222,6 +254,9 @@ const UI_COPY: Record<Language, {
     saveError: "短俳の画像を保存できませんでした。もう一度お試しください。",
     generateRandom: "現代短俳を詠む",
     generateKeyword: "私の現代短俳を詠む",
+    generateHappening: "今を詠む",
+    trendInspiredBy: "身近で今起きていることから着想",
+    trendWindow: "過去24時間",
     generating: "作句・推敲・描画中…",
     generationError: "DeepSeekが現代短俳を作れませんでした。もう一度お試しください。",
     unreachableError: "DeepSeekに接続できませんでした。もう一度お試しください。",
@@ -242,17 +277,20 @@ const UI_COPY: Record<Language, {
     eyebrow: "小さな瞬間のために余白を",
     heroTitle: "今この時を、",
     heroAccent: "Haiku-ly~",
-    intro: "おまかせで現代の三行詩と静かな水墨の世界を見つけるか、心にある一つの言葉から始めましょう。",
+    intro: "おまかせ、一つの言葉、または身近で今起きていることから、現代の三行詩を見つけましょう。",
     paperRule: "三行 · 現代短俳",
     subscriptionTitle: "毎日一篇をメールで",
-    subscriptionIntro: "静かな三行の俳句を、毎日一通お届けします。",
+    subscriptionIntro: "静かな日常か、身近な今から着想した一篇を選べます。",
     subscriptionEmailLabel: "メールアドレス",
     subscriptionPlaceholder: "you@example.com",
     subscriptionTimezoneLabel: "配信タイムゾーン",
     subscriptionTimezoneHelp: "このタイムゾーンの午前8時ごろに届きます。後から同じメールアドレスで変更できます。",
+    subscriptionModeLabel: "毎日の俳句",
+    subscriptionQuiet: "静かな日常",
+    subscriptionHappening: "今起きていること",
     subscriptionButton: "確認メールを送る",
     subscriptionSending: "送信中…",
-    subscriptionPrivacy: "メール確認が必要です。保存する位置情報はタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
+    subscriptionPrivacy: "地域の話題のため国や地域を自動判定します。保存するのは国コードとタイムゾーンのみで、IPアドレスや正確な位置は保存しません。アドレスは暗号化され、ワンクリックで解除できます。",
     subscriptionError: "購読を開始できませんでした。もう一度お試しください。",
     styleHeading: "俳句のスタイル",
     fontLabel: "書体",
@@ -368,6 +406,8 @@ export default function ModernShortHaikuTest() {
   const [displayLines, setDisplayLines] = useState<string[] | null>(null);
   const [subscriptionEmail, setSubscriptionEmail] = useState("");
   const [subscriptionTimezone, setSubscriptionTimezone] = useState("UTC");
+  const [subscriptionMode, setSubscriptionMode] = useState<SubscriptionMode>("happening_now");
+  const [displayedTrend, setDisplayedTrend] = useState<DisplayedTrend | null>(null);
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [subscriptionSucceeded, setSubscriptionSucceeded] = useState(false);
@@ -567,17 +607,25 @@ export default function ModernShortHaikuTest() {
     setError("");
     try {
       const isModernForm = haikuForm === "modern";
-      const response = await fetch(isModernForm ? "/api/modern-haiku" : "/api/v23-haiku", {
+      const endpoint = isModernForm && effectiveMode === "happening"
+        ? "/api/happening-haiku"
+        : isModernForm ? "/api/modern-haiku" : "/api/v23-haiku";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: effectiveMode,
           language: effectiveLanguage,
           ...(isModernForm ? { recentLines: recentLinesRef.current[effectiveLanguage] } : {}),
+          ...(effectiveMode === "happening" ? {
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            locale: navigator.language,
+            excludeClusterIds: displayedTrend ? [displayedTrend.clusterId] : [],
+          } : {}),
           ...(effectiveMode === "keyword" ? { keyword: effectiveKeyword.trim() } : {}),
         }),
       });
-      const result = (await response.json()) as { haiku?: Haiku; error?: string; language?: Language };
+      const result = (await response.json()) as { haiku?: Haiku; error?: string; language?: Language; trend?: DisplayedTrend | null };
       if (!response.ok || !result.haiku) {
         setError(result.error ?? effectiveFormCopy.generationError);
         return;
@@ -591,6 +639,7 @@ export default function ModernShortHaikuTest() {
       closeLineMenu();
       setDisplayLines([...result.haiku.lines]);
       setIsEditing(false);
+      setDisplayedTrend(result.trend ?? null);
       setDisplayed({ haiku: result.haiku, language: result.language ?? effectiveLanguage, form: haikuForm });
     } catch {
       setError(effectiveCopy.unreachableError);
@@ -759,6 +808,7 @@ export default function ModernShortHaikuTest() {
   function changeMode(nextMode: Mode) {
     closeLineMenu();
     setMode(nextMode);
+    if (nextMode === "happening") setHaikuForm("modern");
     setError("");
     setSaved(false);
   }
@@ -774,7 +824,9 @@ export default function ModernShortHaikuTest() {
     if (nextForm === haikuForm) return;
     closeLineMenu();
     setHaikuForm(nextForm);
+    if (nextForm === "traditional" && mode === "happening") setMode("random");
     setDisplayed(null);
+    setDisplayedTrend(null);
     setDisplayLines(null);
     setIsEditing(false);
     setError("");
@@ -814,6 +866,8 @@ export default function ModernShortHaikuTest() {
           email: subscriptionEmail,
           language: submittedLanguage,
           timezone: subscriptionTimezone,
+          locale: navigator.language,
+          contentMode: subscriptionMode,
           website: formData.get("website") ?? "",
         }),
       });
@@ -834,7 +888,7 @@ export default function ModernShortHaikuTest() {
   }
 
   return (
-    <main className="page-shell" id="modern-short-haiku-app" data-version="26">
+    <main className="page-shell" id="modern-short-haiku-app" data-version="27">
       <div className="ambient ambient-left" aria-hidden="true" />
       <div className="ambient ambient-right" aria-hidden="true" />
 
@@ -891,6 +945,9 @@ export default function ModernShortHaikuTest() {
           <button type="button" className={mode === "keyword" ? "active" : ""} aria-pressed={mode === "keyword"} onClick={() => changeMode("keyword")} data-mode="keyword">
             <span aria-hidden="true">⌁</span> {copy.keywordMode}
           </button>
+          <button type="button" className={mode === "happening" ? "active" : ""} aria-pressed={mode === "happening"} onClick={() => changeMode("happening")} data-mode="happening">
+            <span aria-hidden="true">◉</span> {copy.happeningMode}
+          </button>
         </div>
 
         <form ref={formRef} onSubmit={generate} className="modern-generator-form">
@@ -908,6 +965,14 @@ export default function ModernShortHaikuTest() {
               <span>{keyword.length}/48</span>
             </div>
           </div>
+
+          {displayedTrend && (
+            <p className="trend-attribution" id="trend-attribution">
+              <span>{copy.trendInspiredBy}</span>
+              <a href={displayedTrend.sourceUrl} target="_blank" rel="noreferrer">{displayedTrend.title}</a>
+              <small>{displayedTrend.source === "weibo" ? "Weibo" : "Google Trends"} · {displayedTrend.regionLabel} · {copy.trendWindow}</small>
+            </p>
+          )}
 
           <div
             ref={poemPaperRef}
@@ -1087,7 +1152,7 @@ export default function ModernShortHaikuTest() {
           <div className="action-row">
             <p className="error-message" id="error-message" role="alert">{error}</p>
             <button type="submit" className="generate-button" id="generate-haiku" disabled={isGenerating}>
-              {isGenerating ? copy.generating : mode === "random" ? formCopy.generateRandom : formCopy.generateKeyword}
+              {isGenerating ? copy.generating : mode === "random" ? formCopy.generateRandom : mode === "happening" ? copy.generateHappening : formCopy.generateKeyword}
               <span aria-hidden="true">↗</span>
             </button>
           </div>
@@ -1101,6 +1166,13 @@ export default function ModernShortHaikuTest() {
           <p id="subscription-intro">{copy.subscriptionIntro}</p>
         </div>
         <form className="subscription-form" id="daily-subscription-form" onSubmit={subscribe}>
+          <fieldset className="subscription-mode-fieldset">
+            <legend id="subscription-mode-label">{copy.subscriptionModeLabel}</legend>
+            <div className="subscription-mode-switch" role="group" aria-labelledby="subscription-mode-label">
+              <button type="button" className={subscriptionMode === "random" ? "active" : ""} aria-pressed={subscriptionMode === "random"} onClick={() => setSubscriptionMode("random")} data-subscription-mode="random">{copy.subscriptionQuiet}</button>
+              <button type="button" className={subscriptionMode === "happening_now" ? "active" : ""} aria-pressed={subscriptionMode === "happening_now"} onClick={() => setSubscriptionMode("happening_now")} data-subscription-mode="happening_now">{copy.subscriptionHappening}</button>
+            </div>
+          </fieldset>
           <label id="subscription-email-label" htmlFor="subscription-email">{copy.subscriptionEmailLabel}</label>
           <div className="subscription-input-row">
             <input

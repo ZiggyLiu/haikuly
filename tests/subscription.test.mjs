@@ -148,6 +148,43 @@ test("daily email includes the hosted card image and localized save links", () =
   assert.match(message.text, /download=1/);
 });
 
+test("happening-now email attributes the regional source and rolling window safely", () => {
+  const message = buildDailyEmail(
+    "reader@example.com",
+    "en",
+    {
+      lines: ["stadium lights wait", "one last serve crosses the night", "the city exhales"],
+      seed: 3,
+      createdAt: "2026-08-30T12:00:00.000Z",
+      illustration: { motif: "window", accent: "light", tone: "blue-gray", placement: "right" },
+    },
+    "unsubscribe-token",
+    "feedback-token",
+    {
+      from: "Haiku-ly <daily@haikuly.fyi>",
+      replyTo: "zhiguoinusa@gmail.com",
+      baseUrl: "https://haikuly.fyi",
+    },
+    undefined,
+    {
+      clusterId: "trend-us-open",
+      title: "US Open <final>",
+      source: "google_trends_rss",
+      region: "US",
+      regionLabel: "United States",
+      sourceUrl: "https://trends.google.com/trending?geo=US&x=1",
+      windowHours: 24,
+      selectedAt: "2026-08-30T12:00:00.000Z",
+    },
+  );
+
+  assert.match(message.html, /Inspired by what is happening near you/);
+  assert.match(message.html, /US Open &lt;final&gt;/);
+  assert.doesNotMatch(message.html, /US Open <final>/);
+  assert.match(message.html, /Google Trends · United States · rolling 24 hours/);
+  assert.match(message.text, /rolling 24 hours/);
+});
+
 test("feedback API validates a dedicated token and records its daily message identifier", async () => {
   const subscriptionCrypto = await createSubscriptionCrypto(secret);
   const token = await subscriptionCrypto.createActionToken(

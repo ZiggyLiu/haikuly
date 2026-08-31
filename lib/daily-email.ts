@@ -12,8 +12,16 @@ import {
   failDailyDelivery,
   listDueSubscribers,
 } from "./subscriber-store";
-import { dailyCardUrl, dailyImageDownloadUrl, ensureDailyImage } from "./daily-image";
+import {
+  dailyCardUrl,
+  dailyImageDownloadUrl,
+  ensureDailyImage,
+  ensureHappeningImage,
+  happeningCardUrl,
+  happeningImageDownloadUrl,
+} from "./daily-image";
 import { localDateAt, nextLocalDeliveryAt } from "./timezone";
+import { getOrCreateHappeningIssue, type TrendTopic } from "./trends";
 
 type DailyEmailEnv = Env & SecretBindings;
 
@@ -133,6 +141,7 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
 
     const subscriptionCrypto = await createSubscriptionCrypto(config.tokenEncryptionKey);
     const poems = new Map<string, Haiku>();
+    const happeningIssues = new Map<string, { issueId: string; poem: Haiku; topic: TrendTopic } | null>();
     const imageUrls = new Map<string, { imageUrl: string; saveUrl: string; viewUrl: string }>();
     let failureCount = 0;
 
@@ -166,26 +175,46 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
       try {
         const email = await subscriptionCrypto.decryptEmail(subscriber.email_ciphertext);
         if (!email) throw new Error("subscriber_email_decryption_failed");
-        const contentKey = `${sendDate}/${subscriber.language}`;
-        let poem = poems.get(contentKey);
-        if (!poem) {
-          poem = await getOrCreateDailyPoem(
-            config.db,
-            sendDate,
+        const wantsHappening = subscriber.content_mode === "happening_now" && Boolean(subscriber.trend_region);
+        const happeningKey = wantsHappening
+          ? `${subscriber.trend_region}/${subscriber.language}/${Math.floor(scheduledTime / (3 * 60 * 60 * 1000))}`
+          : "";
+        let issue = happeningKey ? happeningIssues.get(happeningKey) : null;
+        if (happeningKey && issue === undefined) {
+          issue = await getOrCreateHappeningIssue(
+            env,
+            subscriber.trend_region as string,
             subscriber.language,
-            env.DEEPSEEK_API_KEY,
+            new Date(scheduledTime),
           );
+          happeningIssues.set(happeningKey, issue);
+        }
+        const contentKey = issue
+          ? `happening/${issue.issueId}/${subscriber.language}`
+          : `random/${sendDate}/${subscriber.language}`;
+        let poem = issue?.poem ?? poems.get(contentKey);
+        if (!poem) {
+          poem = await getOrCreateDailyPoem(config.db, sendDate, subscriber.language, env.DEEPSEEK_API_KEY);
           poems.set(contentKey, poem);
         }
 
         let imageLinks = imageUrls.get(contentKey);
         if (!imageLinks) {
-          const imageUrl = await ensureDailyImage(env, sendDate, subscriber.language);
-          imageLinks = {
-            imageUrl,
-            saveUrl: dailyImageDownloadUrl(config.publicBaseUrl, sendDate, subscriber.language),
-            viewUrl: dailyCardUrl(config.publicBaseUrl, sendDate, subscriber.language),
-          };
+          if (issue) {
+            const imageUrl = await ensureHappeningImage(env, issue.issueId, subscriber.language);
+            imageLinks = {
+              imageUrl,
+              saveUrl: happeningImageDownloadUrl(config.publicBaseUrl, issue.issueId, subscriber.language),
+              viewUrl: happeningCardUrl(config.publicBaseUrl, issue.issueId, subscriber.language),
+            };
+          } else {
+            const imageUrl = await ensureDailyImage(env, sendDate, subscriber.language);
+            imageLinks = {
+              imageUrl,
+              saveUrl: dailyImageDownloadUrl(config.publicBaseUrl, sendDate, subscriber.language),
+              viewUrl: dailyCardUrl(config.publicBaseUrl, sendDate, subscriber.language),
+            };
+          }
           imageUrls.set(contentKey, imageLinks);
         }
 
@@ -208,6 +237,7 @@ export async function runDailyEmail(env: DailyEmailEnv, scheduledTime: number): 
             baseUrl: config.publicBaseUrl,
           },
           imageLinks,
+          issue?.topic,
         );
         await sendResendEmail(
           config.resendApiKey,

@@ -1,5 +1,6 @@
 import type { Haiku, Language } from "../app/haiku";
 import type { ResendEmail } from "./resend";
+import type { TrendTopic } from "./trends";
 
 type EmailSettings = {
   from: string;
@@ -27,6 +28,8 @@ const COPY: Record<Language, {
   saveImage: string;
   viewOnWebsite: string;
   reason: string;
+  happeningNow: string;
+  rollingWindow: string;
 }> = {
   en: {
     confirmSubject: "Confirm your daily Haiku-ly email",
@@ -42,6 +45,8 @@ const COPY: Record<Language, {
     saveImage: "Save the card",
     viewOnWebsite: "Open on Haiku-ly",
     reason: "You receive this message because you confirmed a daily Haiku-ly subscription.",
+    happeningNow: "Inspired by what is happening near you",
+    rollingWindow: "rolling 24 hours",
   },
   zh: {
     confirmSubject: "确认订阅 Haiku-ly 每日俳句",
@@ -57,6 +62,8 @@ const COPY: Record<Language, {
     saveImage: "保存这张图片",
     viewOnWebsite: "在 Haiku-ly 打开",
     reason: "你收到此邮件，是因为你已确认订阅 Haiku-ly 每日俳句。",
+    happeningNow: "灵感来自你身边正在发生的事",
+    rollingWindow: "过去24小时",
   },
   ja: {
     confirmSubject: "Haiku-ly 毎日俳句の購読確認",
@@ -72,6 +79,8 @@ const COPY: Record<Language, {
     saveImage: "画像を保存",
     viewOnWebsite: "Haiku-ly で開く",
     reason: "Haiku-ly の毎日俳句を確認して購読したため、このメールをお送りしています。",
+    happeningNow: "身近で今起きていることから着想",
+    rollingWindow: "過去24時間",
   },
 };
 
@@ -137,6 +146,7 @@ export function buildDailyEmail(
   feedbackToken: string,
   settings: EmailSettings,
   assets?: DailyEmailAssets,
+  trend?: TrendTopic,
 ): ResendEmail {
   const copy = COPY[language];
   const unsubscribeUrl = `${normalizedBaseUrl(settings.baseUrl)}/api/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
@@ -148,9 +158,17 @@ export function buildDailyEmail(
       <p style="margin:0 0 24px;font-size:12px"><a href="${escapeHtml(assets.saveUrl)}" style="color:#365347;margin-right:18px">${copy.saveImage}</a><a href="${escapeHtml(assets.viewUrl)}" style="color:#365347">${copy.viewOnWebsite}</a></p>
   ` : "";
   const lines = haiku.lines.map(escapeHtml);
+  const trendBlock = trend ? `
+      <p style="margin:0 0 28px;padding:12px 14px;border-left:3px solid #8fa298;color:#53665d;font-size:12px;line-height:1.6">
+        ${copy.happeningNow}<br />
+        <a href="${escapeHtml(trend.sourceUrl)}" style="color:#365347;text-decoration:none">${escapeHtml(trend.title)}</a><br />
+        ${escapeHtml(trend.source === "weibo" ? "Weibo" : "Google Trends")} · ${escapeHtml(trend.regionLabel)} · ${copy.rollingWindow}
+      </p>
+  ` : "";
   const html = pageShell(language, `
       <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:28px;font-weight:400">${copy.dailyTitle}</h1>
       <p style="margin:0 0 34px;color:#6d7b74;font-size:14px">${copy.dailyIntro}</p>
+      ${trendBlock}
       ${imageBlock}
       <div style="margin:0 0 38px;font-family:Georgia,serif;font-size:25px;line-height:1.75">
         <div>${lines[0]}</div>
@@ -168,7 +186,7 @@ export function buildDailyEmail(
     reply_to: settings.replyTo,
     subject: copy.dailySubject,
     html,
-    text: `${copy.dailyTitle}\n\n${assets ? `${copy.saveImage}: ${assets.saveUrl}\n${copy.viewOnWebsite}: ${assets.viewUrl}\n\n` : ""}${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.feedback}: ${feedbackUrl}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
+    text: `${copy.dailyTitle}\n\n${trend ? `${copy.happeningNow}: ${trend.title}\n${trend.source === "weibo" ? "Weibo" : "Google Trends"} · ${trend.regionLabel} · ${copy.rollingWindow}\n${trend.sourceUrl}\n\n` : ""}${assets ? `${copy.saveImage}: ${assets.saveUrl}\n${copy.viewOnWebsite}: ${assets.viewUrl}\n\n` : ""}${haiku.lines.join("\n")}\n\n${copy.reason}\n${copy.feedback}: ${feedbackUrl}\n${copy.unsubscribe}: ${unsubscribeUrl}`,
     headers: {
       "List-Unsubscribe": `<${unsubscribeUrl}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

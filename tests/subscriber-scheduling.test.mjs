@@ -12,6 +12,19 @@ test("subscriber scheduling migration is indexed and deduplicates each local dat
   assert.match(migration, /PRIMARY KEY \(`subscriber_id`, `local_date`\)/);
 });
 
+test("happening-now migration stores regional preferences, rolling observations, and cached issues", async () => {
+  const migration = await readFile(
+    new URL("../drizzle/0004_add_happening_now.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /`content_mode` text DEFAULT 'random' NOT NULL/);
+  assert.match(migration, /`trend_region` text/);
+  assert.match(migration, /CREATE TABLE `trend_observations`/);
+  assert.match(migration, /trend_observations_region_observed_idx/);
+  assert.match(migration, /CREATE TABLE `happening_issues`/);
+  assert.match(migration, /CREATE UNIQUE INDEX `happening_issues_issue_key_unique`/);
+});
+
 test("dispatcher uses per-subscriber idempotency and a frequent UTC cron", async () => {
   const [dispatcher, store, wrangler, worker] = await Promise.all([
     readFile(new URL("../lib/daily-email.ts", import.meta.url), "utf8"),
@@ -24,5 +37,6 @@ test("dispatcher uses per-subscriber idempotency and a frequent UTC cron", async
   assert.match(store, /daily_email_deliveries\.status = 'failed'/);
   assert.match(store, /daily_email_deliveries\.status = 'preparing'/);
   assert.match(wrangler, /"crons": \["\*\/15 \* \* \* \*"\]/);
+  assert.match(worker, /collectActiveTrendRegions/);
   assert.doesNotMatch(worker, /CF-Connecting-IP/);
 });

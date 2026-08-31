@@ -1,4 +1,4 @@
-export type Mode = "random" | "keyword";
+export type Mode = "random" | "keyword" | "happening";
 export type Language = "en" | "zh" | "ja";
 export type GenerationSource = "deepseek";
 

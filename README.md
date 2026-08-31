@@ -1,10 +1,16 @@
 # Haiku-ly
 
-Haiku-ly is a small DeepSeek-powered haiku studio. It creates a random 5–7–5 poem or builds one from a short keyword or phrase. The user can write in English, 中文, or 日本語; English is the default.
+Haiku-ly is a small DeepSeek-powered haiku studio. It creates a random poem, builds one from a short keyword or phrase, or uses **Happening now** to catch a current local moment. The user can write in English, 中文, or 日本語; English is the default.
 
 Both modes use the DeepSeek Chat Completions API. English poems use a 5–7–5 syllable pattern. Chinese poems use a 5–7–5 Han-character pattern. Each poem must pass the local form check and a separate DeepSeek common-sense review before Haiku-ly displays it. Haiku-ly returns a clear error when DeepSeek is unavailable. It does not generate a local fallback poem.
 
-Visitors can also request one haiku by email each day. The service uses Resend for outbound email and Cloudflare D1 for subscriber data. It requires email confirmation before activation. It encrypts email addresses in D1 and includes a one-click unsubscribe link in every daily email.
+Visitors can also request one haiku by email each day and choose between a quiet daily poem and Happening now. The service uses Resend for outbound email and Cloudflare D1 for subscriber data. It requires email confirmation before activation. It encrypts email addresses in D1 and includes a one-click unsubscribe link in every daily email.
+
+## Happening now
+
+Happening now uses a rolling 24-hour window. Mainland China uses Weibo's hot-search feed; other countries use the corresponding Google Trending Now RSS feed. Cloudflare's request country selects the feed automatically, with browser locale and timezone as fallbacks—there is no region picker. Haiku-ly stores only the two-letter country code for subscribers, not an IP address or precise location.
+
+The scheduled Worker refreshes feeds for active subscriber regions every 15 minutes. Observations are normalized, related titles are clustered, and topics are ranked using recency, position, popularity, persistence, and momentum. Generated poems are cached by region, language, and three-hour issue window so subscribers in the same cohort receive a consistent issue. Trend attribution appears in the website result and daily email.
 
 ## Local development
 
@@ -41,7 +47,7 @@ npm run typecheck
 4. Store the key in Cloudflare with `npx wrangler secret put RESEND_API_KEY`.
 5. Confirm that `DEEPSEEK_API_KEY` and `TOKEN_ENCRYPTION_KEY` are also present with `npx wrangler secret list`.
 
-The visible sender is `Haiku-ly <daily@haikuly.fyi>`. Replies go to `zhiguoinusa@gmail.com`. A Cron Trigger runs every 15 minutes and sends each due subscriber a haiku at approximately `08:00` in their saved IANA timezone. The browser supplies an editable timezone; Cloudflare's request timezone is the fallback, and Haiku-ly does not store the subscribing IP address or precise location. The safeguards limit each dispatch to 90 recipients and confirmation messages to 10 per day.
+The visible sender is `Haiku-ly <daily@haikuly.fyi>`. Replies go to `zhiguoinusa@gmail.com`. A Cron Trigger runs every 15 minutes and sends each due subscriber a haiku at approximately `08:00` in their saved IANA timezone. The browser supplies an editable timezone; Cloudflare's request timezone is the fallback. The safeguards limit each dispatch to 90 recipients and confirmation messages to 10 per day.
 
 ## Direct Cloudflare deployment
 

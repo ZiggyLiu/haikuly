@@ -16,6 +16,7 @@ import {
   unsubscribeSubscriber,
   updateActiveSubscriberPreferences,
 } from "./subscriber-store";
+import { detectedTrendRegion, type SubscriptionContentMode } from "./trends";
 
 const MAX_BODY_BYTES = 4096;
 const CONFIRMATION_TTL_MS = 48 * 60 * 60 * 1000;
@@ -25,6 +26,8 @@ type SubscribePayload = {
   email?: unknown;
   language?: unknown;
   timezone?: unknown;
+  locale?: unknown;
+  contentMode?: unknown;
   website?: unknown;
 };
 
@@ -160,6 +163,9 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
   const normalizedTimezone = normalizeTimeZone(providedTimezone);
   if (providedTimezone && !normalizedTimezone) return jsonResponse(copy.invalidTimezone, 400);
   const timezone = normalizedTimezone ?? timeZoneFromRequest(request);
+  const locale = typeof payload.locale === "string" ? payload.locale.slice(0, 32) : null;
+  const contentMode: SubscriptionContentMode = payload.contentMode === "happening_now" ? "happening_now" : "random";
+  const trendRegion = detectedTrendRegion(request, timezone, locale);
 
   try {
     const config = requireSubscriptionConfig(env);
@@ -186,6 +192,10 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
         email_hash: emailHash,
         language,
         timezone,
+        content_mode: contentMode,
+        trend_region: trendRegion,
+        region_detected_at: now,
+        region_detection_method: "cloudflare_country",
         confirmation_token: confirmationToken,
         created_at: now,
         updated_at: now,
@@ -201,6 +211,9 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
         emailCiphertext,
         language,
         timezone,
+        contentMode,
+        trendRegion,
+        now,
         nextLocalDeliveryAt(nowDate, timezone),
         now,
       );
@@ -211,7 +224,8 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
     const tokenPayload = confirmationToken
       ? await subscriptionCrypto.readActionToken(confirmationToken, "confirm")
       : null;
-    if (!tokenPayload || tokenPayload.subscriberId !== subscriber.id || tokenPayload.language !== language || subscriber.timezone !== timezone) {
+    if (!tokenPayload || tokenPayload.subscriberId !== subscriber.id || tokenPayload.language !== language || subscriber.timezone !== timezone ||
+      subscriber.content_mode !== contentMode || subscriber.trend_region !== trendRegion) {
       confirmationToken = await subscriptionCrypto.createActionToken(
         subscriber.id,
         "confirm",
@@ -224,6 +238,9 @@ export async function handleSubscribe(request: Request, env: HaikulyRuntimeEnv):
         emailCiphertext,
         language,
         timezone,
+        contentMode,
+        trendRegion,
+        now,
         confirmationToken,
         now,
       );

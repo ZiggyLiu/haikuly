@@ -62,12 +62,13 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /data-language="ja"/);
   assert.match(html, /data-mode="random"/);
   assert.match(html, /data-mode="keyword"/);
+  assert.match(html, /data-mode="happening"/);
   assert.match(html, /data-haiku-form="traditional"/);
   assert.match(html, /data-haiku-form="modern"/);
   assert.match(html, /5-7-5/);
   assert.match(html, /Modern Haiku/);
   assert.match(html, /Spring Whispers,/);
-  assert.match(html, /data-version="26"/);
+  assert.match(html, /data-version="27"/);
   assert.match(html, /id="poem-paper"/);
   assert.match(html, /id="generate-haiku"/);
   assert.match(html, /id="daily-subscription-form"/);
@@ -75,6 +76,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(html, /id="subscription-timezone"/);
   assert.match(html, /Delivery timezone/);
   assert.match(html, /Send confirmation/);
+  assert.match(html, /data-subscription-mode="happening_now"/);
   assert.match(html, /Your email is encrypted/);
 
   const [formalPage, modernPage, modernApi, v23Api, mobileRuntime, styles, inkWash] = await Promise.all([
@@ -98,6 +100,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
     assert.ok(modernPage.includes(className), `modern page must contain ${className}`);
   }
   assert.match(formalPage, /export \{ default \} from "\.\/modern-test\/page";/);
+  assert.match(modernPage, /"\/api\/happening-haiku"/);
   assert.match(modernPage, /isModernForm \? "\/api\/modern-haiku" : "\/api\/v23-haiku"/);
   assert.match(modernPage, /"\/api\/v23-haiku"/);
   assert.match(modernPage, /onClick=\{\(\) => changeLanguage\("en"\)\}/);
@@ -106,6 +109,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(modernPage, /className="modern-generator-form"/);
   assert.match(modernPage, /data-language="en"/);
   assert.match(modernPage, /data-mode="keyword"/);
+  assert.match(modernPage, /data-mode="happening"/);
   assert.match(modernPage, /data-haiku-form="traditional"/);
   assert.match(modernPage, /data-haiku-form="modern"/);
   assert.match(modernPage, /onClick=\{\(\) => changeHaikuForm\("traditional"\)\}/);
@@ -185,7 +189,7 @@ test("modern short-haiku experiment uses the formal layout and DeepSeek service"
   assert.match(v23Api, /illustrationForContent\(result\.haiku\.lines, keyword, result\.haiku\.seed\)/);
   assert.match(v23Api, /form: "5-7-5"/);
   assert.match(v23Api, /version: 23/);
-  assert.match(mobileRuntime, /state\.haikuForm === "modern" \? fetchModernHaiku\(payload\) : fetchV23Haiku\(payload\)/);
+  assert.match(mobileRuntime, /fetchHappeningHaiku\(payload\)/);
   assert.match(mobileRuntime, /fetch\("\/api\/v23-haiku"/);
   assert.match(mobileRuntime, /heroTitle: "Spring Whispers,"/);
   assert.match(mobileRuntime, /data-haiku-form/);

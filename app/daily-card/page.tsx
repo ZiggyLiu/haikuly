@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { haikuDateLabel, poemLinesClassName, type Haiku, type Language } from "../haiku";
 import InkWashIllustration from "../ink-wash";
 
-type DailyPoemResponse = { date: string; language: Language; poem: Haiku };
+type DailyPoemResponse = { date?: string; issue?: string; language: Language; poem: Haiku };
 
 function languageTag(language: Language) {
   return language === "zh" ? "zh-CN" : language;
@@ -35,11 +35,17 @@ function DailyCard({ poem, language, onPainted }: { poem: Haiku; language: Langu
 export default function DailyCardPage() {
   const [payload, setPayload] = useState<DailyPoemResponse | null>(null);
   const [request] = useState(() => {
-    if (typeof window === "undefined") return { date: "", language: "", valid: false };
+    if (typeof window === "undefined") return { date: "", issue: "", language: "", valid: false };
     const query = new URLSearchParams(window.location.search);
     const date = query.get("date") ?? "";
+    const issue = query.get("issue") ?? "";
     const language = query.get("language") ?? "en";
-    return { date, language, valid: /^\d{4}-\d{2}-\d{2}$/.test(date) && ["en", "zh", "ja"].includes(language) };
+    return {
+      date,
+      issue,
+      language,
+      valid: (/^\d{4}-\d{2}-\d{2}$/.test(date) || /^[0-9a-f-]{36}$/.test(issue)) && ["en", "zh", "ja"].includes(language),
+    };
   });
   const [error, setError] = useState(() => !request.valid);
   const [ready, setReady] = useState(false);
@@ -48,8 +54,9 @@ export default function DailyCardPage() {
 
   useEffect(() => {
     if (!request.valid) return;
-    const { date, language } = request;
-    fetch(`/api/daily-poem?date=${encodeURIComponent(date)}&language=${encodeURIComponent(language)}`, {
+    const { date, issue, language } = request;
+    const identifier = issue ? `issue=${encodeURIComponent(issue)}` : `date=${encodeURIComponent(date)}`;
+    fetch(`/api/daily-poem?${identifier}&language=${encodeURIComponent(language)}`, {
       headers: { Accept: "application/json" },
     })
       .then(async (response) => {
